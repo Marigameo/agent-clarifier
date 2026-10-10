@@ -8,7 +8,8 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
 
 | File | What it is |
 |---|---|
-| `PLAN.md` | The spec: format, variants, states, recovery, API, theming, a11y, milestones (§10), open decisions (§11). **The source of truth.** |
+| `PLAN.md` | **What** to build: the spec (format, variants, states, recovery, own words, decisions in §11). |
+| `BUILD.md` | **How** to build it: architecture, state and transition tables, keyboard/focus/ARIA spec, full API, composer integration, milestones with acceptance criteria. **Implement from this.** |
 | `design/board.html` | The visual board: every variant and state, drawn with the real `--clarify-*` tokens. Open it in a browser; it has a theme toggle. |
 | `JOURNAL.md` | Round-by-round log: the brief, Mari's feedback, the decisions made and why. |
 | `process/` | Frozen snapshots of each review round (board, plan, renders). |
@@ -20,7 +21,8 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
 3. **Wording:** offer options in chat before changing user-facing copy. Write plainly, with no jargon in the UI.
 4. **Check before reporting done:** light, dark and phone width (375px). For the board, use headless Chrome screenshots. On this Mac, Chrome writes the PNG and then hangs on exit, so poll for the file and kill the process. Captures narrower than 500px get cropped, so capture at 500.
 5. **Decisions are Mari's.** In the journal, use "I" for Mari's calls and say plainly when something was Claude's suggestion.
-6. Commit after each milestone or round. Ask before pushing, or before anything public: making the repo public, or publishing to npm.
+6. Commit after each milestone or round, and push to the private repo at the end of each milestone. Ask before anything public: making the repo public, or publishing to npm.
+7. **Scope is locked** (BUILD.md §0). The aim is a top-notch core, not more features. Don't add anything outside it. If something seems missing or costly, raise it with Mari.
 
 ## Decided so far (details in JOURNAL.md)
 
@@ -30,7 +32,7 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
 - **Recovery:**
   - Minimise instead of closing, into a pill, with the draft kept.
   - Undo instead of confirmation dialogs.
-  - One history stack behind back, undo, reset and edit.
+  - One history stack behind undo and start over. Back and edit only navigate and never change answers.
   - A review step with per-answer Edit.
   - A record stays in the transcript, with "Edit answers".
 - **Own words:**
@@ -39,21 +41,20 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
   - Short details stay in the card, as a `text` question with a `default`.
 - **Draft mode was dropped** in round 3 because it was confusing. Don't bring back `submit`, "Edit first" or the drafting strip.
 
-## Open decisions (PLAN.md §11)
+- **Settled in round 4:**
+  - review step `auto`
+  - undo window off by default
+  - option previews later (v1.1)
+  - MIT licence
+  - copy: "Or reply in your own words…" and "write it ↗"
+- **Branching is out of v1.** So are option previews and icon slots.
 
-- **Review step:** shown automatically, or always?
-- **Undo window after submit:** off or on by default?
-- **Previews on options:** in v1 or later?
-- **Licence:** MIT?
-- **Copy:** "Or reply in your own words…" and "write it ↗".
+## Next: M1 (BUILD.md §10)
 
-## Next: M1
+- Scaffold: Vite library mode, TS strict, Vitest, size-limit.
+- `src/model/`: `types`, `normalize`, `reducer` (with history), `selectors`, plus `labels`.
+- Table-driven tests for every transition (BUILD §4.2), every normalising rule (§3.1) and every recovery row (PLAN §6). Coverage ≥ 95%.
 
-Per PLAN.md §10:
-- Scaffold: Vite library mode, TypeScript, ESM + types, Vitest.
-- `src/state.ts`: the format types, a reducer, the state machine (hidden → loading → answering ⇄ reviewing → submitting → answered, plus minimised, error and expired), and a history stack capped at 50.
-- Unit tests for every transition and every recovery row in PLAN.md §6.
-
-No UI in M1. After M1, follow M2–M7 in order. Each milestone gets a commit and a journal entry, plus a board snapshot whenever the visuals change.
+No UI in M1. After M1, follow M2–M7 in order.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

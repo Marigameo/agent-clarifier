@@ -122,9 +122,41 @@ Before building, I reviewed the board and pushed back on two things.
 
 ---
 
+## Round 4 · Scope lock, last decisions, build plan
+
+**Branching, considered and deferred.** I asked whether we'd planned for branching: put the most important question first, and let later questions depend on earlier answers, with the conditions declared up front and checked by the component, so there's no extra round trip. Claude proposed a design for it: a JSON `when` condition, a step count that only ever shrinks, a "Because you picked X" line, and hidden answers kept rather than deleted. Then I pulled it back: **"Let's not complicate for now. Let's build this functionally top notch rather than bloating in more supports."** Branching, option previews and option-level conditions are out of v1.
+
+**Working agreement:** every decision gets made here first. Then comes a detailed build plan, which we review and agree on, and only then does implementation happen in its own session in this folder.
+
+**Last decisions** (all four went with Claude's recommendation):
+- **Review step:** `auto`. It only shows when something was skipped or there are 3+ questions.
+- **Undo window after send:** off by default, opt-in with `undo-window`.
+- **Option previews:** later (v1.1).
+- **Copy:** "Or reply in your own words…" and "write it ↗".
+- **Licence:** MIT.
+
+**Spec tidy:** cleared leftovers from earlier rounds: "Reset in the menu" (there's no menu), "Esc or ×" (there's no × any more), and "Back moves through history" (Back only navigates; only undo and start over use history).
+
+**What came back:** `BUILD.md`, the implementation plan:
+- the tech choices
+- the repo layout
+- normalising rules
+- the state and transition tables
+- the keyboard, focus and ARIA spec
+- the full API, events and converter mappings
+- composer integration
+- milestones with acceptance criteria
+- a definition of done
+- risks
+- a list of "calls made" for me to check
+
+**Status:** waiting for my review of BUILD.md. Once agreed, it's frozen into `process/04-build-plan/` and M1 starts.
+
+---
+
 ## Story notes (to use later)
 
-- The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → build.
+- The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
 - Good before/after pairs: the v1 first render vs after the review fixes (the checkbox and radio fix is a small, clear example).
 - Round 2 → 3 is a good "less is more" beat: draft mode got simpler when I asked what each control was for.
 - The renders in each round are ready to use as story images.

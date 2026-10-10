@@ -1,8 +1,8 @@
-# agent-clarifier: plan (v0, for review)
+# agent-clarifier: spec (v1)
 
 > A plug-and-play web component that lets a chat agent ask clarifying questions before it acts.
 > Framework-agnostic, zero dependencies, neutral by default, restyled with CSS variables.
-> Status: **plan + visuals under review. Nothing built yet.**
+> Status: **scope locked and every decision made (round 4). The build steps are in [BUILD.md](BUILD.md).**
 > Name: `agent-clarifier` (package and repo) / `<agent-clarifier>` (element). Events stay `clarify:*` and CSS variables stay `--clarify-*`, to keep code short.
 
 ---
@@ -21,7 +21,9 @@
 - Neutral look. Every colour, radius, space and font is a CSS variable.
 
 **Non-goals (v1)**
-- Branching logic (show Q3 only if Q1 = X). The schema leaves room for it, but it's not built yet.
+- **Branching** (show Q3 only if Q1 = X, with conditions declared up front and checked by the component). Considered in round 4 and deferred: the aim is a top-notch core, not more features.
+- **Option previews** (a visual mockup next to an option, like Claude's `preview`). Deferred to v1.1. `fromClaude()` drops `preview`.
+- Conditions on individual options, and adding follow-up questions to an open card.
 - Validation beyond required, min and max.
 - Sending anything over the network. The component hands back answers and the app sends them.
 - Generating questions. That's the model's job (see the prompt guidance in §9).
@@ -52,7 +54,7 @@ Who writes the questions changes what the format should be.
 
 ---
 
-## 3. The native format (draft)
+## 3. The native format
 
 ```ts
 interface Questionnaire {
@@ -82,7 +84,6 @@ interface Option {
   description?: string;             // "Boutique, good locations"
   recommended?: boolean;            // gets a badge and is focused first
   disabled?: boolean;
-  preview?: string;                 // sanitised HTML or plain text, shown beside the option
   compose?: string;                 // picking it starts this sentence in the composer instead (see §4b)
 }
 ```
@@ -118,7 +119,7 @@ interface Answer {
 | `placement` | `replace` · `dock` | Replace hides the composer (via a slot or a `composer` selector) and gives it back when the card is minimised or done. Dock sits above the composer, which stays usable. |
 | `density` | `comfortable` · `compact` | Compact is for docked cards on small screens. |
 | Question `type` | `single` · `multi` · `text` | Plus the "Something else" row on single and multi |
-| Option extras | description · recommended · disabled · preview | A preview turns the card into a two-column layout on wide screens |
+| Option extras | description · recommended · disabled · compose | Previews are deferred to v1.1 |
 
 **Auto-advance rules (sequential)**
 - **Single**: a click or Enter selects it, the row confirms for about 120ms, then the card moves on. A number key does the same.
@@ -199,19 +200,19 @@ This is the part you called out. Each kind of mistake gets its own fix:
 |---|---|
 | Picked the wrong option in sequential (it auto-advanced) | **Back** (← key or the Back button) returns with the old choice still selected. The step counter is clickable. |
 | Skipped one by accident | The skip toast says "Skipped Budget · **Undo**". Review flags skipped questions. |
-| Answered several, want to start over | **Reset** in review and in the menu. One level of **undo** after a reset ("Answers cleared · Undo"). |
-| Hit Esc or × by accident | Nothing is lost. The card **minimises** to a pill and the draft is kept. Reopen restores the exact step. |
+| Answered several, want to start over | **Start over** in review. One level of **undo** after it ("Answers cleared · Undo"). |
+| Hit Esc or minimise by accident | Nothing is lost. The card **minimises** to a pill and the draft is kept. Reopen restores the exact step. |
 | Submitted, then noticed a mistake | An optional **undo window** before the result is sent. After that, **Edit answers** on the record emits `clarify:revise` with the new result. |
 | Submit failed (the app rejected it, or the network) | The error is inline and **answers are never cleared**. Retry. |
 | Picked a compose option by mistake | **Reopen** the pill: the card comes back on that step, and the started sentence is removed if you haven't touched it |
 | Replied in your own words, then wanted to answer properly | **Answer the questions** on the record reopens the card and emits `clarify:revise` |
 | Typed in "Something else", changed your mind | Picking an option clears the field, and **Undo** brings the text back. |
 
-**How it works:** every change goes through a reducer that keeps a **history stack** (capped at 50). Back, Undo and Reset are all just moves through that history, so the UI can't get out of sync with the data.
+**How it works:** every change goes through one reducer. Answer changes push onto a **history stack** (capped at 50). **Undo** and **Start over** move through that stack. **Back** and **Edit** only navigate and never change answers, so they can't get out of sync with the data.
 
 ---
 
-## 7. Public API (draft)
+## 7. Public API (summary; full signatures in BUILD.md §6)
 
 ```html
 <script type="module" src="agent-clarifier.js"></script>
@@ -266,7 +267,6 @@ canUseTool: async (name, input) => {
 - Styling comes in three layers:
   1. **CSS variables**, the main way to restyle (about 25 tokens: `--clarify-bg`, `--clarify-fg`, `--clarify-muted`, `--clarify-border`, `--clarify-accent`, `--clarify-radius`, `--clarify-font`, `--clarify-space`, …)
   2. **`::part()`** for structural tweaks (`card`, `option`, `badge`, `footer`, …)
-  3. **slots** for icons and the empty "Something else" icon
 - Defaults are neutral greys with one accent, and they follow `prefers-color-scheme`, `[data-theme=dark]` or `color-scheme`.
 
 **Accessibility**
@@ -325,7 +325,7 @@ agent-clarifier/
 
 | # | Milestone | Done when |
 |---|---|---|
-| M0 | **Plan + visual board reviewed** ← *we are here* | You sign off on the board and the plan |
+| M0 | Plan + visual board reviewed, decisions settled | ✅ Round 4 |
 | M1 | Schema + reducer + history | Unit tests pass for every transition |
 | M2 | Sequential + all flows; single, multi and text inputs | Demo works with the mouse |
 | M3 | Placements (replace, dock) + record + minimised pill | Demo works in a fake chat shell |
@@ -337,11 +337,14 @@ agent-clarifier/
 
 ---
 
-## 11. Open decisions (yours)
+## 11. Decisions (all settled, round 4)
 
-1. ~~Name~~: **decided: `agent-clarifier`, published as `@marigameo/agent-clarifier`** (with `publishConfig.access: "public"`, since scoped packages are private by default).
-2. **Review step default:** `auto` (only when something was skipped or there are 3+ questions), or always?
-3. **Undo window after submit:** off by default (fast) or 4s by default (safe)?
-4. **Previews:** in v1 or later? They add layout work.
-5. **Licence:** MIT?
-6. **Own-words copy:** the placeholder "Or reply in your own words…" and the compose hint "write it ↗". OK, or alternatives?
+| # | Decision | Settled as |
+|---|---|---|
+| 1 | Name | `agent-clarifier`, published as **`@marigameo/agent-clarifier`** (`publishConfig.access: "public"`) |
+| 2 | Review step default | **`auto`**: shown only when something was skipped or there are 3+ questions. `review="always"` / `"never"` override it |
+| 3 | Undo window after submit | **Off by default.** Apps opt in with `undo-window="4000"` |
+| 4 | Option previews | **Later (v1.1)** |
+| 5 | Licence | **MIT** |
+| 6 | Own-words copy | Placeholder **"Or reply in your own words…"**, and compose hint **"write it ↗"** |
+| 7 | Branching | **Out of v1.** Scope stays as designed |
