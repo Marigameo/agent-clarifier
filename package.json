@@ -31,9 +31,9 @@
     "ai"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
@@ -49,16 +49,12 @@
     }
   ],
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@size-limit/file": "^14.2.0",
     "@vitest/coverage-v8": "^5.0.3",
-    "eslint": "^10.12.0",
-    "globals": "^17.13.0",
+    "oxlint": "^1.87.0",
     "size-limit": "^14.2.0",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.1",
+    "typescript": "^7.0.2",
     "vite": "^8.3.4",
-    "vite-plugin-dts": "^5.1.2",
     "vitest": "^5.0.3"
   }
 }
