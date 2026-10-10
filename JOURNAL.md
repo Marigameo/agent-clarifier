@@ -118,6 +118,7 @@ Before building, I reviewed the board and pushed back on two things.
   - **`ambiguity-resolver`** sounds like an NLP library that resolves ambiguity *for* you. Here the user resolves it.
   - **`clarifying-questions`** was Claude's first vote. My pushback: it's a component, and "clarifying questions" sounds like an action. A component should be a noun, like `<dialog>` or `date-picker`.
 - **Decision: `agent-clarifier`.** It's a noun, so it reads as a thing. It names both the job (clarifying) and the context (agents asking before acting), and `<agent-clarifier placement="dock">` reads naturally. Events and CSS variables keep the short `clarify:` / `--clarify-*` prefix.
+- **Published as `@marigameo/agent-clarifier`.** The scope ties it to me and can't clash with anyone else's package. The tag stays `<agent-clarifier>`.
 
 ---
 

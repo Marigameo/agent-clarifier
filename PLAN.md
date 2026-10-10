@@ -247,8 +247,8 @@ This is the part you called out. Each kind of mistake gets its own fix:
 **Promise helper**: the friendliest way in for agent code:
 
 ```ts
-import { ask } from 'agent-clarifier';
-import { fromClaude, toClaude } from 'agent-clarifier/adapters/claude';
+import { ask } from '@marigameo/agent-clarifier';
+import { fromClaude, toClaude } from '@marigameo/agent-clarifier/adapters/claude';
 
 canUseTool: async (name, input) => {
   if (name !== 'AskUserQuestion') return { behavior: 'allow', updatedInput: input };
@@ -339,7 +339,7 @@ agent-clarifier/
 
 ## 11. Open decisions (yours)
 
-1. ~~Name~~: **decided: `agent-clarifier`**. Still open: publish unscoped or as `@marigameo/agent-clarifier`?
+1. ~~Name~~: **decided: `agent-clarifier`, published as `@marigameo/agent-clarifier`** (with `publishConfig.access: "public"`, since scoped packages are private by default).
 2. **Review step default:** `auto` (only when something was skipped or there are 3+ questions), or always?
 3. **Undo window after submit:** off by default (fast) or 4s by default (safe)?
 4. **Previews:** in v1 or later? They add layout work.

@@ -24,7 +24,7 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
 
 ## Decided so far (details in JOURNAL.md)
 
-- **Name:** `agent-clarifier`. Events are `clarify:*` and CSS variables are `--clarify-*`.
+- **Name:** `agent-clarifier`, published on npm as **`@marigameo/agent-clarifier`**. `package.json` needs `"publishConfig": { "access": "public" }`. The element is `<agent-clarifier>`. Events are `clarify:*` and CSS variables are `--clarify-*`.
 - **Format:** one native format plus optional converters, `fromClaude`/`toClaude` and `fromElicitation`/`toElicitation`.
 - **Flows:** `sequential` (one at a time) and `all` (all at once). **Inputs:** single, multi, text, plus the "Something else" row. **Placements:** `replace` (takes the composer's place) and `dock` (pinned above the composer).
 - **Recovery:**
@@ -41,7 +41,6 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
 
 ## Open decisions (PLAN.md §11)
 
-- **npm:** unscoped `agent-clarifier`, or `@marigameo/agent-clarifier`?
 - **Review step:** shown automatically, or always?
 - **Undo window after submit:** off or on by default?
 - **Previews on options:** in v1 or later?
