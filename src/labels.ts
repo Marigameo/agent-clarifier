@@ -17,7 +17,6 @@ export interface Labels {
   skip: Label;
   skipAll: Label;
   continue: Label;
-  keepAndNext: Label;
   review: Label;
   send: Label;
   sendAnswers: Label;
@@ -46,7 +45,6 @@ export interface Labels {
   checkAnswers: Label;
   formTitle: Label;
   required: Label;
-  yourPick: Label;
   sendingIn: Label;
   writing: Label;
   sending: Label;
@@ -93,7 +91,6 @@ export const DEFAULT_LABELS: Labels = {
   skip: 'Skip',
   skipAll: 'Skip all',
   continue: 'Continue',
-  keepAndNext: 'Keep & next',
   review: 'Review',
   send: 'Send',
   sendAnswers: 'Send answers',
@@ -122,7 +119,6 @@ export const DEFAULT_LABELS: Labels = {
   checkAnswers: 'Check your answers',
   formTitle: 'A few questions', // working copy, still to settle
   required: 'Required',
-  yourPick: 'Your pick',
   sendingIn: 'Sending in {s}s',
   writing: 'Writing questions…',
   sending: 'Sending…',
