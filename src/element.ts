@@ -15,6 +15,8 @@ import { pillView, recordView, loadingView } from './view/endings';
 import { formView } from './view/form';
 import { reviewView } from './view/review';
 import { stepView } from './view/step';
+import { usingPointer } from './view/modality';
+import { enter, type Move } from './view/motion';
 import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport';
 import { h, rove } from './view/dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './view/types';
@@ -60,13 +62,9 @@ export class AgentClarifier extends Base {
   #composerRef: string | Element | null = null;
   #composerContainerRef: string | Element | null = null;
   #viewName: ViewName = 'none';
+  #shownStep = 0;
   /** Move focus into the card at the next view that can take it (replace mode open, reopen). */
   #wantFocus = false;
-  /**
-   * How the user is interacting. Focus still moves for pointer users (so the keyboard can take
-   * over at any moment), but its ring only shows for keyboard users: after a click it's noise.
-   */
-  #pointer = false;
   /** Polite live region (BUILD §5.4). Lives outside the views, so it survives view swaps. */
   #live: HTMLElement;
 
@@ -82,11 +80,15 @@ export class AgentClarifier extends Base {
     this.#root.addEventListener('input', (e) => this.#onInput(e));
     this.#root.addEventListener('focusin', (e) => this.#onFocusIn(e));
     this.#root.addEventListener('keydown', (e) => this.#onKeyDown(e as KeyboardEvent));
-    this.#root.addEventListener('pointerdown', () => this.#modality(true), true);
-    this.#root.addEventListener('keydown', () => this.#modality(false), true);
+    // Focus still moves for pointer users (so the keyboard can take over at any moment), but its
+    // ring only shows for keyboard users: after a click it's noise. (The page-level tracker has
+    // already updated by the time these run, since it listens at the document in capture phase.)
+    this.#root.addEventListener('pointerdown', () => this.#modality(), true);
+    this.#root.addEventListener('keydown', () => this.#modality(), true);
   }
 
   connectedCallback(): void {
+    usingPointer(); // start tracking how the user interacts, before the first card opens
     watchViewport();
     this.#connectComposer();
     this.#render(true);
@@ -251,9 +253,13 @@ export class AgentClarifier extends Base {
     const swap = force || key !== this.#viewKey;
     // Was focus inside the card? Then it must follow into the new view, never fall to <body>.
     const hadFocus = !!this.#root.activeElement && this.#root.activeElement !== this.#live;
+    const fromName = this.#viewName;
+    const fromStep = this.#shownStep;
+    const fromHeight = swap ? (this.#view?.el.getBoundingClientRect().height ?? 0) : 0;
     if (swap) {
       this.#viewKey = key;
       this.#viewName = name;
+      this.#shownStep = s.step;
       this.#view = this.#build(name, ctx);
       this.#root.replaceChildren(...(this.#view ? [this.#view.el] : []), this.#live);
       this.#resize.disconnect();
@@ -266,11 +272,21 @@ export class AgentClarifier extends Base {
     this.#view?.update(ctx);
     if (this.#view) {
       this.#view.el.inert = this.disabled;
-      this.#view.el.toggleAttribute('data-pointer', this.#pointer);
+      this.#view.el.toggleAttribute('data-pointer', usingPointer());
     }
     this.#edges();
     this.#syncComposer(ctx);
+    if (swap && this.#view && !force) enter(this.#view.el, fromHeight, this.#move(fromName, fromStep, name), getComputedStyle(this).direction === 'rtl');
     if (swap && (hadFocus || this.#wantFocus)) this.#focusView(hadFocus);
+  }
+
+  /** Which way the content moves: forward through the steps, back, or just a swap. */
+  #move(from: ViewName, fromStep: number, to: ViewName): Move {
+    if (from === 'none') return 'open';
+    if (from === 'step' && to === 'step') return this.#s.step < fromStep ? 'back' : 'forward';
+    if (from === 'step' && to === 'review') return 'forward';
+    if (from === 'review' && to === 'step') return 'back';
+    return 'swap';
   }
 
   /**
@@ -304,10 +320,8 @@ export class AgentClarifier extends Base {
     });
   }
 
-  #modality(pointer: boolean): void {
-    if (this.#pointer === pointer) return;
-    this.#pointer = pointer;
-    this.#view?.el.toggleAttribute('data-pointer', pointer);
+  #modality(): void {
+    this.#view?.el.toggleAttribute('data-pointer', usingPointer());
   }
 
   #announce(message: string): void {

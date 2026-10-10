@@ -143,6 +143,15 @@ describe('sequential · mouse only', () => {
     await onStep(m, 'Which area?');
   });
 
+  it('a step change animates the height and slides the new question in', async () => {
+    const m = mount(HOTEL);
+    await userEvent.click(row(m, 'covent'));
+    await onStep(m, 'Budget per night?');
+    const card = m.root.querySelector<HTMLElement>('.card')!;
+    const running = [...card.getAnimations(), ...card.querySelector<HTMLElement>('.scroll')!.getAnimations()];
+    expect(running).toHaveLength(2);
+  });
+
   it('Back returns with the earlier pick still selected', async () => {
     const m = mount(HOTEL);
     await userEvent.click(row(m, 'covent'));
