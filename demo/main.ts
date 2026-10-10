@@ -1,6 +1,6 @@
 // Playground wiring: URL state → controls → the real element. Dev-only, never shipped.
 import '../src/index';
-import type { AgentClarifier } from '../src/index';
+import type { AgentClarifier, Questionnaire } from '../src/index';
 import { SCENARIOS } from './scenarios';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -110,7 +110,30 @@ function start(): void {
   $('result').textContent = '—';
   el.reset();
   toComposer();
-  el.open(s.q);
+  clearInterval(streaming);
+  if (s.stream) stream(s.q);
+  else el.open(s.q);
+}
+
+// Streaming: each frame adds one more piece (a prompt, then its options one by one).
+let streaming = 0;
+function stream(full: Questionnaire): void {
+  const frames: Questionnaire[] = [];
+  full.questions.forEach((q, i) => {
+    const before = full.questions.slice(0, i);
+    for (let n = 0; n <= (q.options?.length ?? 0); n++) {
+      frames.push({ ...full, questions: [...before, { ...q, options: q.options?.slice(0, n) }] });
+    }
+  });
+  el.open({ ...full, questions: [] }, { partial: true });
+  let k = 0;
+  streaming = window.setInterval(() => {
+    if (k < frames.length) el.open(frames[k++]!, { partial: true });
+    else {
+      clearInterval(streaming);
+      el.open(full);
+    }
+  }, 300);
 }
 
 // ── where the element lives ─────────────────────────────────────────────────

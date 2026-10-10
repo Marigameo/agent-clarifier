@@ -2,7 +2,8 @@
 // Placeholders: M3 gives them their real design (record kinds, picks tag, replace/dock behaviour).
 
 import { buildAnswer, draftOf, progress } from '../model/selectors';
-import { h, icon } from './dom';
+import { header } from './chrome';
+import { h, icon, text } from './dom';
 import type { Ctx, View } from './types';
 
 export function pillView(ctx: Ctx): View {
@@ -54,8 +55,56 @@ export function recordView(ctx: Ctx): View {
   return { el, update: () => {} };
 }
 
-export function loadingView(ctx: Ctx): View {
-  // Placeholder until step 2 (skeleton rows that fill in as questions stream).
-  const el = h('div', { class: 'card', part: 'card', 'aria-busy': 'true' }, h('div', { class: 'head' }, h('span', { class: 'title' }, ctx.t('writing'))));
-  return { el, update: () => {} };
+// Classes rather than inline styles, so a strict Content-Security-Policy can't block them.
+const bar = (w: 'l' | 'm' | 's'): HTMLElement => h('span', { class: `sk sk-${w}` });
+
+/**
+ * Loading (board E1): shows what has arrived so far: the first question and its options, with
+ * skeleton rows for what's still coming. Nothing can be picked until the questions are complete,
+ * so a click never lands on a row that's about to shift.
+ */
+export function loadingView(init: Ctx): View {
+  const head = header(init, '', undefined, { step: true });
+  const title = head.el.querySelector('.title')!;
+  // The source can arrive mid-stream, so this line is updated, not built once.
+  const source = h('div', { class: 'source', hidden: true });
+  const list = h('div', { class: 'list', 'aria-hidden': 'true' });
+  const foot = h('div', { class: 'foot', part: 'footer' }, h('span', { class: 'foot-l' }, h('span', { class: 'spin', 'aria-hidden': 'true' }), init.t('writing')));
+  const el = h(
+    'div',
+    { class: 'card loading', part: 'card', role: 'group', 'aria-labelledby': 'title', 'aria-busy': 'true' },
+    h('div', { class: 'scroll' }, h('div', { class: 'top' }, source, head.el), list),
+    foot,
+  );
+
+  function update(ctx: Ctx): void {
+    const q = ctx.s.q?.questions[0];
+    const from = ctx.s.q?.source;
+    source.hidden = !from;
+    text(source, from ? ctx.t('askedBy', { source: from }) : '');
+    title.replaceChildren(q ? q.prompt : bar('l'));
+    text(head.step!, ctx.t('stepOfMore', { n: 1 }));
+    // Draw arrived options in full (badge, description), so nothing jumps when streaming ends.
+    const rows = (q?.options ?? []).map((o, i) =>
+      h(
+        'div',
+        { class: 'opt' },
+        h('span', { class: 'key' }, String(i + 1)),
+        h(
+          'span',
+          { class: 'body' },
+          h('span', { class: 'label' }, o.label, o.recommended ? h('span', { class: 'badge' }, ctx.t('recommended')) : null),
+          o.description ? h('span', { class: 'desc' }, o.description) : null,
+        ),
+      ),
+    );
+    // Two placeholder rows for what's still coming.
+    for (const w of ['m', 's'] as const) {
+      const n = rows.length + 1;
+      rows.push(h('div', { class: 'opt' }, h('span', { class: 'key' }, String(n)), h('span', { class: 'body' }, bar(w))));
+    }
+    list.replaceChildren(...rows);
+  }
+
+  return { el, update };
 }

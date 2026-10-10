@@ -37,10 +37,13 @@ export interface Labels {
   // Counts and hints
   upTo: Label;
   stepOf: Label;
+  stepOfMore: Label;
   answeredOf: Label;
   pickedOf: Label;
   pickOne: Label;
   checkAnswers: Label;
+  formTitle: Label;
+  required: Label;
   yourPick: Label;
   sendingIn: Label;
   writing: Label;
@@ -108,10 +111,13 @@ export const DEFAULT_LABELS: Labels = {
   // Counts and hints
   upTo: 'Up to {max}',
   stepOf: '{n} of {total}',
+  stepOfMore: '{n} of …',
   answeredOf: '{n} of {total} answered',
   pickedOf: '{n} of {total} picked',
   pickOne: 'Pick one to continue',
   checkAnswers: 'Check your answers',
+  formTitle: 'A few questions', // working copy, still to settle
+  required: 'Required',
   yourPick: 'Your pick',
   sendingIn: 'Sending in {s}s',
   writing: 'Writing questions…',

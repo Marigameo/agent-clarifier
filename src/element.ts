@@ -12,6 +12,7 @@ import { buildResult, canContinue, draftOf } from './model/selectors';
 import type { Action, Env, Flow, Questionnaire, ReviewMode, State, Status } from './model/types';
 import { sheet } from './styles';
 import { pillView, recordView, loadingView } from './view/endings';
+import { formView } from './view/form';
 import { reviewView } from './view/review';
 import { stepView } from './view/step';
 import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport';
@@ -175,7 +176,8 @@ export class AgentClarifier extends Base {
   open(q: Questionnaire, opts: { partial?: boolean } = {}): void {
     const partial = !!opts.partial;
     const r = normalize(q);
-    for (const w of r.warnings) console.warn(formatWarning(w));
+    // While streaming, half-written questions are expected, so only warn about the final version.
+    if (!partial) for (const w of r.warnings) console.warn(formatWarning(w));
     const streaming = this.#s.status === 'loading' || (this.#s.status === 'minimised' && this.#s.resumeTo === 'loading');
     const type = streaming ? 'STREAM' : 'OPEN';
     if (!r.ok) {
@@ -308,7 +310,7 @@ export class AgentClarifier extends Base {
       case 'review': return reviewView(ctx);
       case 'pill': return pillView(ctx);
       case 'record': return recordView(ctx);
-      case 'form': return stepView(ctx); // the all-at-once form arrives in M2 step 2
+      case 'form': return formView(ctx);
     }
   }
 
@@ -374,6 +376,12 @@ export class AgentClarifier extends Base {
     return this.#s.q?.questions[this.#s.step];
   }
 
+  /** The question an event belongs to: its block in the all flow, else the current step. */
+  #questionOf(el: Element) {
+    const id = el.closest<HTMLElement>('[data-q]')?.dataset.q;
+    return id ? this.#s.q?.questions.find((q) => q.id === id) : this.#current();
+  }
+
   /** Sequential: after a single pick or "Decide for me", confirm briefly, then move on. */
   #moveOnSoon(): void {
     if (this.#s.q?.flow !== 'sequential') return;
@@ -387,13 +395,13 @@ export class AgentClarifier extends Base {
     if (act && !(act as HTMLButtonElement).disabled) return this.#onAct(act.dataset.act!, act.dataset.q);
 
     const row = target.closest<HTMLElement>('[data-opt]');
-    const q = this.#current();
+    const q = row ? this.#questionOf(row) : undefined;
     if (!row || !q || row.getAttribute('aria-disabled') === 'true') return;
     const id = row.dataset.opt!;
 
     if (id === OTHER) {
       this.#dispatch({ type: 'OTHER_FOCUS', questionId: q.id });
-      row.querySelector('input')?.focus();
+      (row.querySelector('input') ?? row.closest('[data-q]')?.querySelector<HTMLInputElement>('input[data-input]'))?.focus();
     } else if (id === DELEGATE) {
       this.#dispatch({ type: 'DELEGATE', questionId: q.id });
       if (draftOf(this.#s, q.id).delegated) this.#moveOnSoon();
@@ -417,6 +425,7 @@ export class AgentClarifier extends Base {
       case 'skip': return q ? this.#dispatch({ type: 'SKIP', questionId: q.id }) : undefined;
       case 'next': return this.#dispatch({ type: 'NEXT' });
       case 'send': return this.#dispatch({ type: 'SUBMIT' });
+      case 'skip-all': return this.#dispatch({ type: 'SKIP_ALL' });
       case 'retry': return this.#dispatch({ type: 'RETRY' });
       case 'start-over': return this.#dispatch({ type: 'START_OVER' });
       case 'revise': return this.#dispatch({ type: 'REVISE' });
@@ -426,7 +435,7 @@ export class AgentClarifier extends Base {
 
   #onInput(e: Event): void {
     const el = e.target as HTMLInputElement | HTMLTextAreaElement;
-    const q = this.#current();
+    const q = this.#questionOf(el);
     if (!q) return;
     if (el.dataset.input === OTHER) this.#dispatch({ type: 'OTHER_INPUT', questionId: q.id, text: el.value });
     if (el.dataset.input === 'text') this.#dispatch({ type: 'TEXT_INPUT', questionId: q.id, text: el.value });
@@ -434,14 +443,15 @@ export class AgentClarifier extends Base {
 
   #onFocusIn(e: Event): void {
     const el = e.target as HTMLElement;
-    const q = this.#current();
+    const q = this.#questionOf(el);
     if (q && el.dataset.input === 'text') this.#dispatch({ type: 'TEXT_FOCUS', questionId: q.id });
   }
 
   #onKeyDown(e: KeyboardEvent): void {
     const el = e.target as HTMLElement;
     if (e.isComposing || !el.dataset.input) return; // full keyboard support arrives in M2 step 3
-    const q = this.#current();
+    const q = this.#questionOf(el);
+    if (this.#s.q?.flow !== 'sequential') return;
     if (e.key === 'Enter' && !e.shiftKey && q && canContinue(q, draftOf(this.#s, q.id))) {
       e.preventDefault();
       this.#dispatch({ type: 'NEXT' });

@@ -13,6 +13,8 @@ export interface Scenario {
   lang?: string;
   /** Not built yet: shown greyed out in the list. */
   soon?: string;
+  /** Feed the questionnaire in piece by piece, as a model writes it. */
+  stream?: boolean;
 }
 
 const HOTEL: Questionnaire = {
@@ -256,16 +258,15 @@ export const SCENARIOS: Scenario[] = [
     note: 'Every question in one card, answered in any order.',
     user: 'I’m planning a trip to London, can you give me some hotel recommendations?',
     agent: 'A few quick questions, in any order.',
-    q: { ...HOTEL, id: 'hotel-all', flow: 'all' },
-    soon: 'M2 step 2',
+    q: { ...HOTEL, id: 'hotel-all', flow: 'all', title: 'A few quick questions before I search' },
   },
   {
     id: 'stream',
     name: 'Streaming in',
-    note: 'Questions arrive one by one while the agent writes them.',
+    note: 'The questionnaire arrives piece by piece (as a model writes it). What has arrived shows; nothing is pickable until it’s complete.',
     user: 'Plan my team offsite.',
     agent: 'Let me ask a few things.',
     q: HOTEL,
-    soon: 'M2 step 2',
+    stream: true,
   },
 ];
