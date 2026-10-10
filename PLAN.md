@@ -2,12 +2,16 @@
 
 > A plug-and-play web component that lets a chat agent ask clarifying questions before it acts.
 > Framework-agnostic, zero dependencies, neutral by default, restyled with CSS variables.
-> Status: **scope locked and every decision made (round 4). The build steps are in [BUILD.md](BUILD.md).**
+> Status: **scope locked (round 4), coverage gaps closed (round 5). The build steps are in [BUILD.md](BUILD.md), and the reason behind every token is in [DESIGN.md](DESIGN.md).**
 > Name: `agent-clarifier` (package and repo) / `<agent-clarifier>` (element). Events stay `clarify:*` and CSS variables stay `--clarify-*`, to keep code short.
 
 ---
 
-## 1. Goals and non-goals
+## 1. Who it's for, goals and non-goals
+
+**Two users, served at once**
+- **The developer** building an agentic chat in any business area. They want one tag that works with no setup and no dependencies, looks neutral, and can be themed to their brand.
+- **The person answering**, who often writes a vague prompt. They want to reach a good response quickly: few choices, one question at a time, a sensible pick already suggested, and always a way out (skip, let the agent decide, or say it in their own words).
 
 **Goals**
 - One element that works in plain HTML, Astro, React, Vue, Svelte and Angular.
@@ -17,8 +21,11 @@
 - Two placements: **replace** (takes over the composer) and **dock** (pinned above the composer, so it never scrolls away with messages).
 - Leaves a **record** in the conversation once answered.
 - **Your own words, always one step away**: minimise and type, or pick a **compose** option that starts a sentence in the composer for answers the user should write themselves.
+- **Decide for me**, opt-in per question: the user hands the choice back to the agent, which then says what it chose (§4c).
 - Keyboard-complete, screen-reader friendly, touch friendly, reduced-motion safe.
-- Neutral look. Every colour, radius, space and font is a CSS variable.
+- **Works in any language and direction:** right-to-left layouts, plurals and local number formats from the start (§8).
+- **Holds up with real content:** long questions, long options, many questions and small phone screens with the keyboard open (§8).
+- Neutral look. Every colour, radius, space and font is a CSS variable, and **every default has a written reason** ([DESIGN.md](DESIGN.md)).
 
 **Non-goals (v1)**
 - **Branching** (show Q3 only if Q1 = X, with conditions declared up front and checked by the component). Considered in round 4 and deferred: the aim is a top-notch core, not more features.
@@ -62,6 +69,7 @@ interface Questionnaire {
   title?: string;                   // "A few questions before I search"
   flow?: 'sequential' | 'all';      // default 'sequential'
   source?: string;                  // "Claude", "Hotel search (MCP)": who is asking
+  delegate?: boolean;               // default for every question's `delegate` (see §4c)
   questions: Question[];
 }
 
@@ -73,6 +81,7 @@ interface Question {
   options?: Option[];               // single and multi: 2 to 9 (number keys)
   other?: boolean | { label?: string; placeholder?: string }; // default true for single/multi
   required?: boolean;               // default false, so it can be skipped
+  delegate?: boolean;               // default false: show "Decide for me" in place of Skip (§4c)
   min?: number; max?: number;       // multi only
   default?: string | string[];      // option id(s) or text
   description?: string;             // a helper line under the prompt
@@ -100,8 +109,8 @@ interface ClarifyResult {
 }
 
 interface Answer {
-  status: 'answered' | 'skipped';
-  values: string[];                // option ids, [] if skipped
+  status: 'answered' | 'skipped' | 'delegated';   // delegated = "Decide for me"
+  values: string[];                // option ids, [] if skipped or delegated
   labels: string[];                // human-readable, ready to put in a prompt
   other?: string;                  // free text, if used
 }
@@ -120,6 +129,7 @@ interface Answer {
 | `density` | `comfortable` · `compact` | Compact is for docked cards on small screens. |
 | Question `type` | `single` · `multi` · `text` | Plus the "Something else" row on single and multi |
 | Option extras | description · recommended · disabled · compose | Previews are deferred to v1.1 |
+| Question extras | required · delegate · min/max · default | `delegate` adds "Decide for me" in place of Skip (§4c) |
 
 **Auto-advance rules (sequential)**
 - **Single**: a click or Enter selects it, the row confirms for about 120ms, then the card moves on. A number key does the same.
@@ -154,6 +164,22 @@ There's **one way to answer** (the card, with review for edits) and **one way ou
 
 ---
 
+## 4c. Decide for me (round 5)
+
+**Why it's separate from Skip:** both let the agent carry on without an answer, but they mean different things. Skip reads as *"this doesn't matter to me"*, and the agent should say what it **assumed**. Decide for me reads as *"I trust you to pick"*, and the agent should say what it **chose**. Separate statuses let the agent's reply match what the user meant.
+
+**Rules**
+- **Opt-in per question** with `delegate: true`. Set `delegate` on the questionnaire to make it the default for every question.
+- **One way out per question:** on a question with `delegate`, the "Decide for me" row **replaces Skip**. The user never sees both.
+- **It's an answer, so it sits with the answers:** a quiet last row (after "Something else"), drawn like "Something else", with an icon instead of a number key. In the all-at-once flow it's the last chip.
+- **It's exclusive:** picking it clears any picks or typed text on that question, and picking an option clears it. Each change is one undo step, like any other pick.
+- **Sequential:** it moves on after the same 120ms confirm as a single pick, including on multi-select questions, because it's a complete answer on its own.
+- **Required questions can't be delegated.** `required: true` wins and `delegate` is ignored with a warning. If the agent needs the user's answer, it shouldn't offer to decide.
+- **Review and record** show it as an answer, not as a gap. The working copy is "Left to the agent" (wording still to settle). It isn't flagged the way skipped answers are, and it doesn't trigger the review step on its own.
+- **What the agent gets:** `status: 'delegated'` with empty `values`. `toClaude()` sends a short instruction as that question's answer: "Up to you. Pick what fits and say what you chose." The app can override it.
+
+---
+
 ## 5. States
 
 ### Card-level (an explicit state machine)
@@ -185,7 +211,7 @@ hidden ──open()──▶ loading ──questions ready──▶ answering �
 | `disabled` | Dimmed, not focusable | Controlled by the app |
 
 ### Question-level
-`unanswered` · `answered` · `skipped` · `invalid` (required and empty, or below `min`) · `typing-other`
+`unanswered` · `answered` · `skipped` · `delegated` · `invalid` (required and empty, or below `min`) · `typing-other`
 
 ### Option-level
 `default` · `hover` · `focus-visible` · `selected` · `recommended` · `disabled`
@@ -199,6 +225,7 @@ This is the part you called out. Each kind of mistake gets its own fix:
 | Mistake | Recovery |
 |---|---|
 | Picked the wrong option in sequential (it auto-advanced) | **Back** (← key or the Back button) returns with the old choice still selected. The step counter is clickable. |
+| Picked "Decide for me", then wanted to choose | **Back** returns to the question with "Decide for me" still marked. Picking an option replaces it, and **Undo** restores it. |
 | Skipped one by accident | The skip toast says "Skipped Budget · **Undo**". Review flags skipped questions. |
 | Answered several, want to start over | **Start over** in review. One level of **undo** after it ("Answers cleared · Undo"). |
 | Hit Esc or minimise by accident | Nothing is lost. The card **minimises** to a pill and the draft is kept. Reopen restores the exact step. |
@@ -283,6 +310,23 @@ canUseTool: async (name, input) => {
 - The card height animates between steps, so it doesn't jump (a lesson from the mode-picker audit).
 - Collapsing into the record: 200ms.
 
+**Language and direction** (round 5: built in from the first line of CSS, not checked at the end)
+- **Right-to-left:** the CSS only uses logical properties (`margin-inline-start`, `inset-inline-end`, …), so the layout flips when the page's `dir` is `rtl`. Directional things mirror too: the back and forward icons, the step slide, and the arrow key that means "back".
+- **Plurals:** strings can have plural forms ("Up to 1 choice" / "Up to 3 choices"), chosen with the browser's built-in `Intl.PluralRules` for the page's `lang`.
+- **Numbers:** counts like "2 of 4" use the page's number format (`Intl.NumberFormat`). Number-key badges stay 1–9, because they name physical keys.
+
+**Long content** (round 5)
+- **Never cut off what the user needs to decide.** Question text, option labels and descriptions wrap. Long words and URLs break rather than widen the card.
+- **Only summaries are shortened:** answer chips in the record and the pill text. The full text stays in the accessible name and on hover.
+- **The card has a maximum height** (60% of the visible screen, set by `--clarify-max-height`). The header and footer stay in place and the questions scroll between them. A soft edge shadow appears **only while content is scrolled under it**, so the shadow always means "there's more here".
+- **Text fields grow** up to about 5 lines, then scroll.
+
+**Phone** (round 5)
+- **The on-screen keyboard:** the card measures the *visible* screen (`visualViewport`), not the page. So with the keyboard open, the card shrinks and scrolls inside, and the composer stays in view.
+- **No surprise keyboard:** on touch screens, opening the card never focuses a text field, because that would pop the keyboard up over the question. Focus goes to an option, or to the card itself.
+- **Bottom safe area** (the iPhone home bar): this is the app's layout to handle, because the card sits inside the app's own bottom area. The component doesn't add its own inset, which would double it. The README shows where `env(safe-area-inset-bottom)` goes.
+- Touch targets are **44px+ even where the visual is smaller** (chips, footer buttons, icon buttons): the hit area grows on `(pointer: coarse)` and the drawing stays the same.
+
 **Size and dependencies**
 - Zero runtime dependencies, written in vanilla TypeScript.
 - Target **≤ 12 KB gzipped** for the core. Each adapter is about 1 KB.
@@ -301,6 +345,7 @@ A short "when to ask" snippet you can paste into a system prompt:
 - Use at most 4 questions and 2 to 6 options each. Put a recommended option first.
 - Never ask for anything you could read from the context.
 - After a skip, **state what you assumed**.
+- Turn on `delegate` where any sensible pick would do. When the user picks "Decide for me", **state what you chose**.
 
 ---
 
@@ -317,6 +362,7 @@ agent-clarifier/
     adapters/mcp.ts
   demo/                  # playground: every variant and state, theme switcher
   design/board.html      # the visual board under review now
+  DESIGN.md              # the reason behind every token, motion value and layout rule
   tests/
   README.md
 ```
@@ -331,7 +377,7 @@ agent-clarifier/
 | M3 | Placements (replace, dock) + record + minimised pill | Demo works in a fake chat shell |
 | M4 | Recovery: back, review, reset, undo, the undo window, revise, error | Every row in §6 can be demoed |
 | M4b | Own words: minimise + send, compose options, composer auto-wire + manual | Both routes round-trip, with existing text kept |
-| M5 | Keyboard + a11y + motion audit | axe is clean, with a keyboard-only and VoiceOver pass |
+| M5 | Keyboard + a11y + motion audit, RTL, long content, phone keyboard | axe is clean, with a keyboard-only and VoiceOver pass. RTL and long-content scenarios look right |
 | M6 | Theming tokens + parts + Claude/MCP adapters | Two themes in the demo, plus an adapter round-trip test |
 | M7 | README, playground deploy, npm publish, git push | Used in the portfolio story |
 
@@ -348,3 +394,10 @@ agent-clarifier/
 | 5 | Licence | **MIT** |
 | 6 | Own-words copy | Placeholder **"Or reply in your own words…"**, and compose hint **"write it ↗"** |
 | 7 | Branching | **Out of v1.** Scope stays as designed |
+| 8 | Decide for me (round 5) | **In, opt-in per question** (`delegate`). It replaces Skip on that question, and the answer comes back as `delegated` (§4c) |
+| 9 | Long content (round 5) | Wrap what the user decides on; only shorten summaries; a max-height card with pinned header and footer. **To be stress-tested visually later** |
+| 10 | Phone (round 5) | The visible screen sets the size; no surprise keyboard; 44px hit areas; the safe area is the app's |
+| 11 | Language and direction (round 5) | RTL from the start (logical properties only), plurals, local number formats |
+| 12 | Yes/no (round 5) | **No new type.** A `single` question with two options keeps the same rows, keys and habits |
+| 13 | Streaming (round 5) | **As planned:** questions appear as they arrive and can be answered once they've all arrived |
+| 14 | Design rationale (round 5) | Every default token gets a written reason in [DESIGN.md](DESIGN.md). Values without a good reason are flagged for the next visual round |

@@ -18,6 +18,8 @@ process/
   01-board-v1/         first plan + board, renders before and after the review fixes
   02-draft-mode/       plan + board with draft mode added
   03-own-words/        draft mode simplified, "Reply in your own words" removed
+  04-build-plan/       scope lock + BUILD.md as first delivered for review
+  05-coverage/         who it's for, decide for me, long content / phone / RTL rules, DESIGN.md
 ```
 
 ---
@@ -150,7 +152,77 @@ Before building, I reviewed the board and pushed back on two things.
 - risks
 - a list of "calls made" for me to check
 
-**Status:** waiting for my review of BUILD.md. Once agreed, it's frozen into `process/04-build-plan/` and M1 starts.
+**Status:** waiting for my review of BUILD.md. Snapshot: `process/04-build-plan/` (PLAN.md and BUILD.md as delivered for review. The board hadn't changed since round 3 apart from its name, so there are no new renders).
+
+---
+
+## Round 5 · Who it's for, a coverage check, and "everything has a meaning" (10 Oct 2026)
+
+**Brief I gave:** before building, I restated what I want, so we're working from my words and not only from the plan.
+- **Who it's for:** someone building an agentic, generative-UI chat in any business area. Their users write vague prompts, so the system asks clarifying questions to gather context and guide them toward what they meant.
+- **For the person answering:** quick and easy. No overload, one question at a time.
+- **Not too specific.** It must cover: yes/no or one of two; multi-select; single-select; questions in order; questions in any order; skip, or answer in your own words; **decide for me**; required vs optional; selection limits; loading and streaming; i18n and RTL; mobile; long content.
+- **Not a Claude copy.** It should be better, with clear reasons to choose it. Interactions and details like shadows matter: **everything we put in should have a meaning.**
+
+**What Claude found** checking my list against PLAN and BUILD:
+- **Already covered:** 1–6, 8, 9 and 10.
+- **Partly covered:** i18n/RTL (only a "sanity check" at M5) and mobile (no plan for the on-screen keyboard).
+- **Missing:** "decide for me" and long content.
+- **Also flagged:** the "meaning" standard wasn't written down anywhere, and the board breaks it in places. The card has the same shadow in replace mode, where nothing sits beneath it; the dock shadow is hard-coded; and the CSS uses left/right throughout.
+
+**My calls** (Claude gave options, with a recommendation for each):
+- **Decide for me: option B,** opt-in per question (`delegate`). The other options were renaming Skip (A), or showing both Skip and Decide for me (C).
+  - It **replaces** Skip on that question, so there's still one way out.
+  - It comes back as `delegated`, separate from `skipped`.
+  - **Why:** "skip" means *say what you assumed*, and "decide for me" means *say what you chose*. Showing both would be the overload I want to avoid.
+- **Long content:** Claude's rules (below). **We'll revisit this and stress-test it visually later.**
+  - wrap everything the user decides on
+  - only shorten summaries
+  - a card with a maximum height, its header and footer pinned, and a shadow only when content is scrolled under an edge
+  - text fields that grow
+- **Phone:** the visible screen sets the card's size, opening the card never pops up the keyboard, and hit areas are 44px.
+- **Everything else** went with Claude's recommendations:
+  - RTL from the first line of CSS, plus plurals and local number formats
+  - yes/no stays a two-option `single`
+  - streaming stays as planned
+  - a written design rationale
+
+**Details Claude worked out while writing it up** (logged in BUILD §13, items 9–14, for me to check):
+- Decide for me is a **row, not a footer button**, because it's an answer.
+- It **counts as answering**.
+- **Required beats delegate.**
+- On multi-select it **moves on by itself**, since it's a complete answer.
+- The card's maximum height is **60% of the visible screen**.
+- **A correction:** in chat, Claude said the component would handle the iPhone home-bar area in dock mode. Looking closer, the card sits inside the app's own bottom area, so adding the inset would double it. The safe area stays the app's job, with a README recipe.
+
+**What came back:**
+- **`DESIGN.md` (new).** The meaning of each visual signal, then every default token with its reason, marked ✅ / ⚠️ / ❓. **Contrast was measured, not assumed.** 15 findings are waiting for the next visual round. The biggest:
+  - **The "faint" grey fails AA as text** (2.9:1 in light, 3.7:1 in dark), although the plan promised AA defaults. axe would have caught it at M5; now it's caught before any code.
+  - **The warm greys aren't neutral,** and they echo Claude's own look.
+  - **Compact density has two inline edges,** 2px apart.
+- **PLAN:**
+  - who it's for (§1)
+  - §4c Decide for me
+  - `delegate` and `delegated` in the format
+  - a recovery row for it
+  - the language and direction, long content and phone rules (§8)
+  - decisions 8–14
+- **BUILD:**
+  - the `DELEGATE` action and what clears it
+  - normalising rules
+  - ARIA for the new row
+  - converter mappings
+  - §8.1–8.3 (RTL, long content, phone), plus a test that fails if `left`/`right` appear in the CSS
+  - plural and number formatting in labels
+  - M1, M2 and M5 acceptance criteria updated
+  - new risks
+
+**Open:**
+- **Copy** for the delegated answer in review and the record (working copy: "Left to the agent").
+- **The DESIGN.md findings** (F1–F15) and the missing board frames, for the next visual round.
+- **BUILD.md** is still "for review".
+
+Snapshot: `process/05-coverage/` (PLAN.md, BUILD.md, DESIGN.md). The board hasn't changed this round; its frames come next.
 
 ---
 
@@ -160,3 +232,5 @@ Before building, I reviewed the board and pushed back on two things.
 - Good before/after pairs: the v1 first render vs after the review fixes (the checkbox and radio fix is a small, clear example).
 - Round 2 → 3 is a good "less is more" beat: draft mode got simpler when I asked what each control was for.
 - The renders in each round are ready to use as story images.
+- Round 5 is the "measure, don't assume" beat: writing a reason for every token showed that the default grey failed the contrast the plan promised. It was caught on paper, before any code.
+- Skip vs Decide for me is a good small example of meaning over features: same outcome for the agent, different intent from the user, so a different reply.

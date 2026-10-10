@@ -2,7 +2,7 @@
 
 > **How** to build what [PLAN.md](PLAN.md) specifies and [design/board.html](design/board.html) shows.
 > Written so a build session can implement it without re-deciding anything. If something here conflicts with PLAN.md, raise it with Mari before choosing.
-> Status: **for review (round 4).** Once agreed, this file is frozen into `process/04-build-plan/` and implementation starts at M1.
+> Status: **for review (round 5).** Round 5 added Decide for me, the long-content, phone and RTL rules, and [DESIGN.md](DESIGN.md). Once agreed, the status changes to "agreed", a snapshot goes into `process/`, and implementation starts at M1.
 
 ---
 
@@ -15,6 +15,8 @@
 - **States:** every state in PLAN §5.
 - **Recovery:** every row in PLAN §6.
 - **Own words:** minimise and send, plus `compose` options.
+- **Decide for me:** opt-in per question with `delegate` (PLAN §4c).
+- **Real-world layout:** long content, phone keyboard, RTL, plurals and number formats (PLAN §8).
 - **Undo window:** off by default.
 - **Converters:** Claude and MCP.
 - **The `ask()` helper.**
@@ -73,8 +75,9 @@ agent-clarifier/
       record.ts           # record variants (answered / skipped / replied / expired)
       skeleton.ts         # loading view
       motion.ts           # height animation, step slide, reduced-motion guard
+      viewport.ts         # visible-screen height (visualViewport) → --_vvh; scroll-edge shadows
     composer.ts           # find, hide/show, placeholder swap, insert, flash, submit listener
-    labels.ts             # default English strings + merge
+    labels.ts             # default English strings + merge, plural forms, number format, lang/dir lookup
     styles.ts             # constructable stylesheet: tokens, light/dark, component CSS
     ask.ts                # promise helper
     adapters/
@@ -90,7 +93,7 @@ agent-clarifier/
     scenarios.ts          # one preset per board frame id (A1, B1 … H3)
   design/board.html       # visual reference (working copy)
   process/                # frozen snapshots, never edited
-  PLAN.md  BUILD.md  JOURNAL.md  CLAUDE.md  README.md  LICENSE
+  PLAN.md  BUILD.md  DESIGN.md  JOURNAL.md  CLAUDE.md  README.md  LICENSE
 ```
 
 **Package `exports`:**
@@ -125,13 +128,15 @@ Runs on every `open()`. It **fixes what it can, warns once per issue** (`console
 | `default` points to an unknown option | Ignore it and warn |
 | A `compose` option on a multi question | Ignore `compose` and warn (compose only works on single) |
 | `other: true` together with a `compose` option on the same question | Allowed, but warn ("two free-text routes"). The board's H1 uses `other: false`. |
+| `delegate` missing | Take the questionnaire's `delegate`, else `false` |
+| `delegate: true` together with `required: true` on the same question | `required` wins: drop `delegate` and warn. A questionnaire-level `delegate` skips required questions **silently**, because that's the expected mix |
 | **No questions** | **Refuse:** fire `clarify:error` `{ reason: 'empty' }` and stay `hidden` |
 
 ### 3.2 Result rules
 
-- `answers` always has **one entry per question**: `answered` or `skipped`. An unanswered question at submit time counts as `skipped`.
-- `labels` are the visible option labels. "Something else" text appears in `other`, and in `labels` as the typed text.
-- **If every question is skipped, the result's status is `skipped`** (not `submitted`, and no review step). This is the same as "Skip all".
+- `answers` always has **one entry per question**: `answered`, `skipped` or `delegated`. An unanswered question at submit time counts as `skipped`.
+- `labels` are the visible option labels. "Something else" text appears in `other`, and in `labels` as the typed text. A `delegated` answer has empty `values` and `labels`.
+- **If every question is skipped, the result's status is `skipped`** (not `submitted`, and no review step). This is the same as "Skip all". **A delegated answer counts as an answer here**: it's a choice the user made, so a card with every question delegated is `submitted`.
 - `delivery: 'composer'` always comes with `message` (trimmed, never empty).
 
 ---
@@ -152,7 +157,7 @@ Runs on every `open()`. It **fixes what it can, warns once per issue** (`console
 type Status = 'hidden' | 'loading' | 'answering' | 'reviewing' | 'submitting'
             | 'answered' | 'error' | 'minimised' | 'expired';
 
-interface Draft { values: string[]; other: string; otherActive: boolean; skipped: boolean; text: string }
+interface Draft { values: string[]; other: string; otherActive: boolean; skipped: boolean; delegated: boolean; text: string }
 
 interface State {
   status: Status;
@@ -181,14 +186,15 @@ interface State {
 |---|---|---|---|
 | `OPEN(q, partial)` | hidden, answered, expired | Reset the state. `loading` if partial, else `answering`. Apply `default`s | cleared |
 | `STREAM(q, partial)` | loading | Replace `q`. Go to `answering` once `partial=false` | – |
-| `SELECT(qid, opt)` | answering | Single: set the value and clear `other`. Sequential: schedule `NEXT` after 120ms (the element does the timing; the reducer stays pure) | push |
-| `TOGGLE(qid, opt)` | answering | Multi: add or remove, blocked at `max` (toast "Up to N") | push |
-| `OTHER_FOCUS(qid)` / `OTHER_INPUT(qid, text)` | answering | Set `otherActive`, and the text. Typing doesn't push on every key: one push when the field is entered | push (once) |
-| `TEXT_INPUT(qid, text)` | answering | Text question value | push (once per focus) |
+| `SELECT(qid, opt)` | answering | Single: set the value and clear `other` and `delegated`. Sequential: schedule `NEXT` after 120ms (the element does the timing; the reducer stays pure) | push |
+| `TOGGLE(qid, opt)` | answering | Multi: add or remove, blocked at `max` (toast "Up to N"). Clears `delegated` | push |
+| `OTHER_FOCUS(qid)` / `OTHER_INPUT(qid, text)` | answering | Set `otherActive`, and the text. Clears `delegated`. Typing doesn't push on every key: one push when the field is entered | push (once) |
+| `TEXT_INPUT(qid, text)` | answering | Text question value. Clears `delegated` | push (once per focus) |
+| `DELEGATE(qid)` | answering, on a question with `delegate` | Set `delegated`, clear `values`, `other` and `text`, unset `skipped`. Sequential: schedule `NEXT` after 120ms, **on multi too** (it's a complete answer). Picking it again in the all flow unsets it | push |
 | `NEXT` | answering | If `returnTo='review'` → reviewing. Else step+1. After the last step → `needsReview` ? reviewing : `SUBMIT` | – |
 | `BACK` | answering, reviewing | Step−1 (or from review back to the last step). Answers are untouched | – |
 | `GOTO(step)` | answering | Only to steps that are answered or skipped (the clickable dots) | – |
-| `SKIP(qid)` | answering | Mark it skipped, clear its values, then `NEXT`. Toast: "Skipped ‘Label’ · Undo" | push |
+| `SKIP(qid)` | answering, on a question **without** `delegate` (there, "Decide for me" replaces Skip) | Mark it skipped, clear its values, then `NEXT`. Toast: "Skipped ‘Label’ · Undo" | push |
 | `SKIP_ALL` | answering (all flow) | Every question skipped → result `skipped` → record `skipped`. Fires `clarify:skip` | push |
 | `EDIT(qid)` | reviewing | Go to that step with `returnTo='review'` | – |
 | `START_OVER` | reviewing | Clear all drafts, go to step 0. Toast: "Answers cleared · Undo" | push |
@@ -207,9 +213,9 @@ interface State {
 | `TOAST_TIMEOUT` | any | Clear the toast (after 5s, or on the next action) | – |
 
 **Selectors:**
-- `needsReview(state, reviewSetting)`: `'auto'` means something was skipped OR there are 3+ questions.
-- `progress`: sequential is `{ step, total }`, all flow is `{ answered, total }`.
-- `canContinue`: multi needs `values.length ≥ min`, required needs an answer, text and other need non-empty text.
+- `needsReview(state, reviewSetting)`: `'auto'` means something was skipped OR there are 3+ questions. A delegated answer doesn't count as skipped.
+- `progress`: sequential is `{ step, total }`, all flow is `{ answered, total }`. Delegated counts as answered.
+- `canContinue`: multi needs `values.length ≥ min`, required needs an answer, text and other need non-empty text. `delegated` always satisfies it.
 - `buildResult(state, kind)`
 
 ### 4.3 Rendering (`element.ts` + `view/*`)
@@ -234,7 +240,8 @@ interface State {
 
 | Context | Keys |
 |---|---|
-| Option list (single) | `1`–`9` picks · `↑/↓` move · `Home/End` · `Enter` / `Space` picks · `←` back · `Esc` minimise · `⌘Z` / `Ctrl+Z` undo |
+| Option list (single) | `1`–`9` picks · `↑/↓` move · `Home/End` · `Enter` / `Space` picks · `←` back (`→` in RTL) · `Esc` minimise · `⌘Z` / `Ctrl+Z` undo |
+| "Decide for me" row | Reached with `↑/↓` like "Something else" (it has no number key) · `Enter` / `Space` picks |
 | Option list (multi) | `1`–`9` and `Space` toggle · `↑/↓` move · `Enter` continues (if allowed) · `←` · `Esc` · `⌘Z` |
 | "Something else" field | Typing is normal (number keys type numbers) · `Enter` confirms (single: moves on) · `Esc` leaves the field with the text kept · `↑` at the start of the field goes back to the options |
 | Text question | `Enter` continues · `Shift+Enter` adds a new line · `Esc` minimise |
@@ -244,6 +251,7 @@ interface State {
 
 **Rules:**
 - Keys are only handled when focus is inside the card.
+- **Direction-aware:** "back" is the arrow pointing against the reading direction. Read `getComputedStyle(host).direction` when the key is pressed, so a `dir` change on the page is picked up without a re-render.
 - Ignore key events while composing (`event.isComposing`), so IME input is safe.
 - `⌘Z` inside a text field is the browser's own undo, not ours.
 
@@ -252,6 +260,7 @@ interface State {
 - **On open:**
   - `replace`: focus the recommended option, else the first one.
   - `dock`: **don't steal focus.** The user may be typing in the composer. Focus moves in on the first keypress or click inside.
+  - **On touch screens (`pointer: coarse`), never auto-focus a text field**, on open or on a step change. It would pop the keyboard up over the question. If the step is a text question, focus the card container instead, and the keyboard opens when the user taps the field.
 - **On step change:** focus the new step's recommended option, or the previously selected one.
 - **On minimise:** focus the composer (in replace mode it's shown again). **On reopen:** restore the element that was focused.
 - **When the record appears:** don't move focus. Announce it instead (§5.4).
@@ -260,6 +269,7 @@ interface State {
 ### 5.3 Pointer and touch
 
 - Whole rows are clickable, at 44px minimum (`compact`: 44px, `comfortable`: 52px).
+- **Smaller controls keep a 44px hit area on touch:** chips (32px drawn), footer buttons (32px), icon buttons (28px) and the pill button get an invisible `::after` that extends the hit area to 44×44px under `(pointer: coarse)`. The drawing doesn't change, and hit areas never overlap a neighbour (the spacing is checked in the M5 audit).
 - Hover styles only apply on `(hover: hover)`, and the key-hint bar hides on `(hover: none)`.
 - Auto-advance waits 120ms so the selection is seen. A second click within that window doesn't double-advance.
 
@@ -269,6 +279,7 @@ These are exact strings and can be overridden through `labels`:
 - "Question {n} of {total}: {prompt}"
 - "Skipped {label}. Undo available."
 - "Answers cleared. Undo available."
+- "{label}: left to the agent." (wording follows the delegated-answer copy, still to settle)
 - "Up to {max} choices."
 - "Review your answers."
 - "Answers sent."
@@ -281,6 +292,10 @@ These are exact strings and can be overridden through `labels`:
 - **Single:** `role="radiogroup"` with roving `tabindex` and `role="radio"` / `aria-checked`. The number badge is `aria-hidden`.
 - **Multi:** `role="group"` with `role="checkbox"` / `aria-checked`.
 - **"Something else":** a radio or checkbox that becomes an `<input>` with `aria-label="Something else"`.
+- **"Decide for me":**
+  - On single, it's one more `radio` in the group.
+  - On multi, it's a `checkbox` that unchecks the others: the same pattern as "None of the above". Its accessible description says "Clears your other picks".
+  - On text questions, it's a toggle `button` with `aria-pressed`, under the field.
 - **Review rows:** a `<dl>`, with each Edit link labelled "Edit {label}".
 - **Required:** `aria-required`. Errors are linked with `aria-describedby`.
 - **The pill:** a `button` labelled "{n} of {total} answered. Reopen questions".
@@ -358,9 +373,11 @@ It resolves on **submit** (and calls `markAnswered()` itself), **skip**, **reply
   - `type`: `multiSelect ? 'multi' : 'single'`
   - `other`: `true`
 - Options: a label ending in **"(Recommended)"** has that suffix removed and gets `recommended: true`. `preview` is dropped.
+- Claude's format has no "decide for me", so `fromClaude(input, { delegate: true })` lets the app turn it on for every question.
 
 **`toClaude(result, input, opts?)`**
 - `answers` is keyed by the **original question text**, with values in the **original labels** (single: a string, multi: an array). "Something else" sends the typed text. Skipped questions are left out.
+- **Delegated questions** send `opts.delegateMessage ?? "Up to you. Pick what fits and say what you chose."` as their answer, so the instruction sits next to the question it belongs to.
 - `delivery: 'composer'` → `response: message`.
 - Status `skipped` → `response: opts.skipMessage ?? "The user skipped these questions. Use your best judgement and say what you assumed."`
 - `questions` is passed through unchanged.
@@ -374,7 +391,7 @@ It resolves on **submit** (and calls `markAnswered()` itself), **skip**, **reply
 - `required` carries over. `other` is `false`. The `source` is set by the caller.
 
 **`toElicitation(result)`**
-- `submitted` → `accept` with the content typed back from the schema.
+- `submitted` → `accept` with the content typed back from the schema. Delegated fields are left out of `content`, like skipped ones, because MCP has no way to say "you decide". (`fromElicitation` never turns `delegate` on.)
 - `skipped` → `decline`. `dismissed` → `cancel`.
 - `delivery: 'composer'` → `accept` with the picks if every required field is answered, else `decline`. MCP has no free-text field, so the app reads `result.message` itself.
 
@@ -399,11 +416,34 @@ The component **never** injects global styles or changes the composer's own styl
 ## 8. Styling (`styles.ts`)
 
 - A constructable stylesheet adopted by each shadow root (shared across instances).
-- **Tokens:** exactly the list on the board (§8 of board.html), plus `--clarify-duration: 160ms` and `--clarify-ease: cubic-bezier(.2,.7,.2,1)`. Light defaults sit on `:host`.
+- **Tokens:** exactly the list on the board (§8 of board.html), plus `--clarify-duration: 160ms`, `--clarify-ease: cubic-bezier(.2,.7,.2,1)` and `--clarify-max-height: 60%` (of the visible screen, §8.2). DESIGN.md may change values. Its findings are settled in the next visual round, before M2. Light defaults sit on `:host`.
 - **Dark:** `:host([theme=dark])`, plus `@media (prefers-color-scheme: dark) { :host(:not([theme=light])) { … } }`.
 - **Parts:** `card`, `header`, `title`, `step`, `option`, `option-key`, `option-label`, `option-description`, `badge`, `other`, `footer`, `button`, `button-primary`, `toast`, `banner`, `pill`, `record`, `hint`.
-- **Icons:** inline SVGs using `currentColor`. No icon slots in v1.
+- **Icons:** inline SVGs using `currentColor`. No icon slots in v1. Directional icons (back, forward, the "write it ↗" arrow) mirror under `:host(:dir(rtl))`.
 - The board's CSS is the visual reference. Class names may differ, but **every frame on the board must be reproducible** in the demo.
+- **Every default value is explained in [DESIGN.md](DESIGN.md).** A new value needs a line there before it ships.
+
+### 8.1 Direction (RTL)
+
+- **Logical properties only:** `margin-inline-start`, `padding-inline`, `inset-inline-end`, `border-start-start-radius`, `text-align: start`. **No `left`/`right`** anywhere in `styles.ts`. A unit test scans the stylesheet for physical properties and fails if it finds one, so this can't slip back in.
+- The step slide moves in the reading direction: forward slides toward the inline start.
+
+### 8.2 Long content
+
+| Content | Rule |
+|---|---|
+| Prompt, option label, description | Wrap. `overflow-wrap: anywhere` so long words and URLs break. `text-wrap: pretty` on prompts. Never clamped |
+| Record chips, review values, pill text | One line with an ellipsis. The full text goes in the accessible name and `title` |
+| "Something else" and text questions | `<textarea>` that grows with its content (`field-sizing: content` where supported, else a measured height) up to 5 lines, then scrolls |
+| The card | `max-height: var(--clarify-max-height, 60%)` **of the visible screen** (`--_vvh` from `viewport.ts`). The header and footer are fixed and the body scrolls (`overscroll-behavior: contain`) |
+| Scroll edges | A 1px hairline plus a soft shadow at the top or bottom of the body, **shown only while content is hidden past that edge** (a scroll listener sets `data-scroll-top/bottom`). No overflow, no shadow |
+| All-flow with many questions | The body scrolls. When the user tries to send with missing required answers, the first one scrolls into view (`block: 'nearest'`) and gets focus |
+
+### 8.3 Phone
+
+- `viewport.ts` listens to `visualViewport` `resize` and sets `--_vvh` on the host (throttled with `requestAnimationFrame`). With no `visualViewport`, it falls back to `100dvh`.
+- When an element inside the card gets focus, it's scrolled into view with `block: 'nearest'`, so a focused row is never hidden behind the keyboard.
+- No `env(safe-area-inset-*)` inside the component. The README recipe shows the app where to add it, and suggests `interactive-widget=resizes-content` in the viewport meta for Chrome on Android.
 
 ---
 
@@ -411,7 +451,13 @@ The component **never** injects global styles or changes the composer's own styl
 
 Every user-visible string has a key. The defaults:
 
-> Something else · Skip · Skip all · Continue · Keep & next · Review · Send · Send answers · Start over · Edit · Answer · Back · Minimise · Reopen · Undo · Try again · Recommended · write it ↗ · Up to {max} · {n} of {total} · {n} of {total} answered · {n} of {total} picked · Pick one to continue · Check your answers · Your pick · Sending in {s}s · Or reply in your own words… · You answered {n} of {total} · Edit answers · Skipped. The agent used its own judgement. · Answer now · Replied in your own words · {n} picks kept · Answer the questions · Not answered. The agent continued without these. · Couldn't send your answers · Writing questions… · plus the live-region strings in §5.4
+> Something else · Decide for me · Left to the agent *(working copy)* · Skip · Skip all · Continue · Keep & next · Review · Send · Send answers · Start over · Edit · Answer · Back · Minimise · Reopen · Undo · Try again · Recommended · write it ↗ · Up to {max} · {n} of {total} · {n} of {total} answered · {n} of {total} picked · Pick one to continue · Check your answers · Your pick · Sending in {s}s · Or reply in your own words… · You answered {n} of {total} · Edit answers · Skipped. The agent used its own judgement. · Answer now · Replied in your own words · {n} picks kept · Answer the questions · Not answered. The agent continued without these. · Couldn't send your answers · Writing questions… · plus the live-region strings in §5.4
+
+**Plurals, numbers, language and direction** (round 5)
+- A label is either a string or a set of plural forms: `{ one: 'Up to {max} choice', other: 'Up to {max} choices' }`. The form is chosen with `Intl.PluralRules(lang)` using the number in the string. `other` is required, and any language's forms (`zero`, `two`, `few`, `many`) are accepted.
+- `{n}`, `{total}`, `{max}` and `{s}` are formatted with `Intl.NumberFormat(lang)`, so Arabic pages show ٢ من ٤. Number-key badges always show 1–9, because they name physical keys.
+- `lang` comes from the closest ancestor with a `lang` attribute, else `<html lang>`, else `en`. Direction comes from CSS (`:dir()` and computed `direction`), so the component never needs its own `dir` attribute.
+- Both `Intl` APIs are built into the browser: **no dependency, a few hundred bytes**.
 
 ---
 
@@ -421,11 +467,11 @@ Each milestone ends with tests green, a commit, and a JOURNAL.md entry. A board/
 
 | # | Build | Done when |
 |---|---|---|
-| **M1 · Model** | Scaffold (Vite, TS strict, Vitest, size-limit, lint). `types`, `normalize`, `reducer`, `selectors`, `labels` | **Table-driven tests for every row in §4.2, every row in §3.1, and every recovery row in PLAN §6** (as reducer scenarios). Coverage ≥ 95% on `model/`. No DOM yet |
-| **M2 · Element + flows** | `element.ts`, `view/step`, `form`, `review`, `chrome`, `skeleton`. Single, multi, text and other. Both flows. Keyboard §5.1. ARIA §5.5 | Component tests: each flow end to end with the keyboard only and with the mouse only. The demo playground shows board frames A1, B1–B4, D1–D4, E1 and E2 |
+| **M1 · Model** | Scaffold (Vite, TS strict, Vitest, size-limit, lint). `types`, `normalize`, `reducer`, `selectors`, `labels` | **Table-driven tests for every row in §4.2 (including `DELEGATE` and what clears it), every row in §3.1, and every recovery row in PLAN §6** (as reducer scenarios). Plural and number formatting tests for `labels` (English, Arabic, Polish). Coverage ≥ 95% on `model/`. No DOM yet |
+| **M2 · Element + flows** | `element.ts`, `view/step`, `form`, `review`, `chrome`, `skeleton`. Single, multi, text and other, plus the "Decide for me" row. Both flows. Keyboard §5.1. ARIA §5.5. Logical properties only (§8.1), with the stylesheet scan test | Component tests: each flow end to end with the keyboard only and with the mouse only. The demo playground shows board frames A1, B1–B4, D1–D4, E1 and E2 |
 | **M3 · Placements + endings** | `pill`, `record` (all 4 kinds), `composer.ts` (hide/show, placeholder, send detection), replace and dock, minimise/reopen, reply | The demo's fake chat shell reproduces C1, C2, D5, E3–E6. Composer tests for textarea, input and contenteditable |
 | **M4 · Recovery + own words** | Undo and history wiring, toasts, start over, edit-from-review, undo window, error/retry/`markAnswered`, revise, compose options (insert, highlight, untouched removal) | Every PLAN §6 row is demoable **and** covered by a component test. H1–H3 and D6 are reproduced |
-| **M5 · Polish audit** | Motion (§4.3), focus (§5.2), live region (§5.4), reduced motion, touch sizes, IME, RTL sanity check | axe clean on every demo scenario (light and dark). Manual keyboard-only and VoiceOver (Safari) pass, logged in the journal. Playwright screenshots of every scenario at 1280 and 500 widths, light and dark |
+| **M5 · Polish audit** | Motion (§4.3), focus (§5.2), live region (§5.4), reduced motion, touch hit areas (§5.3), IME, `viewport.ts` and the long-content rules (§8.2–8.3), and a full RTL pass | axe clean on every demo scenario (light and dark). Manual keyboard-only and VoiceOver (Safari) pass, logged in the journal. Playwright screenshots of every scenario at 1280 and 500 widths, light and dark. **Three new demo scenarios pass visually:** `dir="rtl"` (Arabic), long content (a 300-character prompt, 9 two-line options, a URL label, 8 questions in the all flow), and the phone keyboard (checked on a real phone, logged) |
 | **M6 · Theming + converters + ask()** | Tokens, parts, the `theme` attribute, `ask()`, `adapters/claude`, `adapters/mcp`, `jsx.d.ts` | The board's F1–F3 themes reproduced using tokens only. Converter round-trip tests (including "(Recommended)" and skip). `ask()` tests. Size ≤ 12 KB gzipped |
 | **M7 · Ship** | README (quick start, the Claude Agent SDK recipe, an MCP recipe, model-side guidance from PLAN §9, the docked CSS recipe, the API reference), demo deploy, `npm publish` | Installed fresh in a scratch Vite app **and** used in the portfolio via the CDN. Mari approves the repo going public and the npm publish |
 
@@ -436,6 +482,8 @@ Each milestone ends with tests green, a commit, and a JOURNAL.md entry. A board/
 - [ ] Every board frame is reproducible in the demo, in light and dark, at 1280 and 375–500 widths
 - [ ] Every PLAN §6 recovery row is covered by a component test
 - [ ] Keyboard-only, with no mouse needed anywhere; VoiceOver pass logged
+- [ ] RTL, long-content and phone-keyboard scenarios look right
+- [ ] Every default token has a reason in DESIGN.md, and no finding there is left open
 - [ ] axe: 0 violations across the scenarios
 - [ ] Zero runtime dependencies; ≤ 12 KB gzipped core
 - [ ] Works in plain HTML, React 19, Vue 3, Svelte 5 and Astro (one smoke example each in `demo/frameworks/`)
@@ -455,6 +503,8 @@ Each milestone ends with tests green, a commit, and a JOURNAL.md entry. A board/
 | SSR (Astro/Next) importing it on the server | `define()` is guarded. Nothing touches `window` at import time |
 | Height animation jank | Measure with `getBoundingClientRect`, animate `height` with the Web Animations API, and fall back to an instant swap under reduced motion |
 | Size creep | `size-limit` in CI fails the build above the budget |
+| `visualViewport` behaves differently in iOS Safari and Chrome on Android | Feature-detect and fall back to `100dvh`. Checked on a real phone in M5, not only in emulation |
+| A `left`/`right` slips into the CSS and breaks RTL | The stylesheet scan test (§8.1) |
 
 ---
 
@@ -468,3 +518,12 @@ Each milestone ends with tests green, a commit, and a JOURNAL.md entry. A board/
 6. **The textarea highlight is an outline pulse on the composer**, since text inside a textarea can't be highlighted. A real highlight only works in `contenteditable`.
 7. **No icon slots in v1.** Icons are inline SVGs that follow the text colour.
 8. **Demo hosting:** GitHub Pages once the repo is public (Pages on a private repo needs a paid plan). Until then, the demo runs locally.
+
+**Added in round 5:**
+
+9. **"Decide for me" is a row, not a footer button.** It's an answer, so it sits with the answers, and it then works the same way in both flows and shows in review.
+10. **Delegating counts as answering:** it never triggers the review step or the "every question skipped → `skipped`" rule.
+11. **Required beats delegate.** If the agent needs the user's answer, it shouldn't offer to decide.
+12. **On multi-select, "Decide for me" moves on by itself** in sequential, although picks on multi never do. It's a complete answer, so there's nothing left to add.
+13. **The safe area is the app's job.** Adding `env(safe-area-inset-bottom)` inside the card would double up with the app's own padding. *(This corrects the round-5 chat proposal, which said the component would handle it in dock mode. In dock mode the composer sits below the card, so the home bar is the composer's concern.)*
+14. **The card's max height is 60% of the visible screen** by default, so at least part of the conversation stays visible above it. It can be changed with `--clarify-max-height`.
