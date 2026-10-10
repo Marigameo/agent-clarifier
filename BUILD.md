@@ -46,7 +46,7 @@
 | Package manager | pnpm | Already on this machine |
 | Tests | Vitest (unit), Vitest browser mode with Playwright (component), Playwright (e2e, axe, screenshots) | Real browsers for focus, keyboard and Shadow DOM |
 | Browsers | Last 2 versions of Chrome, Edge, Firefox and Safari (Safari ≥ 16.4) | Needed for `color-mix()`, `:focus-visible` and Web Animations |
-| Size | **≤ 12 KB gzipped** for the core, about 1 KB per converter. Checked in CI with `size-limit`. | Plug and play should mean light |
+| Size | **Target ≤ 12 KB gzipped** for the core, about 1 KB per converter. Checked with `size-limit`. **Mari's call (M1): polish first, then measure and cut.** The target guides us; it doesn't block a quality feature. If we go over, cuts are proposed to Mari, never made silently | Plug and play should mean light |
 | Runtime deps | **None** | |
 | Licence | MIT | |
 | Node | 22 | Installed |
@@ -481,7 +481,9 @@ Every user-visible string has a key. The defaults:
 
 **Plurals, numbers, language and direction** (round 5)
 - A label is either a string or a set of plural forms: `{ one: 'Up to {max} choice', other: 'Up to {max} choices' }`. The form is chosen with `Intl.PluralRules(lang)` using the number in the string. `other` is required, and any language's forms (`zero`, `two`, `few`, `many`) are accepted.
-- `{n}`, `{total}`, `{max}` and `{s}` are formatted with `Intl.NumberFormat(lang)`, so Arabic pages show ٢ من ٤. Number-key badges always show 1–9, because they name physical keys.
+- `{n}`, `{total}`, `{max}` and `{s}` are formatted with `Intl.NumberFormat(lang)`. **The full language tag decides the digits**, following Unicode CLDR as browsers do: `ar-EG` shows ٢ من ٤, plain `ar` shows 2 من 4, `fa` shows ۲. We never force a style. Number-key badges always show 1–9, because they name physical keys.
+- **The first number in the values picks the plural form** (`{ n, total }` counts `n`). A missing form falls back to `other`. A malformed `lang` (like `en_US`) falls back to English instead of throwing.
+- **`lang` and `dir` lookup moves to M2**: it needs the DOM, so it's tested with the element.
 - `lang` comes from the closest ancestor with a `lang` attribute, else `<html lang>`, else `en`. Direction comes from CSS (`:dir()` and computed `direction`), so the component never needs its own `dir` attribute.
 - Both `Intl` APIs are built into the browser: **no dependency, a few hundred bytes**.
 

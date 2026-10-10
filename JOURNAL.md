@@ -231,6 +231,67 @@ Snapshot: `process/05-coverage/` (PLAN.md, BUILD.md, DESIGN.md). The board hasn'
 
 ---
 
+## M1 · The model (10 Oct 2026)
+
+**How we worked:** a pairing session. Before each file Claude explained the idea behind it, I made the calls, and then it was built. No visual checks until there's UI (my call).
+
+**Tooling, and what we learnt**
+- **TypeScript 7 everywhere** (my call: "update to latest in all places").
+  - TS 7 is the native compiler and drops the JavaScript API that `vite-plugin-dts` and `typescript-eslint` use, so both crashed.
+  - Claude first pinned TS 6, then tested TS 7 in a scratch folder. TS 7 writes `.d.ts` files itself, and **oxlint** doesn't need the API.
+  - Result: 11 dev tools down to 7, and the build went from ~310ms to ~15ms.
+- **Vite stays** (my question: is it the standard?). There's no single standard: Lit uses Rollup, Web Awesome uses esbuild, and newer libraries use tsdown. Vite won because we need a dev server, a library build and Vitest's browser mode, and only Vite gives all three in one tool.
+- **The size check was measuring the wrong file.** Vite leaves whitespace in ES library builds, so we now minify fully, and the number is what ships.
+
+**What was built:** `types`, `normalize`, `reducer` (with history), `selectors` and `labels`.
+- **435 tests**: 100% of lines and 99.4% of branches covered.
+- **The reducer tests come in four groups:**
+  - a matrix (every action × every status)
+  - one test per transition
+  - one scenario per recovery row
+  - the result rules
+
+**Ideas worth keeping**
+- **Two layers of types.** Forgiving input, strict inside. `normalize` is the only bridge, and it takes `unknown`, because agent JSON arrives where TypeScript can't check it.
+- **A pure reducer:** `reducer(state, action, env)`. The clock comes in through `env`, so a test can say "now = 1000" and check that the undo deadline is exactly 5000.
+- **If nothing changes, return the same object.** Picking the same option twice adds no undo step, and the element can skip re-drawing with `next === prev`.
+- **The compiler as a checklist.** Removing one `case` failed the build with "not assignable to never".
+- **Toasts hold data, not words,** so the model never knows the language.
+
+**The deliberate-break check** (Claude's practice, used on every module): inject bugs a user would notice, and confirm a test fails.
+- **100% coverage hid weak tests twice.** "More than 9 options" was tested with 12, so a limit of 10 also passed. "Review from 3 questions" was tested with 2 and 4, never exactly 3.
+- **Lesson: test at the boundary, not on either side of it.** After the fixes, all 20 injected bugs across the model are caught.
+
+**My calls**
+- Multi-select defaults to `min: 1`, so Continue always means "I picked something".
+- Warnings print **codes, not sentences** (saves about 0.4 KB; the README will explain each code).
+- **Size is a target, not a wall: polish first, then measure and cut.** The finished model is **3.98 KB of the 12 KB** target.
+
+**Claude's suggestions I accepted:**
+- An answered card can't be expired.
+- Skip all is hidden when a question is required.
+- A toast lasts until the next action that changes something.
+- An optional text question needs text, or Skip.
+- Edit answers on an all-at-once card reopens the form.
+- Multi-select picks are sent in the options' order.
+
+**Spec gaps that writing code exposed** (all now in BUILD.md):
+- the reducer's `env`
+- `TEXT_FOCUS` and `RESET`
+- streaming with no complete question yet, and streaming while minimised
+- the extra rules for messy agent JSON
+- explicit public `Labels` keys
+
+**A surprise in the locale data:** plain `ar` now uses Western digits (24) in the Unicode data browsers follow. `ar-EG` and `ar-SA` use Arabic-Indic (٢٤), and Persian uses its own (۲۴). So the page's full language tag decides, and we never force a style.
+
+**Still open:**
+- the copy for a delegated answer
+- DESIGN.md findings F1–F15, plus the missing board frames
+
+Both are for the visual round, before M2.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -238,4 +299,5 @@ Snapshot: `process/05-coverage/` (PLAN.md, BUILD.md, DESIGN.md). The board hasn'
 - Round 2 → 3 is a good "less is more" beat: draft mode got simpler when I asked what each control was for.
 - The renders in each round are ready to use as story images.
 - Round 5 is the "measure, don't assume" beat: writing a reason for every token showed that the default grey failed the contrast the plan promised. It was caught on paper, before any code.
+- M1's "100% coverage, still weak tests" beat: deliberately breaking the code found two boundary blind spots that coverage couldn't see.
 - Skip vs Decide for me is a good small example of meaning over features: same outcome for the agent, different intent from the user, so a different reply.

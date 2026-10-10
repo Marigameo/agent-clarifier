@@ -68,12 +68,22 @@ BUILD.md is **agreed** (round 5, frozen in `process/06-build-agreed/`). Mari wan
 
 **Before M2** (not M1, which has no UI): a visual round on the board settles the DESIGN.md findings F1–F15 and adds the missing frames: Decide for me, long content, RTL, and phone with the keyboard open. The copy for a delegated answer ("Left to the agent" is the working copy) still needs Mari's pick.
 
-## Next: M1 (BUILD.md §10)
+## Done: M1 · Model (BUILD.md §10)
 
-- Scaffold: Vite library mode, TS strict, Vitest, size-limit.
-- `src/model/`: `types`, `normalize`, `reducer` (with history), `selectors`, plus `labels`.
-- Table-driven tests for every transition (BUILD §4.2), every normalising rule (§3.1) and every recovery row (PLAN §6). Coverage ≥ 95%.
+`src/model/` (types, normalize, reducer, selectors) and `src/labels.ts`: 435 tests, 100% lines.
+- **Tooling:** TS 7, oxlint, Vite 8 (Rolldown, minified), Vitest 5, size-limit. `pnpm check` runs everything.
+- **Practice:** after each module, inject user-visible bugs and confirm a test fails. Test at boundaries.
+- **Size:** a target, not a wall (Mari's call). Polish first, then propose cuts. The model alone is ~4 KB gzipped.
 
-No UI in M1. After M1, follow M2–M7 in order.
+## Next: visual round, then M2
+
+1. **Visual round on the board:**
+   - settle DESIGN.md F1–F15
+   - add frames for Decide for me, long content, RTL, and phone with the keyboard open
+   - pick the copy for a delegated answer ("Left to the agent" is the working copy)
+   - snapshot and render it as a review round
+2. **M2:** element + flows (BUILD §10). Move the `lang`/`dir` lookup into the element.
+
+Follow M2–M7 in order after that.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

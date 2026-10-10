@@ -13,3 +13,4 @@ export type {
   Answer,
   AnswerStatus,
 } from './model/types';
+export type { Label, LabelKey, Labels, PluralForms } from './labels';
