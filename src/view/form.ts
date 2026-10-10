@@ -4,7 +4,7 @@
 import { canContinue, draftOf, isInvalid, picks, progress } from '../model/selectors';
 import type { NormalizedQuestion } from '../model/types';
 import { button, footLeft, header, setButton, sourceLine } from './chrome';
-import { attr, h, icon, text } from './dom';
+import { attr, h, icon, rove, text } from './dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './types';
 
 interface Block {
@@ -18,7 +18,7 @@ interface Block {
   delegate: HTMLElement | null;
 }
 
-function chip(id: string, role: string, label: string, opts: { quiet?: boolean; icon?: 'pencil' | 'delegate'; disabled?: boolean; out?: string } = {}): HTMLElement {
+function chip(id: string, role: string, label: string, opts: { quiet?: boolean; icon?: 'pencil' | 'delegate'; disabled?: boolean; out?: string; rec?: boolean } = {}): HTMLElement {
   return h(
     'span',
     {
@@ -29,6 +29,7 @@ function chip(id: string, role: string, label: string, opts: { quiet?: boolean; 
       'aria-disabled': opts.disabled ? 'true' : null,
       tabindex: '-1',
       'data-opt': id,
+      'data-rec': opts.rec ? '' : null,
     },
     opts.icon ? icon(opts.icon, opts.icon === 'delegate' ? 'flip' : '') : role === 'checkbox' ? icon('check', 'tick') : null,
     label,
@@ -40,7 +41,7 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
   const titleId = `q-${i}`;
   const role = q.type === 'multi' ? 'checkbox' : 'radio';
   const chips: HTMLElement[] = q.options.map((o) =>
-    chip(o.id, role, o.label, { disabled: o.disabled, ...(o.compose !== null ? { out: '↗' } : {}) }),
+    chip(o.id, role, o.label, { disabled: o.disabled, rec: o.recommended, ...(o.compose !== null ? { out: '↗' } : {}) }),
   );
   let other: HTMLInputElement | null = null;
   if (q.other) {
@@ -105,10 +106,10 @@ export function formView(init: Ctx): View {
   const send = button('send', 'primary');
   const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, skipAll, send));
   const top = h('div', { class: 'top' }, sourceLine(init), head.el);
-  const banner = h('div', { class: 'banner', role: 'alert', part: 'banner', hidden: true });
+  const banner = h('div', { class: 'banner', part: 'banner', hidden: true });
   const el = h(
     'div',
-    { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title' },
+    { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title', tabindex: '-1' },
     h('div', { class: 'scroll' }, top, banner, h('div', { class: 'form' }, blocks.map((b) => b.el))),
     foot,
   );
@@ -126,6 +127,8 @@ export function formView(init: Ctx): View {
         attr(c, c.getAttribute('role') === 'button' ? 'aria-pressed' : 'aria-checked', String(on));
       }
       if (b.delegate && b.q.type === 'text') attr(b.delegate, 'aria-pressed', String(d.delegated));
+      if (b.chips.length) rove(b.chips, active);
+      if (b.delegate && b.q.type === 'text') attr(b.delegate, 'tabindex', '0');
       if (b.other) {
         b.other.hidden = !d.otherActive;
         if (active !== b.other && b.other.value !== d.other) b.other.value = d.other;

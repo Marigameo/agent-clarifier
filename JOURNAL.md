@@ -344,6 +344,40 @@ Clicking through the first playground build raised two things.
 
 ---
 
+## M2 · The element, both flows, keyboard and screen reader (10 Oct 2026)
+
+**What was built, in three steps, each checked in the playground:**
+1. **The sequential flow and the playground.** The element is one loop: event → action → reducer → render → `clarify:*` events. Views build their DOM once, then update in place.
+2. **The all-at-once form and streaming.** Chips; errors only after a send attempt; "show what has arrived" while streaming, with nothing pickable until it's complete.
+3. **Keyboard, focus and screen reader:**
+   - **Keys:** 1–9 pick, arrows move (chips also ←/→, mirrored in RTL), Home/End, Space/Enter, ← back (→ in RTL), Esc minimises (or leaves "Something else" with the text kept), ⌘Z/Ctrl+Z undo (except inside text fields, where it's the browser's own), and IME composition is ignored.
+   - **Roving tabindex:** one Tab stop per group (the picked, else the recommended, else the first option).
+   - **Focus:** it follows into each new view and is never lost to `<body>`. Dock mode never steals it. On touch screens a text field is never auto-focused, so the keyboard doesn't pop up.
+   - **A polite live region** announces the question, skips, limits, Decide for me, review, sent, minimised and failed.
+
+**Component tests run in real Chrome** (Vitest browser mode, using the Chrome already installed):
+- each flow keyboard-only and mouse-only
+- arrows and roving tabindex
+- undo, Esc and RTL
+- errors only after a send attempt
+- both placements, including the app-CSS hiding bug from round 7
+- sending as the answer, normal messages passing through, compose insert and take-back
+- focus on reopen
+
+**The deliberate-break check** on the keyboard code caught 4 of 4: number keys ignored, RTL not mirrored, no focus on open, Esc in the field minimising.
+
+**Bugs found by looking, not by tests:**
+- `display` rules overriding `hidden`
+- the app's CSS overriding the hidden composer
+- the source line missing while streaming
+- rows jumping when streaming ended
+
+**Numbers:** 456 tests (440 unit, 16 component). Size **17.8 KB** gzipped against the 12 KB target. Polish first, cut later (my call).
+
+**Next:** a review round in the playground. Settle DESIGN.md F1–F15 with live comparisons, the open copy ("Left to the agent", "A few questions", "Required"), and the record's final design.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.

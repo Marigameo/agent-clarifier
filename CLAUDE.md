@@ -74,13 +74,19 @@ BUILD.md is **agreed** (round 5, frozen in `process/06-build-agreed/`). Mari wan
 - **Practice:** after each module, inject user-visible bugs and confirm a test fails. Test at boundaries.
 - **Size:** a target, not a wall (Mari's call). Polish first, then propose cuts. The model alone is ~4 KB gzipped.
 
-## Next: M2 · Element + flows, playground first
+## Done: M2 · Element + flows (plus M3's placements, pulled forward in round 7)
 
-Round 6 (Mari): **the board is frozen as the early sketch**, and visuals are judged in the **playground** (BUILD §2.1).
-1. Build the playground shell and the element together, so the real component is visible from the first render.
-2. Settle DESIGN.md F1–F15 and the copy for a delegated answer **in the playground**, as review rounds with screenshots.
-3. Move the `lang`/`dir` lookup into the element.
+Sequential and all-at-once flows, every input type, loading/streaming, replace and dock with real composer wiring, keyboard (BUILD §5.1), focus (§5.2), live region (§5.4), and ARIA (§5.5).
+- **Tests:** 16 component tests in real Chrome (`tests/component`, Vitest browser mode, system Chrome) and 440 unit tests.
+- **Checking visuals:** `node scripts/shots.mjs <dir> "name=query|step|…"`, using the steps `click:` (in the component), `pclick:` (in the page), `key:`, `type:` and `wait:`.
 
-Follow M3–M7 in order after that.
+## Next: review round in the playground (round 8)
+
+Settle the following with Mari, using live comparisons where they help:
+- DESIGN.md findings F1–F15
+- the open copy: "Left to the agent", "A few questions", "Required", and the Decide-for-me icon
+- the record's final design: "Replied in your own words" should be the user's message with a "+N picks" tag
+
+Snapshot the playground screenshots into `process/08-…/`. Then finish M3 (record kinds, pill polish), then M4 to M7.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

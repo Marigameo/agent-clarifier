@@ -3,7 +3,7 @@
 import { canContinue, draftOf, needsReview, picks, questionState } from '../model/selectors';
 import type { NormalizedOption, NormalizedQuestion } from '../model/types';
 import { button, footLeft, header, setButton, sourceLine } from './chrome';
-import { attr, h, icon, text } from './dom';
+import { attr, h, icon, rove, text } from './dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './types';
 
 function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: Ctx): HTMLElement {
@@ -18,6 +18,7 @@ function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: C
       'aria-disabled': o.disabled ? 'true' : null,
       tabindex: '-1',
       'data-opt': o.id,
+      'data-rec': o.recommended ? '' : null,
     },
     multi
       ? h('span', { class: 'key box', part: 'option-key', 'aria-hidden': 'true' }, icon('check'))
@@ -118,7 +119,8 @@ export function stepView(init: Ctx): View {
   const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, skip, primary));
 
   const top = h('div', { class: 'top' }, sourceLine(init), head.el);
-  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title' }, h('div', { class: 'scroll' }, top, body), foot);
+  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title', tabindex: '-1' }, h('div', { class: 'scroll' }, top, body), foot);
+  const group = delegate && q.type !== 'text' ? [...rows, delegate] : rows;
 
   function update(ctx: Ctx): void {
     const s = ctx.s;
@@ -142,6 +144,8 @@ export function stepView(init: Ctx): View {
     }
     if (area && active !== area && area.value !== d.text) area.value = d.text;
     if (delegate) attr(delegate, delegate.getAttribute('role') === 'button' ? 'aria-pressed' : 'aria-checked', String(d.delegated));
+    if (group.length) rove(group, active);
+    else if (delegate) attr(delegate, 'tabindex', '0');
 
     // Footer left: progress dots, "n of max picked", or the new-line hint; a toast wins.
     footLeft(left, ctx, () => {

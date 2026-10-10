@@ -85,7 +85,11 @@
 [hidden] { display: none !important; }
 button { font: inherit; color: inherit; }
 
+/* Read by screen readers, not shown. */
+.live { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
 /* ── card ───────────────────────────────────────────────────────────── */
+.card:focus { outline: none; }
 .card {
   container-type: inline-size;
   display: flex; flex-direction: column;

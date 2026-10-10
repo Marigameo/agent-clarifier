@@ -16,6 +16,7 @@ import { formView } from './view/form';
 import { reviewView } from './view/review';
 import { stepView } from './view/step';
 import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport';
+import { h, rove } from './view/dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './view/types';
 
 /** Lets the module load on a server (Astro, Next): there's no HTMLElement there. */
@@ -58,6 +59,11 @@ export class AgentClarifier extends Base {
   #composer: Composer | null = null;
   #composerRef: string | Element | null = null;
   #composerContainerRef: string | Element | null = null;
+  #viewName: ViewName = 'none';
+  /** Move focus into the card at the next view that can take it (replace mode open, reopen). */
+  #wantFocus = false;
+  /** Polite live region (BUILD §5.4). Lives outside the views, so it survives view swaps. */
+  #live: HTMLElement;
 
   constructor() {
     super();
@@ -66,6 +72,8 @@ export class AgentClarifier extends Base {
     this.#root.addEventListener('click', (e) => this.#onClick(e));
     this.#root.addEventListener('scroll', () => this.#edges(), true);
     this.#resize = new ResizeObserver(() => this.#edges());
+    this.#live = h('div', { class: 'live', role: 'status', 'aria-live': 'polite' });
+    this.#root.append(this.#live);
     this.#root.addEventListener('input', (e) => this.#onInput(e));
     this.#root.addEventListener('focusin', (e) => this.#onFocusIn(e));
     this.#root.addEventListener('keydown', (e) => this.#onKeyDown(e as KeyboardEvent));
@@ -181,13 +189,17 @@ export class AgentClarifier extends Base {
     const streaming = this.#s.status === 'loading' || (this.#s.status === 'minimised' && this.#s.resumeTo === 'loading');
     const type = streaming ? 'STREAM' : 'OPEN';
     if (!r.ok) {
-      if (partial) this.#dispatch({ type, q: null, partial });
+      if (partial) {
+        if (type === 'OPEN' && this.placement === 'replace') this.#wantFocus = true;
+        this.#dispatch({ type, q: null, partial });
+      }
       else this.#emit('error', { reason: r.reason });
       return;
     }
     // The questionnaire's own flow wins; the attribute is the default.
     const raw = q as { flow?: unknown };
     if (raw.flow !== 'all' && raw.flow !== 'sequential') r.q.flow = this.flow;
+    if (type === 'OPEN' && this.placement === 'replace') this.#wantFocus = true;
     this.#dispatch({ type, q: r.q, partial });
   }
 
@@ -229,10 +241,14 @@ export class AgentClarifier extends Base {
     // Sequential steps are separate views, so each question builds fresh rows.
     const key = `${name}:${name === 'step' ? s.step : ''}:${name === 'record' ? s.record?.kind : ''}`;
     const ctx = this.#ctx();
-    if (force || key !== this.#viewKey) {
+    const swap = force || key !== this.#viewKey;
+    // Was focus inside the card? Then it must follow into the new view, never fall to <body>.
+    const hadFocus = !!this.#root.activeElement && this.#root.activeElement !== this.#live;
+    if (swap) {
       this.#viewKey = key;
+      this.#viewName = name;
       this.#view = this.#build(name, ctx);
-      this.#root.replaceChildren(...(this.#view ? [this.#view.el] : []));
+      this.#root.replaceChildren(...(this.#view ? [this.#view.el] : []), this.#live);
       this.#resize.disconnect();
       const scroll = this.#root.querySelector('.scroll');
       if (scroll) {
@@ -244,6 +260,44 @@ export class AgentClarifier extends Base {
     if (this.#view) this.#view.el.inert = this.disabled;
     this.#edges();
     this.#syncComposer(ctx);
+    if (swap && (hadFocus || this.#wantFocus)) this.#focusView(hadFocus);
+  }
+
+  /**
+   * Put focus somewhere sensible in the current view (BUILD §5.2): the picked, recommended or
+   * first option; the Send button on review; the composer once the card is done. Never a text
+   * field on touch screens, where that would pop the keyboard up over the question.
+   */
+  #focusView(force: boolean): void {
+    const v = this.#view?.el;
+    const name = this.#viewName;
+    if (!v || name === 'loading') return; // keep wanting focus until the questions are ready
+    this.#wantFocus = false;
+    if (name === 'pill' || name === 'record') {
+      if (!force) return;
+      if (this.#composer) this.#composer.focus();
+      else v.querySelector<HTMLElement>('button')?.focus();
+      return;
+    }
+    const touch = matchMedia('(pointer: coarse)').matches;
+    const target =
+      (name === 'review' ? v.querySelector<HTMLElement>('.foot .btn.primary') : null) ??
+      v.querySelector<HTMLElement>('[data-opt][tabindex="0"]') ??
+      (touch ? null : v.querySelector<HTMLElement>('textarea')) ??
+      v.querySelector<HTMLElement>('.foot .btn.primary:not([hidden])') ??
+      v;
+    // After the render finishes: focusing a text field dispatches TEXT_FOCUS, which must not
+    // happen in the middle of a render.
+    queueMicrotask(() => {
+      target.focus({ preventScroll: true });
+      target.scrollIntoView?.({ block: 'nearest' });
+    });
+  }
+
+  #announce(message: string): void {
+    // Clear first, so the same sentence twice in a row is still read out.
+    this.#live.textContent = '';
+    setTimeout(() => (this.#live.textContent = message), 30);
   }
 
   // ── the composer ──────────────────────────────────────────────────────
@@ -279,14 +333,6 @@ export class AgentClarifier extends Base {
     // The placeholder says what typing will do, whenever typing is possible and would answer.
     const offersReply = st === 'minimised' || (dock && (st === 'answering' || st === 'reviewing'));
     c.placeholder(offersReply ? ctx.t('composerPlaceholder') : null);
-  }
-
-  #focusCard(): void {
-    const v = this.#view?.el;
-    const target =
-      v?.querySelector<HTMLElement>('[aria-checked="true"], [aria-pressed="true"]') ??
-      v?.querySelector<HTMLElement>('.opt:not([aria-disabled="true"]), textarea, .btn.primary:not([hidden])');
-    target?.focus({ preventScroll: true });
   }
 
   /** Show an edge shadow only where content is hidden past the edge (DESIGN §3). */
@@ -344,13 +390,44 @@ export class AgentClarifier extends Base {
     if (action.type === 'REOPEN' || action.type === 'REVISE') {
       if (action.type === 'REOPEN' && prev.compose) this.#composer?.takeBack();
       this.#emit('reopen', null);
-      this.#focusCard();
+      this.#focusView(true);
     }
     if (action.type === 'COMPOSE' && next.compose) {
       const detail = { text: next.compose.text, questionId: action.questionId, optionId: action.optionId };
       // Not prevented → we start the sentence ourselves. Prevented → the app inserts it.
       if (this.#emit('compose', detail, true)) this.#composer?.insert(detail.text);
     }
+    this.#speak(prev, next, action);
+  }
+
+  /** What a screen reader hears after a transition (BUILD §5.4). */
+  #speak(prev: State, next: State, action: Action): void {
+    const t = this.#ctx().t;
+    const qs = next.q?.questions ?? [];
+    const label = (id: string) => qs.find((q) => q.id === id)?.label ?? '';
+    const say: string[] = [];
+    if (next.toast && next.toast !== prev.toast) {
+      const k = next.toast;
+      say.push(
+        k.kind === 'skipped' ? t('liveSkipped', { label: label(k.questionId) })
+          : k.kind === 'cleared' ? t('liveCleared')
+          : t('liveLimit', { max: k.max }),
+      );
+    }
+    if (action.type === 'DELEGATE' && next.drafts[action.questionId]?.delegated) {
+      say.push(t('liveDelegated', { label: label(action.questionId) }));
+    }
+    const sequential = next.q?.flow === 'sequential';
+    const newStep = next.status === 'answering' && (prev.status !== 'answering' || prev.step !== next.step);
+    if (sequential && newStep && qs[next.step]) {
+      say.push(t('liveStep', { n: next.step + 1, total: qs.length, prompt: qs[next.step]!.prompt }));
+    }
+    const entered = (st: string) => next.status === st && prev.status !== st;
+    if (entered('reviewing')) say.push(t('liveReview'));
+    if (entered('answered') && next.record?.kind === 'answered') say.push(t('liveSent'));
+    if (entered('minimised')) say.push(t('liveMinimised'));
+    if (entered('error')) say.push(`${t('liveFailed')} ${next.error ?? ''}`.trim());
+    if (say.length) this.#announce(say.join(' '));
   }
 
   /** Fire clarify:submit (or clarify:revise) after the undo window. Not prevented → answered. */
@@ -447,14 +524,111 @@ export class AgentClarifier extends Base {
     if (q && el.dataset.input === 'text') this.#dispatch({ type: 'TEXT_FOCUS', questionId: q.id });
   }
 
+  /**
+   * Keyboard (BUILD §5.1). Only keys pressed inside the card arrive here (the listener is on the
+   * shadow root). Keys are ignored while an IME is composing, so Japanese or Chinese input is safe.
+   */
   #onKeyDown(e: KeyboardEvent): void {
-    const el = e.target as HTMLElement;
-    if (e.isComposing || !el.dataset.input) return; // full keyboard support arrives in M2 step 3
-    const q = this.#questionOf(el);
-    if (this.#s.q?.flow !== 'sequential') return;
-    if (e.key === 'Enter' && !e.shiftKey && q && canContinue(q, draftOf(this.#s, q.id))) {
+    if (e.isComposing || e.defaultPrevented) return;
+    const t = e.target as HTMLElement;
+    const s = this.#s;
+    const field = t.matches('input, textarea');
+    const mod = e.metaKey || e.ctrlKey;
+
+    // ⌘Z / Ctrl+Z is our undo, except inside a text field, where it's the browser's own.
+    if (mod && !e.shiftKey && e.key.toLowerCase() === 'z') {
+      if (field) return;
       e.preventDefault();
-      this.#dispatch({ type: 'NEXT' });
+      return this.#dispatch({ type: 'UNDO' });
     }
+    if (mod || e.altKey) return;
+
+    const rtl = getComputedStyle(this).direction === 'rtl';
+    const sequential = s.q?.flow === 'sequential';
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      // In "Something else", Esc leaves the field (text kept) instead of minimising.
+      if (t.dataset.input === OTHER) return this.#focusOther(t);
+      return this.#dispatch({ type: 'MINIMISE' });
+    }
+
+    if (field) {
+      const q = this.#questionOf(t);
+      if (e.key === 'Enter' && !e.shiftKey && sequential && q && canContinue(q, draftOf(s, q.id))) {
+        e.preventDefault();
+        this.#dispatch({ type: 'NEXT' });
+      }
+      // ↑ at the very start of "Something else" goes back up to the options.
+      if (e.key === 'ArrowUp' && t.dataset.input === OTHER && (t as HTMLInputElement).selectionStart === 0) {
+        e.preventDefault();
+        this.#focusOther(t, -1);
+      }
+      return;
+    }
+
+    const row = t.closest<HTMLElement>('[data-opt]');
+    if (row) {
+      const chips = row.classList.contains('chip');
+      const group = this.#groupOf(row);
+      const i = group.indexOf(row);
+      // Lists move with ↑/↓ (← is Back there). Chips flow in a line, so ←/→ move too, mirrored in RTL.
+      const fwd = e.key === 'ArrowDown' || (chips && e.key === (rtl ? 'ArrowLeft' : 'ArrowRight'));
+      const bwd = e.key === 'ArrowUp' || (chips && e.key === (rtl ? 'ArrowRight' : 'ArrowLeft'));
+      const to = fwd ? (i + 1) % group.length : bwd ? (i - 1 + group.length) % group.length : e.key === 'Home' ? 0 : e.key === 'End' ? group.length - 1 : -1;
+      if (to >= 0 && group.length) {
+        e.preventDefault();
+        rove(group, group[to]!);
+        group[to]!.focus();
+        return;
+      }
+      const q = this.#questionOf(row);
+      // Multi-select never moves on by itself: there, Enter means Continue (Space toggles).
+      const enterContinues = sequential && q?.type === 'multi' && row.dataset.opt !== DELEGATE && row.dataset.opt !== OTHER;
+      if (e.key === 'Enter' && enterContinues) {
+        e.preventDefault();
+        return this.#dispatch({ type: 'NEXT' });
+      }
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        row.click();
+        return;
+      }
+    }
+
+    // 1–9 pick the option with that number (sequential lists; they're the visible key badges).
+    if (/^[1-9]$/.test(e.key) && this.#viewName === 'step') {
+      const r = this.#root.querySelectorAll<HTMLElement>('.list [data-opt]:not(.other):not(.delegate)')[Number(e.key) - 1];
+      if (r && r.getAttribute('aria-disabled') !== 'true') {
+        e.preventDefault();
+        r.focus();
+        r.click();
+      }
+      return;
+    }
+
+    // ← goes back (→ in right-to-left languages), in the steps and on review.
+    if (e.key === (rtl ? 'ArrowRight' : 'ArrowLeft') && (this.#viewName === 'step' || this.#viewName === 'review')) {
+      e.preventDefault();
+      this.#dispatch({ type: 'BACK' });
+    }
+  }
+
+  /** The usable rows of the group a row belongs to. */
+  #groupOf(row: HTMLElement): HTMLElement[] {
+    const box = row.closest('[role="radiogroup"], [role="group"]:not(.card)');
+    return Array.from(box?.querySelectorAll<HTMLElement>('[data-opt]') ?? [row]).filter(
+      (r) => r.getAttribute('aria-disabled') !== 'true',
+    );
+  }
+
+  /** From the "Something else" field back to its row (or the row above it, with step -1). */
+  #focusOther(input: HTMLElement, step = 0): void {
+    const row = input.closest<HTMLElement>('[data-opt]') ?? input.closest('[data-q]')?.querySelector<HTMLElement>(`[data-opt="${OTHER}"]`);
+    if (!row) return;
+    const group = this.#groupOf(row);
+    const target = group[Math.max(0, group.indexOf(row) + step)] ?? row;
+    rove(group, target);
+    target.focus();
   }
 }

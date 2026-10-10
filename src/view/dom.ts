@@ -29,6 +29,22 @@ export function attr(el: Element, name: string, value: string | boolean | null):
   }
 }
 
+/**
+ * Roving tabindex (WAI-ARIA radio/checkbox groups): exactly one item in a group is in the Tab
+ * order. It's the focused one, else the picked one, else the recommended one, else the first.
+ */
+const isOn = (i: HTMLElement): boolean => i.getAttribute('aria-checked') === 'true' || i.getAttribute('aria-pressed') === 'true';
+
+export function rove(items: HTMLElement[], active: Element | null): void {
+  const usable = items.filter((i) => i.getAttribute('aria-disabled') !== 'true');
+  const pick =
+    usable.find((i) => i === active || i.contains(active)) ??
+    usable.find(isOn) ??
+    usable.find((i) => i.hasAttribute('data-rec')) ??
+    usable[0];
+  for (const i of items) attr(i, 'tabindex', i === pick ? '0' : '-1');
+}
+
 export function text(el: Element, value: string): void {
   if (el.textContent !== value) el.textContent = value;
 }
