@@ -1,0 +1,103 @@
+/* The playground's own look. Deliberately plain, so the component is what you judge. */
+:root {
+  --pg-bg: #f3f2ee;
+  --pg-panel: #fbfaf8;
+  --pg-ink: #23221f;
+  --pg-soft: #75736d;
+  --pg-line: #dedcd6;
+  --pg-chat: #fafaf8;
+  --pg-bubble: #ecebe6;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pg-bg: #151514; --pg-panel: #1c1c1a; --pg-ink: #e9e8e4; --pg-soft: #9c9a94;
+    --pg-line: #33322f; --pg-chat: #1a1a19; --pg-bubble: #2c2b28; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --pg-bg: #151514; --pg-panel: #1c1c1a; --pg-ink: #e9e8e4; --pg-soft: #9c9a94;
+  --pg-line: #33322f; --pg-chat: #1a1a19; --pg-bubble: #2c2b28; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-block-size: 100dvh;
+  display: grid; grid-template-columns: 1fr 380px;
+  font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--pg-ink); background: var(--pg-bg);
+}
+@media (max-width: 900px) { body { grid-template-columns: 1fr; } }
+
+/* ── the fake chat ── */
+.stage { display: grid; place-items: stretch center; padding: 24px; min-inline-size: 0; }
+.chat {
+  inline-size: 100%; max-inline-size: 760px; block-size: calc(100dvh - 48px); min-block-size: 560px;
+  display: flex; flex-direction: column;
+  background: var(--pg-chat); border: 1px solid var(--pg-line); border-radius: 20px; overflow: hidden;
+}
+.chat.framed { border-radius: 32px; }
+.msgs { flex: 1; overflow: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 20px 18px 12px; }
+.msg { max-inline-size: 85%; line-height: 1.5; overflow-wrap: anywhere; }
+.msg.user { align-self: flex-end; padding: 10px 14px; border-radius: 14px; background: var(--pg-bubble); }
+.dock { display: grid; gap: 10px; padding: 0 12px 12px; }
+.composer {
+  display: flex; align-items: flex-end; gap: 8px; padding: 10px 10px 10px 16px;
+  border: 1px solid var(--pg-line); border-radius: 16px; background: var(--pg-panel);
+}
+.composer textarea {
+  flex: 1; resize: none; border: 0; outline: 0; background: transparent; color: inherit;
+  font: inherit; padding: 6px 0; field-sizing: content; max-block-size: 8lh;
+}
+.send {
+  inline-size: 32px; block-size: 32px; border: 0; border-radius: 9px; cursor: pointer;
+  color: var(--pg-panel); background: var(--pg-ink); font-size: 16px;
+}
+
+/* ── the panel ── */
+.panel {
+  display: flex; flex-direction: column; gap: 18px; padding: 20px;
+  border-inline-start: 1px solid var(--pg-line); background: var(--pg-panel);
+  block-size: 100dvh; overflow: auto; position: sticky; inset-block-start: 0;
+}
+.panel h1 { margin: 0; font-size: 16px; }
+.panel header p { margin: 4px 0 0; color: var(--pg-soft); font-size: 13px; }
+.panel h2 {
+  display: flex; justify-content: space-between; align-items: center;
+  margin: 0 0 8px; font: 500 11px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--pg-soft);
+}
+.scenarios { display: grid; gap: 4px; }
+.scenarios button, .seg button, .restart, .clear {
+  font: inherit; color: inherit; cursor: pointer; text-align: start;
+  border: 1px solid var(--pg-line); background: transparent; border-radius: 8px;
+}
+.scenarios button { padding: 7px 10px; }
+.scenarios button small { color: var(--pg-soft); font-size: 11px; margin-inline-start: 6px; }
+.scenarios button:disabled { opacity: .5; cursor: default; }
+.scenarios button[aria-pressed="true"], .seg button[aria-pressed="true"] { background: var(--pg-ink); color: var(--pg-panel); border-color: var(--pg-ink); }
+.note { margin: 10px 0 8px; font-size: 13px; color: var(--pg-soft); }
+.restart { padding: 6px 10px; font-size: 13px; }
+.controls { display: grid; gap: 12px; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg button { padding: 5px 10px; font-size: 13px; }
+.clear { padding: 2px 8px; font-size: 11px; text-transform: none; letter-spacing: 0; }
+pre {
+  margin: 0; padding: 10px; border-radius: 8px; border: 1px solid var(--pg-line);
+  font: 12px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere;
+  max-block-size: 260px; overflow: auto;
+}
+.log { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; max-block-size: 240px; overflow: auto; font-size: 12px; }
+.log li { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--pg-line); }
+.log time { color: var(--pg-soft); margin-inline-start: 6px; }
+.log code { display: block; margin-block-start: 2px; color: var(--pg-soft); font: 11px/1.4 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+
+/* ── a third theme, made with tokens only (as an app would) ── */
+agent-clarifier.warm {
+  --clarify-font: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --clarify-bg: #fffaf2; --clarify-fg: #2b2118; --clarify-muted: #7a6a58; --clarify-faint: #a8977f;
+  --clarify-border: #eadfcd; --clarify-hover: #f8efe1; --clarify-selected: #f3e6d1; --clarify-key-bg: #f3e6d1;
+  --clarify-accent: #d9623b; --clarify-accent-fg: #fff; --clarify-accent-soft: rgba(217, 98, 59, .12);
+  --clarify-radius: 6px 14px 8px 16px / 14px 6px 16px 8px; --clarify-radius-sm: 6px;
+  --clarify-shadow: 4px 4px 0 rgba(43, 33, 24, .12);
+}

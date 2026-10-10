@@ -9,6 +9,7 @@ export type Label = string | PluralForms;
 /** Every user-visible string. Override any of them through the element's `labels` property. */
 export interface Labels {
   // Rows and buttons
+  askedBy: Label;
   somethingElse: Label;
   decideForMe: Label;
   delegated: Label;
@@ -43,6 +44,8 @@ export interface Labels {
   yourPick: Label;
   sendingIn: Label;
   writing: Label;
+  sending: Label;
+  newLine: Label;
 
   // Toasts
   skippedToast: Label;
@@ -77,6 +80,7 @@ export type LabelKey = keyof Labels;
 
 export const DEFAULT_LABELS: Labels = {
   // Rows and buttons
+  askedBy: 'Asked by {source}',
   somethingElse: 'Something else',
   decideForMe: 'Decide for me',
   delegated: 'Left to the agent', // working copy, still to settle
@@ -111,6 +115,8 @@ export const DEFAULT_LABELS: Labels = {
   yourPick: 'Your pick',
   sendingIn: 'Sending in {s}s',
   writing: 'Writing questions…',
+  sending: 'Sending…',
+  newLine: 'new line',
 
   // Toasts
   skippedToast: 'Skipped “{label}”',
