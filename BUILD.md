@@ -1,6 +1,6 @@
 # agent-clarifier: build plan (v1)
 
-> **How** to build what [PLAN.md](PLAN.md) specifies and [design/board.html](design/board.html) shows.
+> **How** to build what [PLAN.md](PLAN.md) specifies. [design/board.html](design/board.html) is the early sketch (frozen in round 6). The **playground** (`demo/`, §2.1) is where visuals are judged and decided.
 > Written so a build session can implement it without re-deciding anything. If something here conflicts with PLAN.md, raise it with Mari before choosing.
 > Status: **agreed (round 5, 10 Oct 2026).** Mari approved it with every "call made" in §13 accepted. Implementation follows the milestones in §10.
 
@@ -87,14 +87,28 @@ agent-clarifier/
   tests/
     unit/                 # model + adapters (node)
     component/            # element in a real browser (Vitest browser mode)
-    e2e/                  # demo pages: flows, axe, screenshots
+    e2e/                  # playground scenarios: flows, axe, screenshots
   demo/
-    index.html            # playground: fake chat shell + controls + scenario presets
-    scenarios.ts          # one preset per board frame id (A1, B1 … H3)
-  design/board.html       # visual reference (working copy)
+    index.html            # the playground (§2.1)
+    main.ts               # controls, URL state, event log
+    scenarios.ts          # dummy questionnaires, one per case to judge
+    playground.css        # the playground's own look (never shipped)
+  design/board.html       # the early sketch, frozen in round 6
   process/                # frozen snapshots, never edited
   PLAN.md  BUILD.md  DESIGN.md  JOURNAL.md  CLAUDE.md  README.md  LICENSE
 ```
+
+### 2.1 The playground (round 6)
+
+The real `<agent-clarifier>`, wired to dummy data, inside a fake chat. It's dev-only and never shipped. `pnpm dev` opens it.
+
+- **Fake chat:** messages, a real `<textarea>` composer and a send button. Width presets: 375 (phone), 768 and full.
+- **Scenarios:** dummy questionnaires covering every case on Mari's list, including yes/no, single, multi with limits, required, sequential, all at once, Decide for me, long content, streaming, a failing send and Arabic RTL.
+- **Controls:** placement, flow, density, review, undo window, theme (light, dark, warm), language/direction, and "slow send" / "failing send".
+- **Readouts:** a live event log (`clarify:*` with `detail`), the last `ClarifyResult` as JSON, and the reducer state.
+- **Every setting lives in the URL** (`?scenario=long&dir=rtl&theme=dark`), so a case is a link. Screenshots, Playwright tests and review rounds all use those links.
+- **DESIGN.md findings (F1–F15) are decided here**, on the real component, often as a toggle to compare live (warm vs neutral greys, replace shadow on/off).
+- **Review rounds snapshot playground screenshots** (light, dark, 375) into `process/` in place of board renders.
 
 **Package `exports`:**
 - `.` → `dist/index.js`. Importing it defines the element (guarded for SSR: no-op if `customElements` is undefined). It also exports `AgentClarifier`, `ask` and all types.
@@ -446,7 +460,7 @@ The component **never** injects global styles or changes the composer's own styl
 - **Dark:** `:host([theme=dark])`, plus `@media (prefers-color-scheme: dark) { :host(:not([theme=light])) { … } }`.
 - **Parts:** `card`, `header`, `title`, `step`, `option`, `option-key`, `option-label`, `option-description`, `badge`, `other`, `footer`, `button`, `button-primary`, `toast`, `banner`, `pill`, `record`, `hint`.
 - **Icons:** inline SVGs using `currentColor`. No icon slots in v1. Directional icons (back, forward, the "write it ↗" arrow) mirror under `:host(:dir(rtl))`.
-- The board's CSS is the visual reference. Class names may differ, but **every frame on the board must be reproducible** in the demo.
+- The board's CSS is the **starting point** for styles. From round 6 the playground is the visual reference, and differences from the board are fine when they're deliberate and logged.
 - **Every default value is explained in [DESIGN.md](DESIGN.md).** A new value needs a line there before it ships.
 
 ### 8.1 Direction (RTL)
@@ -491,23 +505,23 @@ Every user-visible string has a key. The defaults:
 
 ## 10. Milestones
 
-Each milestone ends with tests green, a commit, and a JOURNAL.md entry. A board/demo snapshot goes into `process/` only when the visuals change. Push at the end of each milestone.
+Each milestone ends with tests green, a commit, and a JOURNAL.md entry. Playground screenshots go into `process/` at each review round, when the visuals change. Push at the end of each milestone.
 
 | # | Build | Done when |
 |---|---|---|
 | **M1 · Model** | Scaffold (Vite, TS strict, Vitest, size-limit, lint). `types`, `normalize`, `reducer`, `selectors`, `labels` | **Table-driven tests for every row in §4.2 (including `DELEGATE` and what clears it), every row in §3.1, and every recovery row in PLAN §6** (as reducer scenarios). Plural and number formatting tests for `labels` (English, Arabic, Polish). Coverage ≥ 95% on `model/`. No DOM yet |
-| **M2 · Element + flows** | `element.ts`, `view/step`, `form`, `review`, `chrome`, `skeleton`. Single, multi, text and other, plus the "Decide for me" row. Both flows. Keyboard §5.1. ARIA §5.5. Logical properties only (§8.1), with the stylesheet scan test | Component tests: each flow end to end with the keyboard only and with the mouse only. The demo playground shows board frames A1, B1–B4, D1–D4, E1 and E2 |
-| **M3 · Placements + endings** | `pill`, `record` (all 4 kinds), `composer.ts` (hide/show, placeholder, send detection), replace and dock, minimise/reopen, reply | The demo's fake chat shell reproduces C1, C2, D5, E3–E6. Composer tests for textarea, input and contenteditable |
-| **M4 · Recovery + own words** | Undo and history wiring, toasts, start over, edit-from-review, undo window, error/retry/`markAnswered`, revise, compose options (insert, highlight, untouched removal) | Every PLAN §6 row is demoable **and** covered by a component test. H1–H3 and D6 are reproduced |
+| **M2 · Element + flows** | `element.ts`, `view/step`, `form`, `review`, `chrome`, `skeleton`. Single, multi, text and other, plus the "Decide for me" row. Both flows. Keyboard §5.1. ARIA §5.5. Logical properties only (§8.1), with the stylesheet scan test | Component tests: each flow end to end with the keyboard only and with the mouse only. The playground shows every M2 scenario (sequential and all at once with every input type, Decide for me, review, loading) in light, dark and at 375px |
+| **M3 · Placements + endings** | `pill`, `record` (all 4 kinds), `composer.ts` (hide/show, placeholder, send detection), replace and dock, minimise/reopen, reply | The playground's fake chat shows replace and dock, the pill, and all four record kinds. Composer tests for textarea, input and contenteditable |
+| **M4 · Recovery + own words** | Undo and history wiring, toasts, start over, edit-from-review, undo window, error/retry/`markAnswered`, revise, compose options (insert, highlight, untouched removal) | Every PLAN §6 row is demoable **and** covered by a component test. Compose and the undo window work in the playground |
 | **M5 · Polish audit** | Motion (§4.3), focus (§5.2), live region (§5.4), reduced motion, touch hit areas (§5.3), IME, `viewport.ts` and the long-content rules (§8.2–8.3), and a full RTL pass | axe clean on every demo scenario (light and dark). Manual keyboard-only and VoiceOver (Safari) pass, logged in the journal. Playwright screenshots of every scenario at 1280 and 500 widths, light and dark. **Three new demo scenarios pass visually:** `dir="rtl"` (Arabic), long content (a 300-character prompt, 9 two-line options, a URL label, 8 questions in the all flow), and the phone keyboard (checked on a real phone, logged) |
-| **M6 · Theming + converters + ask()** | Tokens, parts, the `theme` attribute, `ask()`, `adapters/claude`, `adapters/mcp`, `jsx.d.ts` | The board's F1–F3 themes reproduced using tokens only. Converter round-trip tests (including "(Recommended)" and skip). `ask()` tests. Size ≤ 12 KB gzipped |
+| **M6 · Theming + converters + ask()** | Tokens, parts, the `theme` attribute, `ask()`, `adapters/claude`, `adapters/mcp`, `jsx.d.ts` | Three themes (light, dark, warm) in the playground using tokens only. Converter round-trip tests (including "(Recommended)" and skip). `ask()` tests. Size ≤ 12 KB gzipped |
 | **M7 · Ship** | README (quick start, the Claude Agent SDK recipe, an MCP recipe, model-side guidance from PLAN §9, the docked CSS recipe, the API reference), demo deploy, `npm publish` | Installed fresh in a scratch Vite app **and** used in the portfolio via the CDN. Mari approves the repo going public and the npm publish |
 
 ---
 
 ## 11. Definition of done (v1)
 
-- [ ] Every board frame is reproducible in the demo, in light and dark, at 1280 and 375–500 widths
+- [ ] Every playground scenario works in light and dark, at 1280 and 375 widths
 - [ ] Every PLAN §6 recovery row is covered by a component test
 - [ ] Keyboard-only, with no mouse needed anywhere; VoiceOver pass logged
 - [ ] RTL, long-content and phone-keyboard scenarios look right

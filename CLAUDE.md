@@ -10,17 +10,18 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
 |---|---|
 | `PLAN.md` | **What** to build: the spec (format, variants, states, recovery, own words, decisions in §11). |
 | `BUILD.md` | **How** to build it: architecture, state and transition tables, keyboard/focus/ARIA spec, full API, composer integration, milestones with acceptance criteria. **Implement from this.** |
-| `design/board.html` | The visual board: every variant and state, drawn with the real `--clarify-*` tokens. Open it in a browser; it has a theme toggle. |
+| `design/board.html` | The early visual sketch, **frozen in round 6**: Mari couldn't judge enough from it. Kept for the story. |
+| `demo/` | **The playground**: the real component in a fake chat, with scenarios, controls and an event log (`pnpm dev`). Visuals are judged and decided here (BUILD §2.1). |
 | `DESIGN.md` | **Why** every default looks the way it does: what each visual signal means, every token with its reason and measured contrast, and open findings (F1–F15). A new value needs a reason here before it ships. |
 | `JOURNAL.md` | Round-by-round log: the brief, Mari's feedback, the decisions made and why. |
-| `process/` | Frozen snapshots of each review round (board, plan, renders). |
+| `process/` | Frozen snapshots of each review round (plan, and board renders or playground screenshots). |
 
 ## Working rules
 
-1. **Never destroy process.** `PLAN.md` and `design/board.html` are working copies. At every review round, snapshot both into `process/NN-name/`, with full-page renders (light, dark, phone). Then log the round in `JOURNAL.md` (brief, feedback, the decisions and why, artifacts) and commit. **Never edit anything in `process/`.**
+1. **Never destroy process.** `PLAN.md` is a working copy. At every review round, snapshot it into `process/NN-name/`, with playground screenshots (light, dark, phone). (Before round 6 the board was snapshotted too.) Then log the round in `JOURNAL.md` (brief, feedback, the decisions and why, artifacts) and commit. **Never edit anything in `process/`.**
 2. **Plan and visuals before code**, and review before building anything substantial. Mari likes to discuss decisions first: give options with a recommendation, then apply only what was agreed, one round at a time.
 3. **Wording:** offer options in chat before changing user-facing copy. Write plainly, with no jargon in the UI.
-4. **Check before reporting done:** light, dark and phone width (375px). For the board, use headless Chrome screenshots. On this Mac, Chrome writes the PNG and then hangs on exit, so poll for the file and kill the process. Captures narrower than 500px get cropped, so capture at 500.
+4. **Check before reporting done:** light, dark and phone width (375px). For the playground, use headless Chrome screenshots. On this Mac, Chrome writes the PNG and then hangs on exit, so poll for the file and kill the process. Captures narrower than 500px get cropped, so capture at 500.
 5. **Decisions are Mari's.** In the journal, use "I" for Mari's calls and say plainly when something was Claude's suggestion.
 6. Commit after each milestone or round, and push to the private repo at the end of each milestone. Ask before anything public: making the repo public, or publishing to npm.
 7. **Scope is locked** (BUILD.md §0). The aim is a top-notch core, not more features. Don't add anything outside it. If something seems missing or costly, raise it with Mari.
@@ -66,8 +67,6 @@ BUILD.md is **agreed** (round 5, frozen in `process/06-build-agreed/`). Mari wan
 - Build in small pieces they can review.
 - **Verify visually wherever possible:** test reports and screenshots, and light, dark and 375px once there's UI.
 
-**Before M2** (not M1, which has no UI): a visual round on the board settles the DESIGN.md findings F1–F15 and adds the missing frames: Decide for me, long content, RTL, and phone with the keyboard open. The copy for a delegated answer ("Left to the agent" is the working copy) still needs Mari's pick.
-
 ## Done: M1 · Model (BUILD.md §10)
 
 `src/model/` (types, normalize, reducer, selectors) and `src/labels.ts`: 435 tests, 100% lines.
@@ -75,15 +74,13 @@ BUILD.md is **agreed** (round 5, frozen in `process/06-build-agreed/`). Mari wan
 - **Practice:** after each module, inject user-visible bugs and confirm a test fails. Test at boundaries.
 - **Size:** a target, not a wall (Mari's call). Polish first, then propose cuts. The model alone is ~4 KB gzipped.
 
-## Next: visual round, then M2
+## Next: M2 · Element + flows, playground first
 
-1. **Visual round on the board:**
-   - settle DESIGN.md F1–F15
-   - add frames for Decide for me, long content, RTL, and phone with the keyboard open
-   - pick the copy for a delegated answer ("Left to the agent" is the working copy)
-   - snapshot and render it as a review round
-2. **M2:** element + flows (BUILD §10). Move the `lang`/`dir` lookup into the element.
+Round 6 (Mari): **the board is frozen as the early sketch**, and visuals are judged in the **playground** (BUILD §2.1).
+1. Build the playground shell and the element together, so the real component is visible from the first render.
+2. Settle DESIGN.md F1–F15 and the copy for a delegated answer **in the playground**, as review rounds with screenshots.
+3. Move the `lang`/`dir` lookup into the element.
 
-Follow M2–M7 in order after that.
+Follow M3–M7 in order after that.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

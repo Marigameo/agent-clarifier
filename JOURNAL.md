@@ -21,6 +21,7 @@ process/
   04-build-plan/       scope lock + BUILD.md as first delivered for review
   05-coverage/         who it's for, decide for me, long content / phone / RTL rules, DESIGN.md
   06-build-agreed/     PLAN + BUILD + DESIGN as approved, the baseline the build starts from
+  (from round 6, review rounds snapshot playground screenshots; the board is frozen)
 ```
 
 ---
@@ -289,6 +290,26 @@ Snapshot: `process/05-coverage/` (PLAN.md, BUILD.md, DESIGN.md). The board hasn'
 - DESIGN.md findings F1–F15, plus the missing board frames
 
 Both are for the visual round, before M2.
+
+---
+
+## Round 6 · From the board to a playground (10 Oct 2026)
+
+**My feedback:** I made the board for rough visuals, and **I can't judge enough from it.** Testing the real component needs a playground: the real thing, wired to dummy data.
+
+**Options Claude gave:**
+- **A:** a playground page served by Vite (recommended)
+- **B:** Storybook (heavy, and shows components in isolation instead of inside a chat)
+- **C:** Ladle or Histoire (built around React or Vue)
+- **D:** a small app per framework (a final check, not a design tool)
+
+**My calls:**
+- **A, the playground:** the real `<agent-clarifier>` in a fake chat, with scenarios for every case on my list, controls, an event log, the result as JSON, and every setting in the URL.
+- **Skip the board's visual round.** The board is frozen as the early sketch. DESIGN.md findings F1–F15 and the delegated-answer copy are decided **in the playground**, on the real component, and review rounds snapshot playground screenshots.
+
+**Why:** you can't judge a shadow, a grey or a 120ms confirm from a static drawing. You can when you click through it inside a chat at phone width.
+
+**Plan changes:** BUILD §2.1 describes the playground. The milestone criteria now refer to playground scenarios instead of board frames, and M2 starts with the playground.
 
 ---
 
