@@ -109,6 +109,7 @@ function start(): void {
   bubble('agent', s.agent);
   $('result').textContent = '—';
   el.reset();
+  el.labels = s.labels ?? {};
   toComposer();
   clearInterval(streaming);
   if (s.stream) stream(s.q);

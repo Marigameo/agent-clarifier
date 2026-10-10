@@ -1,5 +1,5 @@
 // Dummy questionnaires for the playground: one per case worth judging.
-import type { Questionnaire } from '../src/index';
+import type { Label, LabelKey, Questionnaire } from '../src/index';
 
 export interface Scenario {
   id: string;
@@ -15,6 +15,8 @@ export interface Scenario {
   soon?: string;
   /** Feed the questionnaire in piece by piece, as a model writes it. */
   stream?: boolean;
+  /** UI strings for this scenario's language (the element's `labels` property). */
+  labels?: Partial<Record<LabelKey, Label>>;
 }
 
 const HOTEL: Questionnaire = {
@@ -223,7 +225,31 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'arabic',
     name: 'Arabic · RTL',
-    note: 'lang="ar-EG", dir="rtl". The layout mirrors, the back arrow flips, and numbers use Arabic-Indic digits. UI labels stay English until a translation is passed in.',
+    note: 'lang="ar-EG", dir="rtl". The layout mirrors, the back arrow flips, numbers use Arabic-Indic digits, and the UI strings come from the labels property. (Sample translation: needs a native speaker’s review.)',
+    labels: {
+      askedBy: 'يسأل {source}',
+      somethingElse: 'شيء آخر',
+      decideForMe: 'قرِّر عنّي',
+      delegated: 'متروك للمساعد',
+      skip: 'تخطٍّ',
+      continue: 'متابعة',
+      review: 'مراجعة',
+      send: 'إرسال',
+      sendAnswers: 'إرسال الإجابات',
+      startOver: 'البدء من جديد',
+      edit: 'تعديل',
+      back: 'رجوع',
+      minimise: 'تصغير',
+      reopen: 'إعادة الفتح',
+      undo: 'تراجع',
+      recommended: 'مُوصى به',
+      stepOf: '{n} من {total}',
+      answeredOf: 'تمت الإجابة على {n} من {total}',
+      checkAnswers: 'راجِع إجاباتك',
+      composerPlaceholder: 'أو اكتب ردّك بكلماتك…',
+      youAnswered: 'أجبت على {n} من {total}',
+      editAnswers: 'تعديل الإجابات',
+    },
     user: 'أريد حجز فندق في القاهرة',
     agent: 'بكل سرور. سؤالان سريعان أولاً.',
     lang: 'ar-EG',
