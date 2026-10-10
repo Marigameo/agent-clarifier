@@ -1,4 +1,6 @@
-# clarify-card: build journal
+# agent-clarifier: build journal
+
+> Called `clarify-card` until the naming round below. The snapshots in `process/` keep the old name, because they are history.
 
 > The story's source material. Every round of research, design and review is logged here, with the artifacts kept in `process/`.
 > Built with Claude (Claude Code) as a pair: I set the direction and make the calls, and Claude researches, drafts and builds.
@@ -104,6 +106,18 @@ Before building, I reviewed the board and pushed back on two things.
 **What came back:** `process/03-own-words/`. Board C1, C2 and D5 were updated, section 4 was rewritten as "In your own words" (H1–H3), and E6 plus a compose-option state were added. In the plan, §4b was rewritten, and the API lost `submit`, `format`, `complete()` and `clarify:draft` and gained `reply()` and `clarify:compose`.
 
 **Open:** the copy for the placeholder ("Or reply in your own words…") and the compose hint ("write it ↗").
+
+---
+
+## Naming · clarify-card → agent-clarifier
+
+- **I wanted** a name that describes the use case by itself.
+- **Candidates:** `clarify-card`, `ambiguity-resolver`, `clarifying-questions`, `agent-clarify`, `ask-user-question`, `agent-questions`, `chat-clarifier`, `clarification-card`. All were free on npm.
+- **Ruled out:**
+  - **Names built on "card" or "panel"** describe the look, not the job. The component is also a pill, a docked tray and a record.
+  - **`ambiguity-resolver`** sounds like an NLP library that resolves ambiguity *for* you. Here the user resolves it.
+  - **`clarifying-questions`** was Claude's first vote. My pushback: it's a component, and "clarifying questions" sounds like an action. A component should be a noun, like `<dialog>` or `date-picker`.
+- **Decision: `agent-clarifier`.** It's a noun, so it reads as a thing. It names both the job (clarifying) and the context (agents asking before acting), and `<agent-clarifier placement="dock">` reads naturally. Events and CSS variables keep the short `clarify:` / `--clarify-*` prefix.
 
 ---
 

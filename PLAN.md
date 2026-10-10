@@ -1,9 +1,9 @@
-# clarify-card: plan (v0, for review)
+# agent-clarifier: plan (v0, for review)
 
 > A plug-and-play web component that lets a chat agent ask clarifying questions before it acts.
 > Framework-agnostic, zero dependencies, neutral by default, restyled with CSS variables.
 > Status: **plan + visuals under review. Nothing built yet.**
-> Working name: `clarify-card` (package) / `<clarify-card>` (element). Naming is open, see §11.
+> Name: `agent-clarifier` (package and repo) / `<agent-clarifier>` (element). Events stay `clarify:*` and CSS variables stay `--clarify-*`, to keep code short.
 
 ---
 
@@ -214,8 +214,8 @@ This is the part you called out. Each kind of mistake gets its own fix:
 ## 7. Public API (draft)
 
 ```html
-<script type="module" src="clarify-card.js"></script>
-<clarify-card placement="dock" flow="sequential"></clarify-card>
+<script type="module" src="agent-clarifier.js"></script>
+<agent-clarifier placement="dock" flow="sequential"></agent-clarifier>
 ```
 
 **Attributes / properties**
@@ -247,8 +247,8 @@ This is the part you called out. Each kind of mistake gets its own fix:
 **Promise helper**: the friendliest way in for agent code:
 
 ```ts
-import { ask } from 'clarify-card';
-import { fromClaude, toClaude } from 'clarify-card/adapters/claude';
+import { ask } from 'agent-clarifier';
+import { fromClaude, toClaude } from 'agent-clarifier/adapters/claude';
 
 canUseTool: async (name, input) => {
   if (name !== 'AskUserQuestion') return { behavior: 'allow', updatedInput: input };
@@ -307,9 +307,9 @@ A short "when to ask" snippet you can paste into a system prompt:
 ## 10. Project structure and milestones
 
 ```
-clarify-card/
+agent-clarifier/
   src/
-    clarify-card.ts      # the custom element (render + events)
+    agent-clarifier.ts   # the custom element (render + events)
     state.ts             # reducer, history, state machine (pure, unit-tested)
     styles.ts            # tokens + component CSS
     ask.ts               # promise helper
@@ -339,7 +339,7 @@ clarify-card/
 
 ## 11. Open decisions (yours)
 
-1. **Name:** `clarify-card`? Alternatives: `ask-card`, `question-card`, `<agent-ask>`. The npm scope too (`@marigameo/…`?).
+1. ~~Name~~: **decided: `agent-clarifier`**. Still open: publish unscoped or as `@marigameo/agent-clarifier`?
 2. **Review step default:** `auto` (only when something was skipped or there are 3+ questions), or always?
 3. **Undo window after submit:** off by default (fast) or 4s by default (safe)?
 4. **Previews:** in v1 or later? They add layout work.
