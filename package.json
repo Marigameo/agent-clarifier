@@ -1,0 +1,64 @@
+{
+  "name": "@marigameo/agent-clarifier",
+  "version": "0.0.0",
+  "description": "A web component that lets a chat agent ask clarifying questions before it acts.",
+  "license": "MIT",
+  "author": "Mariappan <mari@strivelabs.ai>",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": [
+    "./dist/index.js"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "web-component",
+    "custom-element",
+    "agent",
+    "clarifying-questions",
+    "chat",
+    "ai"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "size": "size-limit",
+    "check": "pnpm typecheck && pnpm lint && pnpm coverage && pnpm build && pnpm size"
+  },
+  "size-limit": [
+    {
+      "name": "core (gzipped)",
+      "path": "dist/index.js",
+      "limit": "12 KB",
+      "gzip": true
+    }
+  ],
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@size-limit/file": "^14.2.0",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "size-limit": "^14.2.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.4",
+    "vite-plugin-dts": "^5.1.2",
+    "vitest": "^5.0.3"
+  }
+}
