@@ -10,6 +10,7 @@ const chat = $('chat');
 // ── settings live in the URL, so every case is a link ──────────────────────
 // The first option is the default.
 const CONTROLS = [
+  { key: 'placement', label: 'Placement', options: ['replace', 'dock'] },
   { key: 'theme', label: 'Theme', options: ['auto', 'light', 'dark', 'warm'] },
   { key: 'width', label: 'Chat width', options: ['full', '768', '375'] },
   { key: 'review', label: 'Review step', options: ['auto', 'always', 'never'] },
@@ -65,6 +66,7 @@ function applySettings(): void {
   chat.style.maxInlineSize = width === 'full' ? '' : `${width}px`;
   chat.classList.toggle('framed', width !== 'full');
 
+  el.placement = get('placement', 'replace') as 'replace' | 'dock';
   el.review = get('review', 'auto') as 'auto' | 'always' | 'never';
   el.undoWindow = get('undo', 'off') === '4s' ? 4000 : 0;
 }
@@ -107,8 +109,26 @@ function start(): void {
   bubble('agent', s.agent);
   $('result').textContent = '—';
   el.reset();
+  toComposer();
   el.open(s.q);
 }
+
+// ── where the element lives ─────────────────────────────────────────────────
+// While asking, it sits at the composer. Once it becomes a record, the app moves it into the
+// transcript, so the record stays with the conversation (and back again if it's reopened).
+function toTranscript(): void {
+  if (['answered', 'expired'].includes(el.state) && el.parentElement !== $('msgs')) {
+    $('msgs').append(el);
+    $('msgs').scrollTop = $('msgs').scrollHeight;
+  }
+}
+function toComposer(): void {
+  if (el.parentElement !== $('dock')) $('dock').prepend(el);
+}
+for (const name of ['clarify:skip', 'clarify:reply', 'clarify:expire']) el.addEventListener(name, toTranscript);
+el.addEventListener('clarify:submit', () => queueMicrotask(toTranscript));
+el.addEventListener('clarify:revise', () => queueMicrotask(toTranscript));
+el.addEventListener('clarify:reopen', toComposer);
 
 // ── the app's side: sending, replying in own words ──────────────────────────
 const SEND_EVENTS = ['clarify:submit', 'clarify:revise'];
@@ -117,11 +137,13 @@ for (const name of SEND_EVENTS) {
     const mode = get('send', 'ok');
     if (mode === 'ok') return;
     e.preventDefault(); // the app takes over: it will call markAnswered() or setError()
-    if (mode === 'slow') setTimeout(() => el.markAnswered(), 1500);
+    if (mode === 'slow') setTimeout(() => (el.markAnswered(), toTranscript()), 1500);
     else setTimeout(() => el.setError('The server didn’t respond. Your answers are kept.'), 900);
   });
 }
 
+// The app's normal send. While the card waits for an answer, the element catches the submit first
+// (capture phase) and delivers it as clarify:reply instead, so this only runs for ordinary messages.
 $<HTMLFormElement>('composer').addEventListener('submit', (e) => {
   e.preventDefault();
   const input = $<HTMLTextAreaElement>('composer-input');
@@ -129,8 +151,6 @@ $<HTMLFormElement>('composer').addEventListener('submit', (e) => {
   if (!text) return;
   bubble('user', text);
   input.value = '';
-  // Manual wiring until M3: a message sent while the card is minimised is the answer.
-  if (el.state === 'minimised') el.reply(text);
 });
 $<HTMLTextAreaElement>('composer-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {

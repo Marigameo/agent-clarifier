@@ -13,7 +13,8 @@ export function reviewView(init: Ctx): View {
   const left = h('span', { class: 'foot-l' });
   const send = button('send', 'primary');
   const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, send));
-  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title' }, sourceLine(init), head.el, h('div', { class: 'scroll' }, banner, list), foot);
+  const top = h('div', { class: 'top' }, sourceLine(init), head.el);
+  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title' }, h('div', { class: 'scroll' }, top, banner, list), foot);
 
   function update(ctx: Ctx): void {
     const s = ctx.s;

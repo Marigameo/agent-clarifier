@@ -117,7 +117,8 @@ export function stepView(init: Ctx): View {
   const primary = button('next', 'primary');
   const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, skip, primary));
 
-  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title' }, sourceLine(init), head.el, h('div', { class: 'scroll' }, body), foot);
+  const top = h('div', { class: 'top' }, sourceLine(init), head.el);
+  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title' }, h('div', { class: 'scroll' }, top, body), foot);
 
   function update(ctx: Ctx): void {
     const s = ctx.s;

@@ -25,6 +25,7 @@
   --_success: var(--clarify-success, #2f7d4f);
   --_shadow: var(--clarify-shadow, 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px rgba(0, 0, 0, .06));
   --_edge: rgba(0, 0, 0, .28);
+  --_shadow-dock: var(--clarify-shadow-dock, 0 -6px 20px rgba(0, 0, 0, .05));
   color-scheme: light;
   --_font: var(--clarify-font, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif);
   --_font-title: var(--clarify-font-title, var(--_font));
@@ -56,6 +57,7 @@
   --_success: var(--clarify-success, #7cc79a);
   --_shadow: var(--clarify-shadow, 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35));
   --_edge: rgba(0, 0, 0, .7);
+  --_shadow-dock: var(--clarify-shadow-dock, 0 -6px 20px rgba(0, 0, 0, .35));
   color-scheme: dark;
  }
 @media (prefers-color-scheme: dark) { :host(:not([theme="light"])) { 
@@ -75,6 +77,7 @@
   --_success: var(--clarify-success, #7cc79a);
   --_shadow: var(--clarify-shadow, 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35));
   --_edge: rgba(0, 0, 0, .7);
+  --_shadow-dock: var(--clarify-shadow-dock, 0 -6px 20px rgba(0, 0, 0, .35));
   color-scheme: dark;
  } }
 * { box-sizing: border-box; }
@@ -108,14 +111,26 @@ button { font: inherit; color: inherit; }
   padding-block: 16px 10px; padding-inline: 20px 16px;
 }
 .source + .head { padding-block-start: 6px; }
-.source, .head, .foot { flex: none; }
+.foot { flex: none; }
 
-/* Only the questions scroll; the header and footer stay put. */
+/* The questions scroll; the footer stays put. The header sticks to the top while it's short,
+   and scrolls away with the content when it's tall (over a third of the card), so a long
+   question never crowds out the options (round 7, option C). */
 .scroll { flex: 1 1 auto; min-block-size: 0; overflow-y: auto; overscroll-behavior: contain; }
+.top { position: sticky; inset-block-start: 0; z-index: 1; background: var(--_bg); }
+.card[data-tall] .top { position: static; }
 /* An edge shadow means "there's more under here", so it only shows while content is hidden. */
-.head, .foot { position: relative; z-index: 1; transition: box-shadow var(--_duration) var(--_ease); }
-.card[data-above] .head { box-shadow: 0 1px 0 var(--_border), 0 8px 12px -10px var(--_edge); }
+.top, .foot { transition: box-shadow var(--_duration) var(--_ease); }
+.foot { position: relative; z-index: 1; }
+.card[data-above]:not([data-tall]) .top { box-shadow: 0 1px 0 var(--_border), 0 8px 12px -10px var(--_edge); }
 .card[data-below] .foot { box-shadow: 0 -8px 12px -10px var(--_edge); }
+
+/* dock: the card sits on the composer, so its bottom edge joins it and its shadow falls upward,
+   onto the conversation it floats over (DESIGN §3). */
+:host([placement="dock"]) .card {
+  border-end-start-radius: 0; border-end-end-radius: 0; border-block-end: 0;
+  box-shadow: var(--_shadow-dock);
+}
 .title {
   flex: 1; min-inline-size: 0; margin: 0;
   font: 600 16px/1.35 var(--_font-title); letter-spacing: -.005em;

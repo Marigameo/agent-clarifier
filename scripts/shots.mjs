@@ -1,6 +1,6 @@
 // Screenshots of playground scenarios, for checking work and for review rounds.
 // Usage: node scripts/shots.mjs <outDir> [name=query[|step1|step2…] …]
-// Steps: "click:<css in the component>" · "key:<Key>" · "type:<text>" · "wait:<ms>"
+// Steps: "click:<css in the component>" · "pclick:<css in the page>" · "key:<Key>" · "type:<text>" · "wait:<ms>"
 import { createServer } from 'vite';
 import { chromium } from 'playwright-core';
 import { mkdirSync } from 'node:fs';
@@ -23,6 +23,7 @@ for (const spec of specs) {
   for (const step of steps) {
     const [kind, arg] = step.split(/:(.*)/s);
     if (kind === 'click') await page.locator(`agent-clarifier >> ${arg}`).first().click();
+    if (kind === 'pclick') await page.locator(arg).first().click();
     if (kind === 'key') await page.keyboard.press(arg);
     if (kind === 'type') await page.keyboard.type(arg);
     if (kind === 'wait') await page.waitForTimeout(Number(arg));

@@ -385,7 +385,7 @@ reply(text: string): void     // manual composer wiring
 | `clarify:reply` | `ClarifyResult` (delivery `composer`) | no | A message was sent while the card was minimised |
 | `clarify:compose` | `{ text, questionId, optionId }` | **yes** | A compose option was picked. Prevent it to insert the text yourself |
 | `clarify:dismiss` | `{ resumeTo }` | no | Minimised |
-| `clarify:reopen` | – | no | Reopened |
+| `clarify:reopen` | – | no | Reopened: from the pill, **or from a record** (Edit answers / Answer the questions). Apps that move the record into the transcript move the element back to the composer on this event |
 | `clarify:expire` | `ClarifyResult` (status `dismissed`) | no | `expire()` was called |
 | `clarify:error` | `{ reason }` | no | The questionnaire couldn't be shown |
 
@@ -441,15 +441,17 @@ It resolves on **submit** (and calls `markAnswered()` itself), **skip**, **reply
 
 | Task | `<textarea>` / `<input>` | `contenteditable` | No composer given |
 |---|---|---|---|
-| Hide (replace mode) | `hidden` on `composerContainer`, restored exactly afterwards | same | The app hides its own |
+| Hide (replace mode) | `hidden` **plus inline `display: none !important`** on `composerContainer`, so the app's own CSS can't override it. Both restored exactly afterwards | same | The app hides its own |
 | Placeholder swap | Save, then set `placeholder`. Restored when the card is answered, expired or reset | `data-placeholder` / `aria-placeholder` | – |
 | Insert a compose sentence | `setRangeText(text, 0, 0, 'end')` at the start, keeping existing text. Fires `input` | Insert a text node at the start, with the caret after it | `clarify:compose` only |
 | Highlight | A 600ms soft outline pulse on the composer (Web Animations API). Ranges can't be highlighted in a textarea | A temporary `<mark>`, removed after 600ms | – |
 | Detect "untouched" | The value still starts with the inserted text and nothing else changed | same | – |
-| Detect send | `submit` on the composer's `form` (capture). The card reads the value before the app clears it | same | The app calls `reply(text)` |
+| Detect send | `submit` on the composer's `form`, in the **capture phase**, so it runs before the app's handler. **While the card waits for an answer** (minimised, or dock while answering/reviewing), the submit is stopped (`preventDefault` + `stopImmediatePropagation`), delivered as `clarify:reply`, and the box is cleared as a send would. Otherwise it passes through untouched | same | The app calls `reply(text)` |
 | Docked look | Sets `data-clarifier-docked` on the composer container. The README gives a 3-line CSS recipe to square off its top corners | same | – |
 
-The component **never** injects global styles or changes the composer's own styles, apart from the temporary animation and the `hidden` attribute.
+The component **never** injects global styles or changes the composer's own styles, apart from the temporary animation and the hiding above.
+
+**Where the record lives** (round 7). The element is placed at the composer while it asks. When it becomes a record (`clarify:submit` not prevented, `clarify:skip`, `clarify:reply`, `clarify:expire`, or after `markAnswered()`), the app moves the element into its transcript, so the record stays with the conversation. On `clarify:reopen` it moves it back. The playground shows this, `ask()` will do it for you (M6), and the README gives the five-line recipe.
 
 ---
 

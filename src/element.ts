@@ -4,6 +4,7 @@
 // render (swap the view if it changed, else update it in place) → fire clarify:* events
 // from the transition.
 
+import { Composer, findComposer } from './composer';
 import { format, mergeLabels, type LabelKey, type Labels } from './labels';
 import { formatWarning, normalize } from './model/normalize';
 import { initialState, reducer } from './model/reducer';
@@ -42,7 +43,7 @@ function viewOf(s: State): ViewName {
 }
 
 export class AgentClarifier extends Base {
-  static observedAttributes: string[] = ['flow', 'review', 'undo-window', 'disabled'];
+  static observedAttributes: string[] = ['placement', 'flow', 'review', 'undo-window', 'disabled', 'composer', 'composer-container'];
 
   #s: State = initialState();
   #labels: Labels = mergeLabels();
@@ -53,6 +54,9 @@ export class AgentClarifier extends Base {
   #toastTimer = 0;
   #submitTimer = 0;
   #resize: ResizeObserver;
+  #composer: Composer | null = null;
+  #composerRef: string | Element | null = null;
+  #composerContainerRef: string | Element | null = null;
 
   constructor() {
     super();
@@ -68,16 +72,49 @@ export class AgentClarifier extends Base {
 
   connectedCallback(): void {
     watchViewport();
+    this.#connectComposer();
+    this.#render(true);
   }
 
   disconnectedCallback(): void {
     unwatchViewport();
     this.#resize.disconnect();
+    this.#composer?.destroy();
+    this.#composer = null;
   }
 
   // ── attributes and properties ─────────────────────────────────────────
 
-  attributeChangedCallback(): void {
+  attributeChangedCallback(name: string): void {
+    if (name === 'composer' || name === 'composer-container') this.#connectComposer();
+    if (this.isConnected) this.#render(true);
+  }
+
+  /** replace (default): the card takes the composer's place. dock: it sits above it. */
+  get placement(): 'replace' | 'dock' {
+    return this.getAttribute('placement') === 'dock' ? 'dock' : 'replace';
+  }
+  set placement(v: 'replace' | 'dock') {
+    this.setAttribute('placement', v);
+  }
+
+  /** The app's message box: a CSS selector (attribute) or the element itself (property). */
+  get composer(): string | Element | null {
+    return this.#composerRef ?? this.getAttribute('composer');
+  }
+  set composer(v: string | Element | null) {
+    this.#composerRef = v;
+    this.#connectComposer();
+    this.#render(true);
+  }
+
+  /** What to hide in replace mode. Default: the composer's form, else the composer. */
+  get composerContainer(): string | Element | null {
+    return this.#composerContainerRef ?? this.getAttribute('composer-container');
+  }
+  set composerContainer(v: string | Element | null) {
+    this.#composerContainerRef = v;
+    this.#connectComposer();
     this.#render(true);
   }
 
@@ -204,6 +241,50 @@ export class AgentClarifier extends Base {
     this.#view?.update(ctx);
     if (this.#view) this.#view.el.inert = this.disabled;
     this.#edges();
+    this.#syncComposer(ctx);
+  }
+
+  // ── the composer ──────────────────────────────────────────────────────
+
+  #connectComposer(): void {
+    this.#composer?.destroy();
+    this.#composer = null;
+    if (!this.isConnected) return;
+    const field = findComposer(this, this.composer);
+    if (!field) return;
+    const container = findComposer(this, this.composerContainer) as HTMLElement | null;
+    this.#composer = new Composer(field, container, (text) => this.#replyFromComposer(text));
+  }
+
+  /** A message sent from the composer is the answer while the card waits for one (PLAN §4b). */
+  #replyFromComposer(text: string): boolean {
+    const st = this.#s.status;
+    const waiting = st === 'minimised' || (this.placement === 'dock' && (st === 'answering' || st === 'reviewing'));
+    if (!waiting) return false;
+    this.#dispatch({ type: 'REPLY', text });
+    return this.#s.status === 'answered';
+  }
+
+  /** Hide/show the composer and swap its placeholder to match the card (BUILD §7). */
+  #syncComposer(ctx: Ctx): void {
+    const c = this.#composer;
+    if (!c) return;
+    const st = this.#s.status;
+    const open = ['loading', 'answering', 'reviewing', 'submitting', 'error'].includes(st);
+    const dock = this.placement === 'dock';
+    c.hide(!dock && open);
+    c.dock(dock && open);
+    // The placeholder says what typing will do, whenever typing is possible and would answer.
+    const offersReply = st === 'minimised' || (dock && (st === 'answering' || st === 'reviewing'));
+    c.placeholder(offersReply ? ctx.t('composerPlaceholder') : null);
+  }
+
+  #focusCard(): void {
+    const v = this.#view?.el;
+    const target =
+      v?.querySelector<HTMLElement>('[aria-checked="true"], [aria-pressed="true"]') ??
+      v?.querySelector<HTMLElement>('.opt:not([aria-disabled="true"]), textarea, .btn.primary:not([hidden])');
+    target?.focus({ preventScroll: true });
   }
 
   /** Show an edge shadow only where content is hidden past the edge (DESIGN §3). */
@@ -211,6 +292,10 @@ export class AgentClarifier extends Base {
     const card = this.#view?.el;
     const scroll = card?.querySelector('.scroll');
     if (!card || !scroll) return;
+    // A header taller than a third of the card scrolls away instead of sticking (round 7).
+    const top = card.querySelector<HTMLElement>('.top');
+    const max = parseFloat(getComputedStyle(card).maxHeight);
+    card.toggleAttribute('data-tall', !!top && max > 0 && top.offsetHeight > max / 3);
     card.toggleAttribute('data-above', scroll.scrollTop > 0);
     card.toggleAttribute('data-below', scroll.scrollTop + scroll.clientHeight < scroll.scrollHeight - 1);
   }
@@ -249,10 +334,20 @@ export class AgentClarifier extends Base {
       if (kind === 'replied') this.#emit('reply', next.record.result);
       if (kind === 'expired') this.#emit('expire', next.record.result);
     }
-    if (next.status === 'minimised' && prev.status !== 'minimised') this.#emit('dismiss', { resumeTo: next.resumeTo });
-    if (action.type === 'REOPEN') this.#emit('reopen', null);
+    if (next.status === 'minimised' && prev.status !== 'minimised') {
+      this.#emit('dismiss', { resumeTo: next.resumeTo });
+      // Minimising gives the composer back, so typing can start straight away (BUILD §5.2).
+      if (action.type !== 'COMPOSE') this.#composer?.focus();
+    }
+    if (action.type === 'REOPEN' || action.type === 'REVISE') {
+      if (action.type === 'REOPEN' && prev.compose) this.#composer?.takeBack();
+      this.#emit('reopen', null);
+      this.#focusCard();
+    }
     if (action.type === 'COMPOSE' && next.compose) {
-      this.#emit('compose', { text: next.compose.text, questionId: action.questionId, optionId: action.optionId }, true);
+      const detail = { text: next.compose.text, questionId: action.questionId, optionId: action.optionId };
+      // Not prevented → we start the sentence ourselves. Prevented → the app inserts it.
+      if (this.#emit('compose', detail, true)) this.#composer?.insert(detail.text);
     }
   }
 

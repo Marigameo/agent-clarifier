@@ -40,6 +40,10 @@ body {
 .msgs { flex: 1; min-block-size: 0; overflow: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 20px 18px 12px; }
 .msg { max-inline-size: 85%; line-height: 1.5; overflow-wrap: anywhere; }
 .msg.user { align-self: flex-end; padding: 10px 14px; border-radius: 14px; background: var(--pg-bubble); }
+.dock:has([data-clarifier-docked]) { gap: 0; }
+/* The README recipe: square the composer's top corners while a card is docked on it. */
+.composer[data-clarifier-docked] { border-start-start-radius: 0; border-start-end-radius: 0; }
+.msgs agent-clarifier { inline-size: 100%; max-inline-size: 560px; }
 .dock { flex: none; display: grid; gap: 10px; padding: 0 12px 12px; }
 .composer {
   display: flex; align-items: flex-end; gap: 8px; padding: 10px 10px 10px 16px;
