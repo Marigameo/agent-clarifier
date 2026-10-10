@@ -477,7 +477,7 @@ The component **never** injects global styles or changes the composer's own styl
 | Prompt, option label, description | Wrap. `overflow-wrap: anywhere` so long words and URLs break. `text-wrap: pretty` on prompts. Never clamped |
 | Record chips, review values, pill text | One line with an ellipsis. The full text goes in the accessible name and `title` |
 | "Something else" and text questions | `<textarea>` that grows with its content (`field-sizing: content` where supported, else a measured height) up to 5 lines, then scrolls |
-| The card | `max-height: var(--clarify-max-height, 60%)` **of the visible screen** (`--_vvh` from `viewport.ts`). The header and footer are fixed and the body scrolls (`overscroll-behavior: contain`) |
+| The card | `max-height: var(--clarify-max-height, 60%)` **of the visible screen** (`--_vvh` from `viewport.ts`). The footer is fixed and the body scrolls (`overscroll-behavior: contain`). **The header sticks while it's short and scrolls away when it's taller than a third of the card** (round 7), so a long question never crowds out the options |
 | Scroll edges | A 1px hairline plus a soft shadow at the top or bottom of the body, **shown only while content is hidden past that edge** (a scroll listener sets `data-scroll-top/bottom`). No overflow, no shadow |
 | All-flow with many questions | The body scrolls. When the user tries to send with missing required answers, the first one scrolls into view (`block: 'nearest'`) and gets focus |
 

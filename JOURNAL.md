@@ -313,6 +313,37 @@ Both are for the visual round, before M2.
 
 ---
 
+## Round 7 · Using it for real: long content and the composer (10 Oct 2026)
+
+Clicking through the first playground build raised two things.
+
+**1 · Long content was cut off.** The card had no height limit yet, so it grew past the chat and was clipped.
+- **Fixed now** instead of at M5: the card is capped at 60% of the visible screen, the questions scroll, the footer stays put, and an edge shadow shows only while more is hidden.
+- **The phone screenshot then exposed a second problem:** a 300-character question pinned at the top took 60% of the card. Claude's options:
+  - A: always pinned
+  - B: always scrolls
+  - C: pinned when short, scrolls when it's taller than a third of the card (recommended)
+- **My call: C.** It's done with `position: sticky` and one flag, so nothing moves in the DOM.
+
+**2 · "What if the user types in the composer instead? Should the card dismiss? Claude hides the composer."** The playground showed neither placement yet, so the composer just sat there.
+- Claude restated the rule from round 3: **replace** (the default, like Claude) hides the composer, and minimising gives it back reading "Or reply in your own words…". **Dock** keeps it visible.
+- In both, **typing never dismisses; sending does.** The message becomes the answer, and the record has "Answer the questions" to undo that.
+- **Why not dismiss on typing:** typing is tentative, people glance back at the options, and a stray key shouldn't hide the questions.
+- **My call: build the placements next** (pulled forward from M3, before the all-at-once form), so the playground behaves like a real chat.
+
+**What came with it**
+- **Sending from the composer:** the element listens on the form in the capture phase. While the card waits for an answer, it takes the message as `clarify:reply` and stops the app's normal send. Otherwise the message passes through untouched.
+- **A bug that only a real page shows:** `hidden` on the composer's form was overridden by the app's own `.composer { display: flex }`. Hiding now adds an inline `display: none !important` and restores everything exactly.
+- **Where the record lives:**
+  - The element sits at the composer while it asks.
+  - When it becomes a record, the app moves it into the transcript.
+  - On `clarify:reopen` it moves back, and that event now also fires when a record is reopened.
+  - The playground does this; `ask()` will do it in M6.
+- Compose options start their sentence in the composer, and Reopen takes it back out if it wasn't touched.
+- **Size:** 14.6 KB gzipped (target 12). As agreed, we polish first and cut later.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
