@@ -17,39 +17,57 @@ export function pillView(ctx: Ctx): View {
   return { el, update: () => {} };
 }
 
+/**
+ * The record left in the transcript (PLAN §5, board E3–E6). It says what happened in one line,
+ * offers the way back, and lists answers only where they add something.
+ */
 export function recordView(ctx: Ctx): View {
   const s = ctx.s;
   const r = s.record!;
   const qs = s.q?.questions ?? [];
   const p = progress(s);
-  const [msg, action] =
-    r.kind === 'skipped'
-      ? [ctx.t('skippedRecord'), ctx.t('answerNow')]
-      : r.kind === 'replied'
-        ? [ctx.t('replied'), ctx.t('answerQuestions')]
-        : r.kind === 'expired'
-          ? [r.message ?? ctx.t('expiredRecord'), null]
-          : [ctx.t('youAnswered', { n: p.answered, total: p.total }), ctx.t('editAnswers')];
+  const picked = qs.filter((q) => buildAnswer(q, draftOf(s, q.id)).status !== 'skipped').length;
 
-  const rows = r.kind === 'skipped' || r.kind === 'expired'
-    ? []
-    : qs.map((q) => {
+  let mark: 'check' | 'arrow' | 'pencil' | 'clock';
+  let line: string;
+  let action: string | null;
+  switch (r.kind) {
+    case 'answered':
+      [mark, line, action] = ['check', ctx.t('youAnswered', { n: p.answered, total: p.total }), ctx.t('editAnswers')];
+      break;
+    case 'skipped':
+      [mark, line, action] = ['arrow', ctx.t('skippedRecord'), ctx.t('answerNow')];
+      break;
+    case 'replied':
+      // The message itself is the user's own chat bubble; the record only says what it answered.
+      [mark, line, action] = ['pencil', picked ? `${ctx.t('replied')} · ${ctx.t('picksKept', { n: picked })}` : ctx.t('replied'), ctx.t('answerQuestions')];
+      break;
+    default:
+      [mark, line, action] = ['clock', r.message ?? ctx.t('expiredRecord'), null];
+  }
+
+  // Answers are listed when the card was answered, or when an expired card had some picks.
+  const showList = r.kind === 'answered' || (r.kind === 'expired' && picked > 0);
+  const rows = showList
+    ? qs.map((q) => {
         const a = buildAnswer(q, draftOf(s, q.id));
-        const v = a.status === 'skipped' ? ctx.t('skipped') : a.status === 'delegated' ? ctx.t('delegated') : a.labels.join(', ');
-        return [h('dt', {}, q.label), h('dd', {}, v)];
-      });
+        const gap = a.status === 'skipped';
+        const v = gap ? ctx.t('skipped') : a.status === 'delegated' ? ctx.t('delegated') : a.labels.join(', ');
+        // One line each; the full text stays available on hover and to screen readers.
+        return [h('dt', {}, q.label), h('dd', { class: gap ? 'gap' : null, title: v }, v)];
+      })
+    : [];
 
   const el = h(
     'div',
-    { class: `record${r.kind === 'expired' ? ' expired' : ''}`, part: 'record', role: 'status' },
+    { class: `record ${r.kind}`, part: 'record', role: 'group', 'aria-label': line, tabindex: '-1' },
     h(
       'div',
       { class: 'record-head' },
-      icon(r.kind === 'answered' ? 'check' : 'arrow', 'flip'),
-      msg,
+      icon(mark, mark === 'arrow' ? 'flip' : ''),
+      h('span', { class: 'record-line' }, line),
       action ? h('button', { class: 'btn link', type: 'button', 'data-act': 'revise' }, action) : null,
     ),
-    r.kind === 'replied' ? h('p', { class: 'quote' }, `“${r.result.message ?? ''}”`) : null,
     rows.length ? h('dl', {}, rows.flat()) : null,
   );
   return { el, update: () => {} };

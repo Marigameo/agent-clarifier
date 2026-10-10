@@ -21,6 +21,7 @@ process/
   04-build-plan/       scope lock + BUILD.md as first delivered for review
   05-coverage/         who it's for, decide for me, long content / phone / RTL rules, DESIGN.md
   06-build-agreed/     PLAN + BUILD + DESIGN as approved, the baseline the build starts from
+  08-claude-calls/     design calls delegated to Claude: palette, contrast, elevation, records
   (from round 6, review rounds snapshot playground screenshots; the board is frozen)
 ```
 
@@ -375,6 +376,42 @@ Clicking through the first playground build raised two things.
 **Numbers:** 456 tests (440 unit, 16 component). Size **17.8 KB** gzipped against the 12 KB target. Polish first, cut later (my call).
 
 **Next:** a review round in the playground. Settle DESIGN.md F1–F15 with live comparisons, the open copy ("Left to the agent", "A few questions", "Required"), and the record's final design.
+
+---
+
+## Round 8 · I delegate the design calls (10 Oct 2026)
+
+**My call:** "Choose things for me. Later I'll audit with some skills." Rather than adjusting things in the playground one by one, I'll review the finished state and work on the gaps I notice. **So every decision below is Claude's**, made against DESIGN.md's principles, with reasons recorded for my audit.
+
+**Claude's calls**
+- **Palette: neutral greys** (F9). "Neutral by default" was the promise, any brand accent sits on grey without clashing, and the warm off-whites read as Claude's own look. The warm set stays as a theme made with tokens only.
+- **Contrast, measured, not assumed** (F1–F3):
+  - all text is ink or muted (≥ 4.5:1 on the selected fill)
+  - "faint" is used only for edges (≥ 3:1)
+  - the text field finally has a visible outline
+- **Elevation means "floats over the conversation"** (F4, F5, F14):
+  - no shadow on the card in replace mode, since it takes the composer's place
+  - the dock shadow is a token
+  - in dark mode, floating things get a 1px top highlight, because shadows barely show there
+- **Geometry:**
+  - concentric 8px row corners (F7)
+  - radii from tokens (F8)
+  - four type sizes (F10)
+  - compact density with one 16px edge (F6)
+  - 52px rows kept, with the reason written down (F12)
+- **Focus rings for keyboard users only.** After a click, focus still moves (so the keyboard can take over) but the ring stays hidden. The screenshots showed it as noise for mouse users.
+- **Toasts pause while hovered or focused** (F13).
+- **The undo window is now visible:** "Sending in 3s · Undo", and ⌘Z also works.
+- **Records, final designs:**
+  - answered: a ✓ line plus one line per answer
+  - skipped and replied: a single line with the way back
+  - replied: the user's own message becomes their chat bubble
+  - expired: dashed
+- **Copy kept as the working copy:** "Left to the agent", "A few questions", "Required". The Decide-for-me icon is a hand-off arrow.
+
+**Snapshot:** `process/08-claude-calls/` (PLAN, BUILD, DESIGN, desktop light/dark and phone sheets).
+
+**Numbers:** 456 tests. Size 18.3 KB gzipped against the 12 KB target; cuts come after polish.
 
 ---
 

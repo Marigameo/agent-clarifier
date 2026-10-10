@@ -33,22 +33,22 @@ Each signal has **one meaning**, so it never has to be learnt twice.
 
 ## 2. Colour
 
-| Token | Light | Dark | Role | Contrast (on bg / on selected) | Why |
+Neutral greys since round 8 (F9). Contrast measured on the background and on the selected fill (the hardest case).
+
+| Token | Light | Dark | Role | Contrast (bg / selected) | Why |
 |---|---|---|---|---|---|
-| `--clarify-fg` | #1d1d1b | #ecebe7 | Text, the primary button, the toast | 16.9 / 14.4 · 13.2 / 11.1 | ✅ Near-black rather than black: softer on white and less glare in long reading, still far above AA |
-| `--clarify-muted` | #6b6a66 | #a9a7a1 | Descriptions, helper text, ghost buttons | 5.4 / 4.6 · 6.5 / 5.5 | ✅ The lightest grey that still passes AA on the selected fill. Secondary, but readable |
-| `--clarify-faint` | #9a9893 | #7c7a75 | Step count, source line, "Something else" label, review keys, ↵ hint, checkbox ring, placeholders | **2.9 / 2.5** · 3.7 / 3.1 | ⚠️ **Fails AA for text in both themes**, and the light checkbox ring misses 3:1. See finding F1 |
-| `--clarify-border` | #e7e5e0 | #363531 | Card edge, row dividers | 1.3 / 1.1 | ✅ for dividers (decorative). ⚠️ for the text field outline, which needs 3:1 (F3) |
-| `--clarify-hover` / `-selected` | #f5f4f0 / #eeede8 | #2b2a28 / #31302d | Row fills | – | ✅ Selected is a step darker than hover, so the state hierarchy reads. Fill is never the only cue |
-| `--clarify-key-bg` | #f1f0ec | #2e2d2a | Number-key badges | – | ✅ Between hover and selected, so badges read as "keys", not buttons |
-| `--clarify-accent` | #3b5bdb | #8ea6ff | Focus ring, checks, recommended badge, links | 5.7 / 4.8 · 6.8 / 5.7 | ✅ Passes AA as text, so links and the badge can use it directly. A calm blue is the most familiar "interactive" signal across products |
-| `--clarify-accent-soft` | accent at 10% | accent at 14% | Recommended badge fill, compose highlight | badge text 4.9 | ✅ Tints, never blocks: the accent text on it still passes AA |
-| `--clarify-danger` | #c2410c | #f0895a | Errors, invalid, flagged review rows | 5.2 · 6.3 | ✅ *(Claude's reading, to confirm)* A burnt orange rather than red: errors here are always recoverable (answers are kept), so it warns instead of alarming |
-| `--clarify-success` | #2f7d4f | #7cc79a | The record's tick, answered marks | 5.0 · 7.9 | ✅ Used only for "done", so green always means finished |
+| `--clarify-fg` | #1c1c1c | #ededed | Text, the primary button, the toast | 17.0 / 14.4 · 14.1 / 11.3 | ✅ Near-black: softer than black on white, far above AA |
+| `--clarify-muted` | #666666 | #a3a3a3 | **All secondary and small text**: descriptions, step count, source, review keys, placeholders | 5.7 / 4.9 · 6.5 / 5.2 | ✅ Passes AA everywhere it's used. Hierarchy below it comes from size (12px), not a paler grey |
+| `--clarify-faint` | #888888 | #7a7a7a | **Non-text only**: checkbox rings, the text field outline, skipped-step dashes | edge 3.5 / 3.0 · 3.8 / 3.1 | ✅ Meets 3:1 for the edges that identify a control (WCAG 1.4.11). Never used for text (F1) |
+| `--clarify-border` | #e6e6e6 | #343434 | Card edge, row dividers | decorative | ✅ Dividers only; nothing depends on seeing them |
+| `--clarify-hover` / `-selected` | #f5f5f5 / #ececec | #292929 / #303030 | Row fills | – | ✅ Selected is a step darker than hover. The fill is never the only sign of a pick |
+| `--clarify-key-bg` | #f0f0f0 | #2c2c2c | Number-key badges | – | ✅ Between hover and selected: reads as a key, not a button |
+| `--clarify-accent` | #3b5bdb | #8ea6ff | Focus ring, checks, recommended badge, links | 5.7 / 4.8 · 7.1 / 5.7 | ✅ Passes as text, so links and the badge use it directly |
+| `--clarify-accent-soft` | 10% | 14% | Badge fill | badge text 4.9 · 5.5 | ✅ Tints without blocking |
+| `--clarify-danger` | #c2410c | #f0895a | Errors (on their own pale fill) | 4.6 on danger-soft · 5.4 | ✅ *(Claude's reading)* Burnt orange, not red: errors here are always recoverable |
+| `--clarify-success` | #2f7d4f | #7cc79a | The answered tick | 5.0 · 8.2 | ✅ Only ever means "done" |
 
-**The palette's temperature** ⚠️ (F9): every grey is slightly warm (yellow-tinted). PLAN promises "neutral greys". Warm off-whites are also a recognisable part of Claude's own look, which works against "not a Claude copy".
-
----
+**Temperature (F9, Claude's call in round 8): neutral.** "Neutral by default" was a promise, any brand accent sits on grey without clashing, and the warm off-whites read as Claude's look. The warm set lives on as the playground's "warm" theme, made with tokens only.
 
 ## 3. Elevation
 
@@ -123,24 +123,34 @@ Each signal has **one meaning**, so it never has to be learnt twice.
 
 ---
 
-## 8. Findings to settle in the next visual round
+## 8. Findings (round 5), resolved in round 8 (Claude's calls)
 
-These aren't decided. Each needs Mari's call, and most need the board updated.
+Mari delegated these calls in round 8 and will audit the result. Each line is my decision and why.
 
-| # | Finding | Suggested fix |
+| # | Finding | Resolution |
 |---|---|---|
-| **F1** | `--clarify-faint` fails AA for text (2.9:1 light, 3.7:1 dark) | All text uses `muted`. `faint` becomes **non-text only** (rings, outlines, inactive dots) at ≥ 3:1. Light needs about #888 (measured 3.0 on the selected fill); dark already passes (3.1) |
-| **F2** | Light checkbox ring is 2.5:1 on the selected fill | Fixed by F1 |
-| **F3** | The text field's outline uses `border` (1.3:1) | Outline it with the new `faint` (≥ 3:1) |
-| **F4** | The replace-mode card has a shadow | No shadow in replace: border only, like the composer it replaces |
-| **F5** | The dock shadow is hard-coded | A token, `--clarify-shadow-dock` |
-| **F6** | Compact density has two inline edges (16 / 18) | One compact edge: 16 (8 inset + 8 row padding) |
-| **F7** | Row radius 9 isn't concentric | 8, or derived: `calc(var(--clarify-radius) - 8px)` as the default for `--clarify-radius-sm` |
-| **F8** | Record, toast and banner radii are hard-coded | Use the radius tokens |
-| **F9** | Warm greys: not neutral, and close to Claude's look | **True neutral** greys by default, with the warm set kept as a theme example. Needs a visual comparison |
-| **F10** | Five type sizes; 11px is small on phones | Four: 16 / 14 / 13 / 12 |
-| **F11** | The board uses `left`/`right` throughout | Logical properties; add an RTL frame |
-| **F12** | 52px row height has a weak reason | Keep 52 and record it as "44 + 8 for a pointer-first density", or try 48 |
-| **F13** | The toast timer doesn't pause | Pause on hover and on focus |
-| **F14** | Dark-mode elevation | Try a 1px top highlight or a slightly lighter dock surface |
-| **F15** | Missing frames: Decide for me (sequential, all, review, record), long content, RTL, phone with keyboard | Add them, then stress-test visually |
+| F1 | Faint text failed AA | **All text uses fg or muted.** Faint is non-text only. Hierarchy comes from size |
+| F2 | Checkbox ring under 3:1 | Faint is now #888 / #7a7a7a: 3.0+ on the selected fill |
+| F3 | Text field outline invisible | Outlined with faint (3.5:1) |
+| F4 | Replace card had a shadow | **No shadow by default** (`--clarify-shadow` defaults to none): it sits in the composer's slot, and the composer has none |
+| F5 | Dock shadow hard-coded | Token `--clarify-shadow-dock` |
+| F6 | Compact had two edges | `density="compact"`: one 16px edge (6 inset + 10 padding), 44px rows |
+| F7 | Row radius not concentric | 8px default (16 − 8 inset). Buttons, toast and banner use it too |
+| F8 | Hard-coded radii | Record uses `--clarify-radius`; toast/banner use `--clarify-radius-sm` |
+| F9 | Warm greys | **Neutral** (see §2) |
+| F10 | Five type sizes | Four: 16 / 14 / 13 / 12 (badge and key hints moved from 11 to 12) |
+| F11 | left/right in CSS | Logical properties only, enforced by a test |
+| F12 | 52px rows, weak reason | **Kept.** Comfortable is pointer-first: 44 (touch minimum) + 8 lets a two-line row (label + description) breathe. Compact is 44 |
+| F13 | Toast timer didn't pause | Waits while the toast is hovered or focused |
+| F14 | Dark elevation weak | Floating things (pill, docked card) add a 1px top highlight in dark |
+| F15 | Missing frames | Replaced by playground scenarios: Decide for me, long content, Arabic RTL, streaming, phone width |
+
+**Also decided in round 8:**
+- **Focus rings show for keyboard users only.** Focus still moves after a click (so the keyboard can take over), but the ring only appears once the user presses a key.
+- **Copy kept as working copy** ("Left to the agent", "A few questions", "Required"). They're plain, and the audit can revisit them.
+- **The Decide-for-me icon is a hand-off arrow (→|):** "pass it on", rather than an AI sparkle, which is overused and says nothing about handing over.
+- **Record designs:**
+  - answered: a ✓ line plus the answers, one line each, with full text on hover
+  - skipped and replied: a single line with the way back
+  - replied: the user's message is their own chat bubble
+  - expired: dashed, listing picks only if there were any

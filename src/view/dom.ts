@@ -58,6 +58,7 @@ const PATHS = {
   minimise: 'M4 6l4 4 4-4',
   undo: 'M5 4 2.5 6.5 5 9M3 6.5h6.5a3.5 3.5 0 0 1 0 7H7',
   alert: 'M8 1.75a6.25 6.25 0 1 0 0 12.5 6.25 6.25 0 0 0 0-12.5zM8 4.8v3.8M8 10.9v.1',
+  clock: 'M8 1.75a6.25 6.25 0 1 0 0 12.5 6.25 6.25 0 0 0 0-12.5zM8 5v3.3l2 1.4',
   // "Decide for me": a hand-off arrow. Placeholder until the icon is settled in review.
   delegate: 'M2.5 8h7M7 4.5 10.5 8 7 11.5M13.5 3.5v9',
 } as const;

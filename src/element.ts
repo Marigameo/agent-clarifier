@@ -62,6 +62,11 @@ export class AgentClarifier extends Base {
   #viewName: ViewName = 'none';
   /** Move focus into the card at the next view that can take it (replace mode open, reopen). */
   #wantFocus = false;
+  /**
+   * How the user is interacting. Focus still moves for pointer users (so the keyboard can take
+   * over at any moment), but its ring only shows for keyboard users: after a click it's noise.
+   */
+  #pointer = false;
   /** Polite live region (BUILD §5.4). Lives outside the views, so it survives view swaps. */
   #live: HTMLElement;
 
@@ -77,6 +82,8 @@ export class AgentClarifier extends Base {
     this.#root.addEventListener('input', (e) => this.#onInput(e));
     this.#root.addEventListener('focusin', (e) => this.#onFocusIn(e));
     this.#root.addEventListener('keydown', (e) => this.#onKeyDown(e as KeyboardEvent));
+    this.#root.addEventListener('pointerdown', () => this.#modality(true), true);
+    this.#root.addEventListener('keydown', () => this.#modality(false), true);
   }
 
   connectedCallback(): void {
@@ -257,7 +264,10 @@ export class AgentClarifier extends Base {
       }
     }
     this.#view?.update(ctx);
-    if (this.#view) this.#view.el.inert = this.disabled;
+    if (this.#view) {
+      this.#view.el.inert = this.disabled;
+      this.#view.el.toggleAttribute('data-pointer', this.#pointer);
+    }
     this.#edges();
     this.#syncComposer(ctx);
     if (swap && (hadFocus || this.#wantFocus)) this.#focusView(hadFocus);
@@ -292,6 +302,12 @@ export class AgentClarifier extends Base {
       target.focus({ preventScroll: true });
       target.scrollIntoView?.({ block: 'nearest' });
     });
+  }
+
+  #modality(pointer: boolean): void {
+    if (this.#pointer === pointer) return;
+    this.#pointer = pointer;
+    this.#view?.el.toggleAttribute('data-pointer', pointer);
   }
 
   #announce(message: string): void {
@@ -365,7 +381,7 @@ export class AgentClarifier extends Base {
     // Toasts disappear by themselves after a while
     if (next.toast !== prev.toast) {
       clearTimeout(this.#toastTimer);
-      if (next.toast) this.#toastTimer = window.setTimeout(() => this.#dispatch({ type: 'TOAST_TIMEOUT' }), TOAST_MS);
+      if (next.toast) this.#toastTimer = window.setTimeout(this.#toastDone, TOAST_MS);
     }
 
     const quiet = ['OPEN', 'STREAM', 'RESET', 'REVISE'].includes(action.type);
@@ -430,6 +446,13 @@ export class AgentClarifier extends Base {
     if (say.length) this.#announce(say.join(' '));
   }
 
+  /** A toast waits while it's hovered or focused, so nobody loses Undo while reaching for it (F13). */
+  #toastDone = (): void => {
+    const toast = this.#root.querySelector('.toast');
+    if (toast?.matches(':hover, :focus-within')) this.#toastTimer = window.setTimeout(this.#toastDone, 1000);
+    else this.#dispatch({ type: 'TOAST_TIMEOUT' });
+  };
+
   /** Fire clarify:submit (or clarify:revise) after the undo window. Not prevented → answered. */
   #scheduleSubmit(s: State): void {
     const revising = s.revising;
@@ -439,8 +462,11 @@ export class AgentClarifier extends Base {
       if (ok) this.#dispatch({ type: 'SUBMIT_OK' });
     };
     clearTimeout(this.#submitTimer);
-    if (s.undoUntil) this.#submitTimer = window.setTimeout(fire, Math.max(0, s.undoUntil - Date.now()));
-    else queueMicrotask(fire);
+    if (s.undoUntil) {
+      this.#submitTimer = window.setTimeout(fire, Math.max(0, s.undoUntil - Date.now()));
+      // Redraw the "Sending in 3s" countdown each second until the send goes out or is undone.
+      const tick = window.setInterval(() => (this.#s.status === 'submitting' ? this.#render() : clearInterval(tick)), 1000);
+    } else queueMicrotask(fire);
   }
 
   #emit(name: string, detail: unknown, cancelable = false): boolean {
@@ -499,6 +525,7 @@ export class AgentClarifier extends Base {
       case 'minimise': return this.#dispatch({ type: 'MINIMISE' });
       case 'reopen': return this.#dispatch({ type: 'REOPEN' });
       case 'undo': return this.#dispatch({ type: 'UNDO' });
+      case 'undo-send': return this.#dispatch({ type: 'UNDO_SUBMIT' });
       case 'skip': return q ? this.#dispatch({ type: 'SKIP', questionId: q.id }) : undefined;
       case 'next': return this.#dispatch({ type: 'NEXT' });
       case 'send': return this.#dispatch({ type: 'SUBMIT' });
@@ -539,7 +566,7 @@ export class AgentClarifier extends Base {
     if (mod && !e.shiftKey && e.key.toLowerCase() === 'z') {
       if (field) return;
       e.preventDefault();
-      return this.#dispatch({ type: 'UNDO' });
+      return this.#dispatch({ type: s.status === 'submitting' ? 'UNDO_SUBMIT' : 'UNDO' });
     }
     if (mod || e.altKey) return;
 

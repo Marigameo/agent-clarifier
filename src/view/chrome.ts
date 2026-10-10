@@ -56,6 +56,21 @@ export function setButton(
 /** The footer's left side: a toast when there is one, otherwise the given content. */
 export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | string)[]): void {
   const toast = ctx.s.toast;
+  // The undo window after Send: a countdown with Undo, in the same place as a toast.
+  const until = ctx.s.status === 'submitting' ? ctx.s.undoUntil : null;
+  if (until) {
+    const s = Math.max(1, Math.ceil((until - Date.now()) / 1000));
+    const msg = ctx.t('sendingIn', { s });
+    const current = el.querySelector('.toast > span');
+    if (current) text(current, msg);
+    else {
+      el.replaceChildren(
+        h('span', { class: 'toast', part: 'toast' }, h('span', {}, msg),
+          h('button', { class: 'btn link', type: 'button', 'data-act': 'undo-send' }, icon('undo'), ctx.t('undo'))),
+      );
+    }
+    return;
+  }
   if (!toast) {
     el.replaceChildren(...content());
     return;

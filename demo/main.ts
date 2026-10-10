@@ -148,7 +148,13 @@ function toTranscript(): void {
 function toComposer(): void {
   if (el.parentElement !== $('dock')) $('dock').prepend(el);
 }
-for (const name of ['clarify:skip', 'clarify:reply', 'clarify:expire']) el.addEventListener(name, toTranscript);
+for (const name of ['clarify:skip', 'clarify:expire']) el.addEventListener(name, toTranscript);
+// A reply sent from the composer was taken as the answer, so the app shows it as the user's own
+// message (it never reached the app's normal send), with the record under it.
+el.addEventListener('clarify:reply', (e) => {
+  bubble('user', (e as CustomEvent<{ message: string }>).detail.message);
+  toTranscript();
+});
 el.addEventListener('clarify:submit', () => queueMicrotask(toTranscript));
 el.addEventListener('clarify:revise', () => queueMicrotask(toTranscript));
 el.addEventListener('clarify:reopen', toComposer);

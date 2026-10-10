@@ -80,13 +80,12 @@ Sequential and all-at-once flows, every input type, loading/streaming, replace a
 - **Tests:** 16 component tests in real Chrome (`tests/component`, Vitest browser mode, system Chrome) and 440 unit tests.
 - **Checking visuals:** `node scripts/shots.mjs <dir> "name=query|step|…"`, using the steps `click:` (in the component), `pclick:` (in the page), `key:`, `type:` and `wait:`.
 
-## Next: review round in the playground (round 8)
+## Round 8: Claude decides, Mari audits
 
-Settle the following with Mari, using live comparisons where they help:
-- DESIGN.md findings F1–F15
-- the open copy: "Left to the agent", "A few questions", "Required", and the Decide-for-me icon
-- the record's final design: "Replied in your own words" should be the user's message with a "+N picks" tag
+From round 8, **Mari delegates design and copy calls to Claude** and will audit the finished state later. Log each call in the journal as Claude's, with its reason. Still ask before anything public (repo visibility, npm) or any scope change.
 
-Snapshot the playground screenshots into `process/08-…/`. Then finish M3 (record kinds, pill polish), then M4 to M7.
+## Next
+
+M4 leftovers, then M5 (motion: height animation and step slide; axe; IME), then M6 (`ask()`, the Claude and MCP converters, `jsx.d.ts`), then M7 (README, framework smoke examples). Then size work: the target is 12 KB and we're at about 18. Propose the cuts.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.
