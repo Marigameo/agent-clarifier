@@ -12,6 +12,9 @@ import type {
   NormalizedQuestionnaire,
   QuestionType,
 } from './types';
+import { claim, hash, slug } from './ids';
+
+export { hash, slug };
 
 export type WarningCode =
   | 'questionnaire-id'
@@ -62,31 +65,6 @@ const str = (v: unknown): string | undefined =>
 
 const int = (v: unknown): number | undefined =>
   typeof v === 'number' && Number.isFinite(v) ? Math.floor(v) : undefined;
-
-/** "Near King's Cross" → "near-king-s-cross". Keeps letters in any script. */
-export function slug(label: string): string {
-  return (
-    label
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}]+/gu, '-')
-      .replace(/^-+|-+$/g, '') || 'option'
-  );
-}
-
-/** Short, stable id from text (djb2). Same questions → same id. */
-export function hash(text: string): string {
-  let h = 5381;
-  for (let i = 0; i < text.length; i++) h = (h * 33) ^ text.charCodeAt(i);
-  return (h >>> 0).toString(36);
-}
-
-/** Returns `base`, or `base-2`, `base-3`… whichever is free, and claims it. */
-function claim(base: string, used: Set<string>): string {
-  let id = base;
-  for (let n = 2; used.has(id); n++) id = `${base}-${n}`;
-  used.add(id);
-  return id;
-}
 
 // ── normalize ────────────────────────────────────────────────────────────────
 

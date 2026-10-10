@@ -5,7 +5,11 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   build: {
     lib: {
-      entry: { index: 'src/index.ts' },
+      entry: {
+        index: 'src/index.ts',
+        'adapters/claude': 'src/adapters/claude.ts',
+        'adapters/mcp': 'src/adapters/mcp.ts',
+      },
       formats: ['es'],
     },
     target: 'es2022',

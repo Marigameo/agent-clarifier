@@ -46,7 +46,7 @@
 | Package manager | pnpm | Already on this machine |
 | Tests | Vitest (unit), Vitest browser mode with Playwright (component), Playwright (e2e, axe, screenshots) | Real browsers for focus, keyboard and Shadow DOM |
 | Browsers | Last 2 versions of Chrome, Edge, Firefox and Safari (Safari ≥ 16.4) | Needed for `color-mix()`, `:focus-visible` and Web Animations |
-| Size | **Target ≤ 12 KB gzipped** for the core, about 1 KB per converter. Checked with `size-limit`. **Mari's call (M1): polish first, then measure and cut.** The target guides us; it doesn't block a quality feature. If we go over, cuts are proposed to Mari, never made silently | Plug and play should mean light |
+| Size | **Target ≤ 12 KB gzipped** for the core (the size check guards at **20 KB** until the size round, so it stays meaningful while we polish), about 1 KB per converter. Checked with `size-limit`. **Mari's call (M1): polish first, then measure and cut.** The target guides us; it doesn't block a quality feature. If we go over, cuts are proposed to Mari, never made silently | Plug and play should mean light |
 | Runtime deps | **None** | |
 | Licence | MIT | |
 | Node | 22 | Installed |
@@ -404,38 +404,45 @@ It resolves on **submit** (and calls `markAnswered()` itself), **skip**, **reply
 
 ### 6.5 Converters
 
-**`fromClaude(input)`**
+Checked against the official specs on 10 Oct 2026 (Claude Agent SDK docs and `sdk-tools.d.ts`; MCP spec 2026-07-28). Each converter is a separate entry of about 1.1 KB, so you only pay for what you import.
+
+**`fromClaude(input, { delegate?, source? })`**
 - The questionnaire `id` is a short hash of the question texts.
 - Each question becomes:
   - `id`: a slug of `header` (made unique), else `q{n}`
-  - `prompt`: the `question` text
-  - `label`: `header`
+  - `prompt`: the `question` text; `label`: `header`
   - `type`: `multiSelect ? 'multi' : 'single'`
-  - `other`: `true`
-- Options: a label ending in **"(Recommended)"** has that suffix removed and gets `recommended: true`. `preview` is dropped.
-- Claude's format has no "decide for me", so `fromClaude(input, { delegate: true })` lets the app turn it on for every question.
+  - `other: true`, because Claude adds no "Other" option and expects the UI to offer free text
+- Options: a label ending in **"(Recommended)"** has the suffix removed and gets `recommended: true`. This is a widely used convention, not an official field, so the original label is always sent back unchanged. `preview` is dropped (v1.1).
 
-**`toClaude(result, input, opts?)`**
-- `answers` is keyed by the **original question text**, with values in the **original labels** (single: a string, multi: an array). "Something else" sends the typed text. Skipped questions are left out.
-- **Delegated questions** send `opts.delegateMessage ?? "Up to you. Pick what fits and say what you chose."` as their answer, so the instruction sits next to the question it belongs to.
-- `delivery: 'composer'` → `response: message`.
-- Status `skipped` → `response: opts.skipMessage ?? "The user skipped these questions. Use your best judgement and say what you assumed."`
-- `questions` is passed through unchanged.
+**`toClaude(result, input, opts?)` → the value `canUseTool` returns** *(round 8: it returns the whole permission result, so integration is one line)*
+- **Sent:** `{ behavior: 'allow', updatedInput: { questions, answers } }`.
+  - `answers` is keyed by the **original question text**.
+  - Values are the **original option labels**. Multi-select is joined with `", "`, which matches the SDK's `Record<string, string>` type.
+  - "Something else" sends the typed text, never the word "Other".
+  - Skipped questions are left out.
+  - Delegated questions send `opts.delegateMessage ?? "Up to you. Pick what fits and say what you chose."`.
+- **Skipped (all):** `allow` with `response: opts.skipMessage ?? "I'd rather not answer these. Use your best judgement, and tell me what you assumed."`. It's written in the user's voice, because Claude reads it as "The user responded: …". The SDK has no dedicated skip field.
+- **Replied in own words:** `allow` with `response: message`. Any picks made before replying are appended ("Picked so far: …"), because `response` replaces the answer list.
+- **Expired:** `{ behavior: 'deny', message: opts.dismissMessage ?? "The user closed the questions without answering." }`.
 
-**`fromElicitation(params)`**
-- `message` → `title`. Each schema property becomes a question:
-  - enum → single (with `enumNames` as labels)
-  - boolean → single Yes/No
-  - string → text
-  - number or integer → text with `inputmode="decimal"` and a "Enter a number" check
-- `required` carries over. `other` is `false`. The `source` is set by the caller.
+**`fromElicitation(params, { source?, flow?, yes?, no? })`**
+- Returns `null` for URL mode or a missing schema, since those aren't forms.
+- `message` → `title`. `flow` is `'all'` by default, because the spec asks that users can review and change answers before sending.
+- Each property becomes a question with `id` = its key, `prompt` = description, else title, and `label` = title. `required` carries over, and `other` is false (the schema is closed).
+- Property types:
+  - **single-select:** all three spec shapes are accepted: `enum`, `oneOf: [{ const, title }]`, and the legacy `enum` + `enumNames`
+  - **multi-select:** `type: 'array'` with `items.enum` or `items.anyOf`; `minItems`/`maxItems` → `min`/`max`
+  - **boolean:** a Yes/No single (labels can be changed)
+  - **string, number, integer:** a text question
+  - `default` carries over for every type
+- `source` should be the server's name, because MCP requires clients to show who is asking.
 
-**`toElicitation(result)`**
-- `submitted` → `accept` with the content typed back from the schema. Delegated fields are left out of `content`, like skipped ones, because MCP has no way to say "you decide". (`fromElicitation` never turns `delegate` on.)
-- `skipped` → `decline`. `dismissed` → `cancel`.
-- `delivery: 'composer'` → `accept` with the picks if every required field is answered, else `decline`. MCP has no free-text field, so the app reads `result.message` itself.
-
----
+**`toElicitation(result, params)`**
+- **Sent:** `accept`, with content typed back from the schema: const values, arrays for multi-select, booleans, and numbers.
+- **Skipped:** `decline`. **Expired:** `cancel`.
+- **Replied in own words:** `accept` with the picks.
+- **Any required field missing after conversion** (for example a "number" that wasn't one, or a reply sent before answering) → `decline`. The converter never sends an `accept` that breaks the server's own schema.
 
 ## 7. Composer integration (`composer.ts`)
 

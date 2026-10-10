@@ -27,7 +27,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      include: ['src/model/**', 'src/labels.ts'],
+      include: ['src/model/**', 'src/labels.ts', 'src/adapters/**'],
       reporter: ['text', 'html'],
       thresholds: { lines: 95, functions: 95, branches: 95, statements: 95 },
     },

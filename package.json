@@ -16,6 +16,14 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./adapters/claude": {
+      "types": "./dist/adapters/claude.d.ts",
+      "default": "./dist/adapters/claude.js"
+    },
+    "./adapters/mcp": {
+      "types": "./dist/adapters/mcp.d.ts",
+      "default": "./dist/adapters/mcp.js"
+    },
     "./jsx": {
       "types": "./types/jsx.d.ts"
     }
@@ -47,9 +55,30 @@
   },
   "size-limit": [
     {
-      "name": "core (gzipped)",
-      "path": "dist/index.js",
-      "limit": "12 KB",
+      "name": "core (gzipped; guard 20 KB, target 12 KB after the size round)",
+      "path": [
+        "dist/index.js",
+        "dist/ids-*.js"
+      ],
+      "limit": "20 KB",
+      "gzip": true
+    },
+    {
+      "name": "Claude converter",
+      "path": [
+        "dist/adapters/claude.js",
+        "dist/ids-*.js"
+      ],
+      "limit": "1.5 KB",
+      "gzip": true
+    },
+    {
+      "name": "MCP converter",
+      "path": [
+        "dist/adapters/mcp.js",
+        "dist/ids-*.js"
+      ],
+      "limit": "1.5 KB",
       "gzip": true
     }
   ],

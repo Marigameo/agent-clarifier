@@ -280,8 +280,8 @@ import { fromClaude, toClaude } from '@marigameo/agent-clarifier/adapters/claude
 
 canUseTool: async (name, input) => {
   if (name !== 'AskUserQuestion') return { behavior: 'allow', updatedInput: input };
-  const result = await ask(fromClaude(input), { placement: 'replace' });
-  return { behavior: 'allow', updatedInput: toClaude(result, input) };
+  const result = await ask(fromClaude(input), { container: composerSlot, transcript: messages });
+  return toClaude(result, input);
 };
 ```
 
