@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>agent-clarifier · plain HTML</title>
+  </head>
+  <body>
+    <!-- The README quick start, against the built file (as a CDN user would load it). -->
+    <agent-clarifier composer="#message"></agent-clarifier>
+    <form><textarea id="message"></textarea><button>Send</button></form>
+    <output id="out"></output>
+
+    <script type="module">
+      import { ask } from '../../dist/index.js';
+
+      const result = await ask({
+        id: 'trip',
+        questions: [{
+          id: 'area', prompt: 'Which area would you like to stay in?', type: 'single',
+          options: [{ id: 'soho', label: 'Soho', recommended: true }, { id: 'kx', label: 'King’s Cross' }],
+        }],
+      });
+      document.querySelector('#out').textContent = JSON.stringify(result.answers.area.labels);
+    </script>
+  </body>
+</html>
