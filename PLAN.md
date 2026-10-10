@@ -110,7 +110,7 @@ interface ClarifyResult {
 
 interface Answer {
   status: 'answered' | 'skipped' | 'delegated';   // delegated = "Decide for me"
-  values: string[];                // option ids, [] if skipped or delegated
+  values: string[];                // option ids (text questions: [the text]), [] if skipped or delegated
   labels: string[];                // human-readable, ready to put in a prompt
   other?: string;                  // free text, if used
 }

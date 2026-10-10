@@ -200,35 +200,41 @@ interface State {
 
 **Push history** = snapshot `{ step, drafts, status }` before applying. **Undo** restores the latest snapshot. Navigation never pushes.
 
+**Rules for every action** (settled while building M1):
+- An action that isn't allowed, or **changes nothing**, returns the **same state object**. Picking the already-picked option adds no undo step, and the element can skip rendering with one `next === prev` check.
+- States are never mutated (tests deep-freeze them), so snapshots can share drafts with the live state.
+- A snapshot identical to the last one isn't pushed again.
+- **A toast lasts until the next action that changes something**, unless that action sets a new toast. A no-op doesn't clear it.
+
 | Action | Allowed in | Effect | History |
 |---|---|---|---|
-| `OPEN(q, partial)` | hidden, answered, expired | Reset the state. `loading` if partial, else `answering`. Apply `default`s | cleared |
-| `STREAM(q, partial)` | loading | Replace `q`. Go to `answering` once `partial=false` | – |
+| `OPEN(q, partial)` | hidden, answered, expired | Reset the state. `loading` if partial, else `answering`. Apply `default`s. `q` may be `null` while partial (no complete question yet) | cleared |
+| `STREAM(q, partial)` | loading, or minimised from loading | Replace `q`. Go to `answering` once `partial=false`. If minimised, only `resumeTo` changes, so Reopen lands in `answering` | – |
 | `SELECT(qid, opt)` | answering | Single: set the value and clear `other` and `delegated`. Sequential: schedule `NEXT` after 120ms (the element does the timing; the reducer stays pure) | push |
-| `TOGGLE(qid, opt)` | answering | Multi: add or remove, blocked at `max` (toast "Up to N"). Clears `delegated` | push |
+| `TOGGLE(qid, opt)` | answering | Multi: add or remove, blocked at `max` (toast "Up to N", no undo step). "Something else" with text counts as a pick. Picks are kept **in the options' order**, so the result reads the same however they were clicked. Clears `delegated` | push |
 | `OTHER_FOCUS(qid)` / `OTHER_INPUT(qid, text)` | answering | Set `otherActive`, and the text. Clears `delegated`. Typing doesn't push on every key: one push when the field is entered | push (once) |
 | `TEXT_FOCUS(qid)` | answering | The text field was entered. Mirrors `OTHER_FOCUS`, so a whole typing session is one undo step | push |
 | `TEXT_INPUT(qid, text)` | answering | Text question value. Clears `delegated` | – (the push happened on `TEXT_FOCUS`) |
 | `DELEGATE(qid)` | answering, on a question with `delegate` | Set `delegated`, clear `values`, `other` and `text`, unset `skipped`. Sequential: schedule `NEXT` after 120ms, **on multi too** (it's a complete answer). Picking it again in the all flow unsets it | push |
-| `NEXT` | answering | If `returnTo='review'` → reviewing. Else step+1. After the last step → `needsReview` ? reviewing : `SUBMIT` | – |
+| `NEXT` | answering, sequential | Only when the current question is **settled** (answered, delegated or skipped). If `returnTo='review'` → reviewing. Else step+1. After the last step: nothing answered → finish as skipped; else `needsReview` ? reviewing : `SUBMIT` | – |
 | `BACK` | answering, reviewing | Step−1 (or from review back to the last step). Answers are untouched | – |
 | `GOTO(step)` | answering | Only to steps that are answered or skipped (the clickable dots) | – |
-| `SKIP(qid)` | answering, on a question **without** `delegate` (there, "Decide for me" replaces Skip) | Mark it skipped, clear its values, then `NEXT`. Toast: "Skipped ‘Label’ · Undo" | push |
-| `SKIP_ALL` | answering (all flow) | Every question skipped → result `skipped` → record `skipped`. Fires `clarify:skip` | push |
+| `SKIP(qid)` | answering, on a question that is **not required** and has **no** `delegate` (there, "Decide for me" replaces Skip) | Mark it skipped, clear its values, then `NEXT` (sequential, current question only). Toast: "Skipped ‘Label’ · Undo" | push |
+| `SKIP_ALL` | answering (all flow), **only if no question is required** (the element hides the button otherwise) | Every question skipped → result `skipped` → record `skipped`. Fires `clarify:skip` | cleared |
 | `EDIT(qid)` | reviewing | Go to that step with `returnTo='review'` | – |
 | `START_OVER` | reviewing | Clear all drafts, go to step 0. Toast: "Answers cleared · Undo" | push |
 | `UNDO` | answering, reviewing | Restore the latest snapshot. Clear the toast | pop |
-| `SUBMIT` | answering (all flow or last step), reviewing | All flow: if required questions are missing → `attempted=true` and stay. Else → `submitting`, with `undoUntil` if the undo window is on | – |
-| `UNDO_SUBMIT` | submitting (before `undoUntil`) | Back to the previous status | – |
+| `SUBMIT` | answering (all flow or last step), reviewing | If any question is **invalid** (required and empty, or picks below `min`) → `attempted=true` and stay. If nothing is answered → finish as skipped. Else → `submitting` with `resumeTo` = where it came from, and `undoUntil` = `now + undoWindow` if the window is on | – |
+| `UNDO_SUBMIT` | submitting, while `now < undoUntil` | Back to `resumeTo` | – |
 | `SUBMIT_OK` | submitting | Record `answered`. Clear history | cleared |
 | `SUBMIT_FAIL(msg)` | submitting | → `error` with the message. Answers kept | – |
 | `RETRY` | error | → `submitting` (fires submit again) | – |
 | `MINIMISE` | loading, answering, reviewing, error | `resumeTo` = current status → `minimised`. Toast cleared | – |
 | `REOPEN` | minimised | → `resumeTo`. If `compose` is untouched, the element removes the inserted sentence | – |
 | `COMPOSE(qid, opt)` | answering | Record the pick as the answer, set `compose`, → `minimised` | push |
-| `REPLY(text)` | minimised (dock: also answering and reviewing) | Record `replied`, result `delivery: 'composer'` with `message` and the picks so far | cleared |
-| `REVISE` | answered (record of any kind except expired) | Reopen in reviewing (or step 0 if nothing was picked) with `revising=true` | cleared |
-| `EXPIRE(msg?)` | anything except hidden | Record `expired`, read-only | cleared |
+| `REPLY(text)` | minimised, answering, reviewing (the **element** only sends it while answering or reviewing in dock mode) | Text trimmed; blank → nothing. Record `replied`, result `delivery: 'composer'` with `message` and the picks so far | cleared |
+| `REVISE` | answered (record of any kind except expired) | Sequential with answers → reviewing. All flow → the form (answering). After a skip, or with nothing picked → fresh drafts at step 0. `revising=true` until the next record | cleared |
+| `EXPIRE(msg?)` | anything except hidden, **answered** and expired (an answer already given stays given) | Record `expired`, read-only, result `dismissed` | cleared |
 | `RESET` | any | Back to `hidden`, everything cleared (the `reset()` method) | cleared |
 | `TOAST_TIMEOUT` | any | Clear the toast (after 5s, or on the next action) | – |
 

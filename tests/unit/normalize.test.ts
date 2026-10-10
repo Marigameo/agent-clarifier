@@ -232,7 +232,7 @@ describe('helpers', () => {
 
   it('formats a warning for the console', () => {
     expect(formatWarning({ code: 'too-few-options', at: 'questions[0]' })).toBe(
-      '[agent-clarifier] questions[0]: fewer than 2 options',
+      '[agent-clarifier] questions[0]: too-few-options',
     );
   });
 });

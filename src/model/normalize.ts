@@ -44,28 +44,10 @@ export type NormalizeResult =
 
 export const MAX_OPTIONS = 9;
 
-const MESSAGES: Record<WarningCode, string> = {
-  'questionnaire-id': 'no id; made one from the questions',
-  flow: "unknown flow; using 'sequential'",
-  'question-dropped': 'no prompt; question left out',
-  type: 'missing or unknown type; guessed from the options',
-  'question-id': 'missing or duplicate id; made one from its position',
-  'options-ignored': 'options on a text question are ignored',
-  'option-dropped': 'no label; option left out',
-  'option-id': 'missing or duplicate id; made one from the label',
-  'too-many-options': `more than ${MAX_OPTIONS} options; keeping the first ${MAX_OPTIONS}`,
-  'too-few-options': 'fewer than 2 options',
-  'recommended-many': 'more than one recommended option; keeping the first',
-  'recommended-disabled': 'a disabled option cannot be recommended',
-  'compose-multi': 'compose only works on single questions; ignored',
-  'compose-and-other': 'has both "Something else" and a compose option (two free-text routes)',
-  'min-max': 'min/max adjusted (multi only, 1 ≤ min ≤ max ≤ choices)',
-  default: 'default ignored or trimmed (unknown, disabled or too many)',
-  'delegate-required': 'required questions cannot be delegated; delegate ignored',
-};
-
+/** Codes, not sentences: they read clearly on their own and keep ~0.4 KB out of every download.
+ *  The README explains each one. */
 export function formatWarning(w: Warning): string {
-  return `[agent-clarifier] ${w.at}: ${MESSAGES[w.code]}`;
+  return `[agent-clarifier] ${w.at}: ${w.code}`;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────

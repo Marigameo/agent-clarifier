@@ -219,8 +219,9 @@ export interface Env {
 // if an action is added here and not handled there.
 
 export type Action =
-  | { type: 'OPEN'; q: NormalizedQuestionnaire; partial: boolean }
-  | { type: 'STREAM'; q: NormalizedQuestionnaire; partial: boolean }
+  // q is null while streaming and no question is complete yet (partial must then be true).
+  | { type: 'OPEN'; q: NormalizedQuestionnaire | null; partial: boolean }
+  | { type: 'STREAM'; q: NormalizedQuestionnaire | null; partial: boolean }
   | { type: 'SELECT'; questionId: string; optionId: string }
   | { type: 'TOGGLE'; questionId: string; optionId: string }
   | { type: 'OTHER_FOCUS'; questionId: string }
