@@ -59,14 +59,12 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
   - Yes/no is a two-option `single`, with no new type.
   - Every default has a reason in `DESIGN.md`.
 
-## Before M1
+## How we build
 
-BUILD.md is marked **"for review" (round 5)**. When Mari approves it, or asks for changes and then approves:
-1. Apply any changes.
-2. Change its status line to "agreed".
-3. Snapshot `PLAN.md` + `BUILD.md` + `DESIGN.md` into the next `process/NN-name/`.
-4. Log the outcome in JOURNAL.md, including Mari's answers to BUILD.md §13, "calls made" (items 1–14).
-5. Commit and push, then start M1.
+BUILD.md is **agreed** (round 5, frozen in `process/06-build-agreed/`). Mari wants to **learn each stage**:
+- Before each step, explain what we're building and why, plus the technical idea behind it.
+- Build in small pieces they can review.
+- **Verify visually wherever possible:** test reports and screenshots, and light, dark and 375px once there's UI.
 
 **Before M2** (not M1, which has no UI): a visual round on the board settles the DESIGN.md findings F1–F15 and adds the missing frames: Decide for me, long content, RTL, and phone with the keyboard open. The copy for a delegated answer ("Left to the agent" is the working copy) still needs Mari's pick.
 

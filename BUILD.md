@@ -2,7 +2,7 @@
 
 > **How** to build what [PLAN.md](PLAN.md) specifies and [design/board.html](design/board.html) shows.
 > Written so a build session can implement it without re-deciding anything. If something here conflicts with PLAN.md, raise it with Mari before choosing.
-> Status: **for review (round 5).** Round 5 added Decide for me, the long-content, phone and RTL rules, and [DESIGN.md](DESIGN.md). Once agreed, the status changes to "agreed", a snapshot goes into `process/`, and implementation starts at M1.
+> Status: **agreed (round 5, 10 Oct 2026).** Mari approved it with every "call made" in §13 accepted. Implementation follows the milestones in §10.
 
 ---
 

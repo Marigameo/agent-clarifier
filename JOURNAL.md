@@ -20,6 +20,7 @@ process/
   03-own-words/        draft mode simplified, "Reply in your own words" removed
   04-build-plan/       scope lock + BUILD.md as first delivered for review
   05-coverage/         who it's for, decide for me, long content / phone / RTL rules, DESIGN.md
+  06-build-agreed/     PLAN + BUILD + DESIGN as approved, the baseline the build starts from
 ```
 
 ---
@@ -223,6 +224,10 @@ Before building, I reviewed the board and pushed back on two things.
 - **BUILD.md** is still "for review".
 
 Snapshot: `process/05-coverage/` (PLAN.md, BUILD.md, DESIGN.md). The board hasn't changed this round; its frames come next.
+
+**Outcome: I approved BUILD.md** ("looks good"), with every call in §13 accepted as written, items 1–14. Its status is now **agreed**, frozen in `process/06-build-agreed/`.
+- **How we'll work from here:** go through each milestone together, explaining the what and the why before the code, and **check visually at every stage where we can**.
+- **Still open:** the copy for a delegated answer, and DESIGN.md findings F1–F15. Both are due before M2, the first UI milestone.
 
 ---
 
