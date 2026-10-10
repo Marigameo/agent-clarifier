@@ -184,10 +184,9 @@ button { font: inherit; color: inherit; }
   content: ""; position: absolute; inset-block-start: 0; inset-inline: 12px;
   border-block-start: 1px solid var(--_border);
 }
-.opt[aria-checked="true"], .opt[aria-pressed="true"], .opt.typing { background: var(--_selected); }
+.opt[aria-checked="true"], .opt[aria-pressed="true"] { background: var(--_selected); }
 .opt[aria-checked="true"]::before, .opt[aria-checked="true"] + .opt::before,
-.opt[aria-pressed="true"]::before, .opt[aria-pressed="true"] + .opt::before,
-.opt.typing::before, .opt.typing + .opt::before { border-color: transparent; }
+.opt[aria-pressed="true"]::before, .opt[aria-pressed="true"] + .opt::before { border-color: transparent; }
 .opt:focus-visible { box-shadow: inset 0 0 0 2px var(--_accent); }
 /* Rings are for keyboard users; after a click or tap they're noise (fills already show the pick). */
 [data-pointer] .opt:focus-visible, [data-pointer] .chip:focus-visible, [data-pointer] .btn:focus-visible, [data-pointer] .icon-btn:focus-visible { box-shadow: none; }
@@ -220,15 +219,18 @@ button { font: inherit; color: inherit; }
 .out { flex: none; font-size: 12px; color: var(--_muted); white-space: nowrap; }
 
 .quiet .label { color: var(--_muted); }
-.other input {
-  display: none; flex: 1; min-inline-size: 0; padding: 0;
+.quiet[aria-checked="true"] .label, .quiet[aria-pressed="true"] .label { color: var(--_fg); }
+.other-field {
+  display: flex; align-items: center; gap: 12px;
+  margin-block: 2px 4px; padding: 10px 12px; border-radius: var(--_radius-sm);
+  background: var(--_bg); box-shadow: inset 0 0 0 1.5px var(--_accent);
+}
+.other-field input {
+  flex: 1; min-inline-size: 0; padding: 0;
   font: inherit; color: var(--_fg); background: transparent; border: 0; outline: 0;
 }
-.other.typing { background: var(--_bg); box-shadow: inset 0 0 0 1.5px var(--_accent); }
-.other.typing .body { display: none; }
-.other.typing input { display: block; }
 .enter { font-size: 12px; color: var(--_muted); }
-.other:not(.typing) .enter { display: none; }
+:host([density="compact"]) .other-field { padding: 8px 10px; }
 
 /* ── text question ──────────────────────────────────────────────────── */
 .field { padding: 0 16px 14px; }
@@ -279,10 +281,11 @@ button.dot::after { content: ""; position: absolute; inset: -10px -2px; }
 button.dot:focus-visible { box-shadow: var(--_focus); }
 
 .toast {
-  display: inline-flex; align-items: center; gap: 10px;
+  display: inline-flex; align-items: center; gap: 10px; min-inline-size: 0; white-space: nowrap;
   padding-block: 6px; padding-inline: 12px 8px; border-radius: var(--_radius-sm);
   font-size: 13px; color: var(--_bg); background: var(--_fg);
 }
+.toast .msg { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; }
 .toast .btn.link { color: var(--_bg); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── all at once ────────────────────────────────────────────────────── */
@@ -344,6 +347,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 
 /* ── review ─────────────────────────────────────────────────────────── */
 .review { margin: 0; padding: 0 8px 8px; }
+.review dd.act { justify-self: end; }
 .review .row {
   display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center;
   padding: 11px 12px; border-radius: var(--_radius-sm);
@@ -351,7 +355,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .review .row + .row { border-block-start: 1px solid var(--_border); }
 .review dt { font-size: 12px; color: var(--_muted); overflow-wrap: anywhere; }
 .review dd { margin: 0; overflow-wrap: anywhere; }
-.review .gap dd { color: var(--_muted); font-style: italic; }
+.review .gap dd:not(.act) { color: var(--_muted); font-style: italic; }
 .review .flag { background: var(--_danger-soft); }
 .review .flag dt { color: var(--_danger); }
 /* Narrow cards (phones, sidebars): the footer keeps the dashes and buttons; the pick count
@@ -420,7 +424,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 
 @media (hover: hover) {
   .icon-btn:hover { background: var(--_hover); }
-  .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]):not(.typing) { background: var(--_hover); }
+  .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--_hover); }
   .opt:hover::before, .opt:hover + .opt::before { border-color: transparent; }
   .opt:hover .trail { visibility: visible; }
 }

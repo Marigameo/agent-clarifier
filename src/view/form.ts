@@ -76,7 +76,7 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
             role: q.type === 'multi' ? 'group' : 'radiogroup',
             'aria-labelledby': titleId,
             'aria-describedby': `${titleId}-err`,
-            'aria-required': q.required ? 'true' : null,
+            'aria-required': q.required && q.type === 'single' ? 'true' : null,
           },
           chips,
         );

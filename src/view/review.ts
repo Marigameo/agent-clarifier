@@ -35,10 +35,22 @@ export function reviewView(init: Ctx): View {
             { class: `row${gap ? ' gap flag' : ''}` },
             h('dt', {}, q.label),
             h('dd', {}, value),
+            // A second dd holds the action: dl rows may only contain dt and dd.
             h(
-              'button',
-              { class: 'btn link', type: 'button', 'data-act': 'edit', 'data-q': q.id, 'aria-label': ctx.t('editLabel', { label: q.label }) },
-              gap ? ctx.t('answer') : ctx.t('edit'),
+              'dd',
+              { class: 'act' },
+              h(
+                'button',
+                {
+                  class: 'btn link',
+                  type: 'button',
+                  'data-act': 'edit',
+                  'data-q': q.id,
+                  // The spoken name starts with the visible word (WCAG 2.5.3).
+                  'aria-label': ctx.t(gap ? 'answerLabel' : 'editLabel', { label: q.label }),
+                },
+                gap ? ctx.t('answer') : ctx.t('edit'),
+              ),
             ),
           );
         }),

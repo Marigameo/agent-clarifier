@@ -61,11 +61,11 @@ export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | strin
   if (until) {
     const s = Math.max(1, Math.ceil((until - Date.now()) / 1000));
     const msg = ctx.t('sendingIn', { s });
-    const current = el.querySelector('.toast > span');
+    const current = el.querySelector('.toast > .msg');
     if (current) text(current, msg);
     else {
       el.replaceChildren(
-        h('span', { class: 'toast', part: 'toast' }, h('span', {}, msg),
+        h('span', { class: 'toast', part: 'toast' }, h('span', { class: 'msg' }, msg),
           h('button', { class: 'btn link', type: 'button', 'data-act': 'undo-send' }, icon('undo'), ctx.t('undo'))),
       );
     }
@@ -88,7 +88,8 @@ export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | strin
       : h('button', { class: 'btn link', type: 'button', 'data-act': 'undo' }, icon('undo'), ctx.t('undo'));
   const current = el.firstElementChild;
   if (current?.classList.contains('toast') && current.textContent === msg + (undo ? ctx.t('undo') : '')) return;
-  el.replaceChildren(h('span', { class: 'toast', role: 'status', part: 'toast' }, msg, undo));
+  // One line: the message shortens with an ellipsis, Undo always stays whole.
+  el.replaceChildren(h('span', { class: 'toast', part: 'toast' }, h('span', { class: 'msg', title: msg }, msg), undo));
 }
 
 export { text };

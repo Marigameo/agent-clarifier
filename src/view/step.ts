@@ -37,9 +37,14 @@ function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: C
   );
 }
 
-function otherRow(q: NormalizedQuestion, ctx: Ctx): HTMLElement {
+/**
+ * "Something else": a radio/checkbox row, plus a text field that opens just below it.
+ * The field is a sibling, not inside the row: a text box nested inside a radio confuses screen
+ * readers (axe: nested-interactive). Round 8, Claude's call.
+ */
+function otherRow(q: NormalizedQuestion, ctx: Ctx): [HTMLElement, HTMLElement] {
   const label = q.other?.label ?? ctx.t('somethingElse');
-  return h(
+  const row = h(
     'div',
     {
       class: 'opt other quiet',
@@ -51,9 +56,14 @@ function otherRow(q: NormalizedQuestion, ctx: Ctx): HTMLElement {
     },
     h('span', { class: 'key plain', 'aria-hidden': 'true' }, icon('pencil')),
     h('span', { class: 'body' }, h('span', { class: 'label' }, label)),
+  );
+  const field = h(
+    'div',
+    { class: 'other-field', hidden: true },
     h('input', { type: 'text', 'aria-label': label, placeholder: q.other?.placeholder ?? '', 'data-input': OTHER, enterkeyhint: 'next' }),
     h('span', { class: 'enter', 'aria-hidden': 'true' }, '↵'),
   );
+  return [row, field];
 }
 
 function delegateRow(q: NormalizedQuestion, ctx: Ctx): HTMLElement {
@@ -83,6 +93,7 @@ export function stepView(init: Ctx): View {
   // Body: option rows, or a text field
   const rows: HTMLElement[] = [];
   let other: HTMLElement | null = null;
+  let field: HTMLElement | null = null;
   let input: HTMLInputElement | null = null;
   let area: HTMLTextAreaElement | null = null;
   let body: HTMLElement;
@@ -99,14 +110,16 @@ export function stepView(init: Ctx): View {
   } else {
     q.options.forEach((o, i) => rows.push(optionRow(q, o, i, init)));
     if (q.other) {
-      other = otherRow(q, init);
-      input = other.querySelector('input');
+      [other, field] = otherRow(q, init);
+      input = field.querySelector('input');
       rows.push(other);
     }
     body = h(
       'div',
-      { class: 'list', role: q.type === 'multi' ? 'group' : 'radiogroup', 'aria-labelledby': 'title', 'aria-required': q.required ? 'true' : null },
+      // aria-required is only allowed on radiogroup (single); a required multi says so in its error.
+      { class: 'list', role: q.type === 'multi' ? 'group' : 'radiogroup', 'aria-labelledby': 'title', 'aria-required': q.required && q.type === 'single' ? 'true' : null },
       rows,
+      field,
     );
   }
   const delegate = q.delegate ? delegateRow(q, init) : null;
@@ -138,8 +151,8 @@ export function stepView(init: Ctx): View {
     }
     // Never overwrite a field while the user is typing in it (that would move the caret).
     const active = (el.getRootNode() as ShadowRoot | Document).activeElement;
-    if (other && input) {
-      other.classList.toggle('typing', d.otherActive);
+    if (field && input) {
+      field.hidden = !d.otherActive;
       if (active !== input && input.value !== d.other) input.value = d.other;
     }
     if (area && active !== area && area.value !== d.text) area.value = d.text;

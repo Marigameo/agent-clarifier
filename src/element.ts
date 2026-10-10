@@ -518,7 +518,8 @@ export class AgentClarifier extends Base {
 
     if (id === OTHER) {
       this.#dispatch({ type: 'OTHER_FOCUS', questionId: q.id });
-      (row.querySelector('input') ?? row.closest('[data-q]')?.querySelector<HTMLInputElement>('input[data-input]'))?.focus();
+      (row.nextElementSibling?.querySelector<HTMLInputElement>('input[data-input]') ??
+        row.closest('[data-q]')?.querySelector<HTMLInputElement>('input[data-input]'))?.focus();
     } else if (id === DELEGATE) {
       this.#dispatch({ type: 'DELEGATE', questionId: q.id });
       if (draftOf(this.#s, q.id).delegated) this.#moveOnSoon();
@@ -666,7 +667,9 @@ export class AgentClarifier extends Base {
 
   /** From the "Something else" field back to its row (or the row above it, with step -1). */
   #focusOther(input: HTMLElement, step = 0): void {
-    const row = input.closest<HTMLElement>('[data-opt]') ?? input.closest('[data-q]')?.querySelector<HTMLElement>(`[data-opt="${OTHER}"]`);
+    const row =
+      (input.closest('.other-field')?.previousElementSibling as HTMLElement | null) ??
+      input.closest('[data-q]')?.querySelector<HTMLElement>(`[data-opt="${OTHER}"]`);
     if (!row) return;
     const group = this.#groupOf(row);
     const target = group[Math.max(0, group.indexOf(row) + step)] ?? row;

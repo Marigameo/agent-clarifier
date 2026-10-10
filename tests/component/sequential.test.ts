@@ -100,6 +100,15 @@ describe('sequential · keyboard only', () => {
     expect(m.el.snapshot.drafts.area!.other).toBe('Zone 2');
   });
 
+  it('keys pressed while an IME is composing (Japanese, Chinese…) are ignored', async () => {
+    const m = mount(HOTEL);
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+    focused(m)!.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, composed: true, isComposing: true }));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(m.el.snapshot.drafts.area!.values).toEqual([]);
+    expect(title(m)).toBe('Which area?');
+  });
+
   it('in right-to-left pages, → goes back', async () => {
     const m = mount(HOTEL);
     document.querySelector('#page')!.setAttribute('dir', 'rtl');

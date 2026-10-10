@@ -24,6 +24,7 @@ export interface Labels {
   startOver: Label;
   edit: Label;
   editLabel: Label;
+  answerLabel: Label;
   answer: Label;
   back: Label;
   minimise: Label;
@@ -99,6 +100,7 @@ export const DEFAULT_LABELS: Labels = {
   startOver: 'Start over',
   edit: 'Edit',
   editLabel: 'Edit {label}',
+  answerLabel: 'Answer {label}',
   answer: 'Answer',
   back: 'Back',
   minimise: 'Minimise',
