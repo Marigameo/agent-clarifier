@@ -453,7 +453,7 @@ Clicking through the first playground build raised two things.
 - **The size check had been failing quietly since M2 step 1**, because I'd said "polish first". A check that's always red gets ignored, so it now guards at 20 KB, and 12 KB stays the target for a size round.
 - **The deliberate-break check** caught 5/5 injected bugs in the converters.
 
-**Numbers:** 510 tests (unit + component in real Chrome), green. Core 19.7 KB gzipped; the converters are about 1.1 KB each.
+**Numbers:** 508 tests (unit + component in real Chrome), green. Core 19.7 KB gzipped; the converters are about 1.1 KB each.
 
 **Waiting on me:**
 1. **Size:** cut behaviour to reach 12 KB, or revise the target. Claude's measurements and options are below.
