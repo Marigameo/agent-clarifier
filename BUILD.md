@@ -121,6 +121,9 @@ Runs on every `open()`. It **fixes what it can, warns once per issue** (`console
 | `required` missing | `false` |
 | Question `id` missing or duplicated | Make one from the index (`q1`, `q2`…) and warn |
 | Option `id` missing or duplicated | Make one from the label (slug, made unique) and warn |
+| `label` missing | Use the prompt |
+| `min` / `max` missing on multi | `min` = 1 (so Continue always means "I picked something"; Skip is the way past with none), `max` = the number of options |
+| `default` given as a string on single or multi | Wrap it in an array |
 | More than 9 options | Keep the first 9 and warn (number keys only go to 9) |
 | Fewer than 2 options on single or multi | Warn, and still render |
 | More than one `recommended` | Keep the first and warn |
@@ -169,16 +172,18 @@ interface State {
   resumeTo: Status | null;          // where Reopen returns (answering or reviewing)
   attempted: boolean;               // all flow: show required errors only after a send attempt
   error: string | null;
-  toast: Toast | null;              // { kind, text, undo: boolean }
-  record: Record_ | null;           // { kind: 'answered'|'skipped'|'replied'|'expired', result }
+  toast: Toast | null;              // data, not words: { kind: 'skipped', questionId } | { kind: 'cleared' } | { kind: 'limit', max }
+  record: ClarifyRecord | null;     // { kind: 'answered'|'skipped'|'replied'|'expired', result, message? }
   revising: boolean;                // reopened from a record: the next submit fires clarify:revise
-  compose: { text: string; touched: boolean } | null;
+  compose: { questionId: string; text: string } | null;   // "touched" is read from the composer by the element on reopen (§7)
   undoUntil: number | null;         // undo window deadline (ms timestamp)
   history: Snapshot[];              // past { step, drafts, status }, capped at 50
 }
 ```
 
 ### 4.2 Actions and transitions (`reducer.ts`)
+
+**The reducer is pure:** `reducer(state, action, env)`, where `env` = `{ review, undoWindow, now }`. Everything from the outside world (attributes, the clock) comes in through `env`, so the same inputs always give the same state.
 
 **Push history** = snapshot `{ step, drafts, status }` before applying. **Undo** restores the latest snapshot. Navigation never pushes.
 
@@ -189,7 +194,8 @@ interface State {
 | `SELECT(qid, opt)` | answering | Single: set the value and clear `other` and `delegated`. Sequential: schedule `NEXT` after 120ms (the element does the timing; the reducer stays pure) | push |
 | `TOGGLE(qid, opt)` | answering | Multi: add or remove, blocked at `max` (toast "Up to N"). Clears `delegated` | push |
 | `OTHER_FOCUS(qid)` / `OTHER_INPUT(qid, text)` | answering | Set `otherActive`, and the text. Clears `delegated`. Typing doesn't push on every key: one push when the field is entered | push (once) |
-| `TEXT_INPUT(qid, text)` | answering | Text question value. Clears `delegated` | push (once per focus) |
+| `TEXT_FOCUS(qid)` | answering | The text field was entered. Mirrors `OTHER_FOCUS`, so a whole typing session is one undo step | push |
+| `TEXT_INPUT(qid, text)` | answering | Text question value. Clears `delegated` | – (the push happened on `TEXT_FOCUS`) |
 | `DELEGATE(qid)` | answering, on a question with `delegate` | Set `delegated`, clear `values`, `other` and `text`, unset `skipped`. Sequential: schedule `NEXT` after 120ms, **on multi too** (it's a complete answer). Picking it again in the all flow unsets it | push |
 | `NEXT` | answering | If `returnTo='review'` → reviewing. Else step+1. After the last step → `needsReview` ? reviewing : `SUBMIT` | – |
 | `BACK` | answering, reviewing | Step−1 (or from review back to the last step). Answers are untouched | – |
@@ -210,6 +216,7 @@ interface State {
 | `REPLY(text)` | minimised (dock: also answering and reviewing) | Record `replied`, result `delivery: 'composer'` with `message` and the picks so far | cleared |
 | `REVISE` | answered (record of any kind except expired) | Reopen in reviewing (or step 0 if nothing was picked) with `revising=true` | cleared |
 | `EXPIRE(msg?)` | anything except hidden | Record `expired`, read-only | cleared |
+| `RESET` | any | Back to `hidden`, everything cleared (the `reset()` method) | cleared |
 | `TOAST_TIMEOUT` | any | Clear the toast (after 5s, or on the next action) | – |
 
 **Selectors:**
