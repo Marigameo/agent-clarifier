@@ -38,6 +38,7 @@ export interface Labels {
   upTo: Label;
   stepOf: Label;
   stepOfMore: Label;
+  goTo: Label;
   answeredOf: Label;
   pickedOf: Label;
   pickOne: Label;
@@ -112,6 +113,7 @@ export const DEFAULT_LABELS: Labels = {
   upTo: 'Up to {max}',
   stepOf: '{n} of {total}',
   stepOfMore: '{n} of …',
+  goTo: 'Go to question {n}: {label}',
   answeredOf: '{n} of {total} answered',
   pickedOf: '{n} of {total} picked',
   pickOne: 'Pick one to continue',

@@ -495,7 +495,7 @@ export class AgentClarifier extends Base {
   #onClick(e: Event): void {
     const target = e.target as Element;
     const act = target.closest<HTMLElement>('[data-act]');
-    if (act && !(act as HTMLButtonElement).disabled) return this.#onAct(act.dataset.act!, act.dataset.q);
+    if (act && !(act as HTMLButtonElement).disabled) return this.#onAct(act.dataset.act!, act.dataset.q, act.dataset.step);
 
     const row = target.closest<HTMLElement>('[data-opt]');
     const q = row ? this.#questionOf(row) : undefined;
@@ -518,7 +518,7 @@ export class AgentClarifier extends Base {
     }
   }
 
-  #onAct(act: string, questionId?: string): void {
+  #onAct(act: string, questionId?: string, step?: string): void {
     const q = this.#current();
     switch (act) {
       case 'back': return this.#dispatch({ type: 'BACK' });
@@ -534,6 +534,7 @@ export class AgentClarifier extends Base {
       case 'start-over': return this.#dispatch({ type: 'START_OVER' });
       case 'revise': return this.#dispatch({ type: 'REVISE' });
       case 'edit': return questionId ? this.#dispatch({ type: 'EDIT', questionId }) : undefined;
+      case 'goto': return this.#dispatch({ type: 'GOTO', step: Number(step) });
     }
   }
 

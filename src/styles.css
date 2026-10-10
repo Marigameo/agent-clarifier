@@ -264,12 +264,19 @@ textarea::placeholder, input::placeholder { color: var(--_muted); }
 .btn.link { block-size: auto; padding: 0; border: 0; background: none; color: var(--_accent); }
 .btn:disabled { opacity: .35; cursor: not-allowed; }
 .btn:focus-visible, .icon-btn:focus-visible { outline: none; box-shadow: var(--_focus); }
+.keys { display: inline-flex; align-items: center; gap: 6px; }
+/* No physical keyboard on touch screens, so key hints would only be clutter. */
+@media (hover: none) { .keys { display: none; } }
 kbd { font: inherit; font-size: 12px; padding: 1px 5px; border: 1px solid var(--_border); border-radius: 5px; }
 
-.dots { display: inline-flex; gap: 4px; }
-.dots i { inline-size: 14px; block-size: 4px; border-radius: 2px; background: var(--_border); }
-.dots i.on { background: var(--_fg); }
-.dots i.skip { background: repeating-linear-gradient(90deg, var(--_faint) 0 2px, transparent 2px 4px); }
+.dots { display: inline-flex; align-items: center; gap: 4px; }
+.dot { display: block; inline-size: 14px; block-size: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--_border); }
+.dot.on { background: var(--_fg); }
+.dot.skip { background: repeating-linear-gradient(90deg, var(--_faint) 0 2px, transparent 2px 4px); }
+/* A settled step is a button: a taller invisible hit area keeps it easy to click. */
+button.dot { position: relative; cursor: pointer; }
+button.dot::after { content: ""; position: absolute; inset: -10px -2px; }
+button.dot:focus-visible { box-shadow: var(--_focus); }
 
 .toast {
   display: inline-flex; align-items: center; gap: 10px;
@@ -347,6 +354,12 @@ kbd { font: inherit; font-size: 12px; padding: 1px 5px; border: 1px solid var(--
 .review .gap dd { color: var(--_muted); font-style: italic; }
 .review .flag { background: var(--_danger-soft); }
 .review .flag dt { color: var(--_danger); }
+/* Narrow cards (phones, sidebars): the footer keeps the dashes and buttons; the pick count
+   (also in the description, and enforced with a message) and key hints step aside. */
+@container (max-width: 400px) {
+  .foot-l .count, .foot-l .keys { display: none; }
+}
+.foot-l .count, .keys { white-space: nowrap; }
 @container (max-width: 420px) {
   .review .row { grid-template-columns: 1fr auto; }
   .review dt { grid-column: 1 / -1; }

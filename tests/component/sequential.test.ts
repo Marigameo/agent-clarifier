@@ -130,6 +130,19 @@ describe('sequential · mouse only', () => {
     expect(result.answers.extras!.labels).toEqual(['Gym']);
   });
 
+  it('settled steps in the progress dashes are buttons that jump back', async () => {
+    const m = mount(HOTEL);
+    await userEvent.click(row(m, 'covent'));
+    await onStep(m, 'Budget per night?');
+    await userEvent.click(row(m, 'mid'));
+    await onStep(m, 'What matters most?');
+    const dots = m.root.querySelectorAll('.dots button');
+    expect(dots).toHaveLength(2); // the two answered steps; the current and later ones aren't buttons
+    expect(dots[0]!.getAttribute('aria-label')).toBe('Go to question 1: Area');
+    await userEvent.click(dots[0] as HTMLElement);
+    await onStep(m, 'Which area?');
+  });
+
   it('Back returns with the earlier pick still selected', async () => {
     const m = mount(HOTEL);
     await userEvent.click(row(m, 'covent'));

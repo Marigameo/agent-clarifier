@@ -1,6 +1,6 @@
 // Sequential flow: one question per card (PLAN §4).
 
-import { canContinue, draftOf, needsReview, picks, questionState } from '../model/selectors';
+import { canContinue, draftOf, isSettled, needsReview, picks, questionState } from '../model/selectors';
 import type { NormalizedOption, NormalizedQuestion } from '../model/types';
 import { button, footLeft, header, setButton, sourceLine } from './chrome';
 import { attr, h, icon, rove, text } from './dom';
@@ -147,21 +147,26 @@ export function stepView(init: Ctx): View {
     if (group.length) rove(group, active);
     else if (delegate) attr(delegate, 'tabindex', '0');
 
-    // Footer left: progress dots, "n of max picked", or the new-line hint; a toast wins.
+    // Footer left: progress dashes (always, so you can jump back from any step), plus the pick
+    // count on limited multi-selects or the new-line hint on text. A toast replaces them for a while.
     footLeft(left, ctx, () => {
+      const dots = h(
+        'span',
+        { class: 'dots' },
+        qs.map((x, i) => {
+          const d2 = draftOf(s, x.id);
+          const cls = questionState(x, d2) === 'skipped' ? 'skip' : i <= s.step ? 'on' : '';
+          // Settled steps are buttons, so you can jump straight back to one (PLAN §6).
+          return i !== s.step && isSettled(x, d2)
+            ? h('button', { class: `dot ${cls}`, type: 'button', 'data-act': 'goto', 'data-step': i, 'aria-label': ctx.t('goTo', { n: i + 1, label: x.label }) })
+            : h('i', { class: `dot ${cls}`, 'aria-hidden': 'true' });
+        }),
+      );
       if (q.type === 'multi' && q.max < q.options.length + (q.other ? 1 : 0)) {
-        return [ctx.t('pickedOf', { n: picks(q, d), total: q.max })];
+        return [dots, h('span', { class: 'count' }, ctx.t('pickedOf', { n: picks(q, d), total: q.max }))];
       }
-      if (q.type === 'text') return [h('kbd', {}, '⇧↵'), ctx.t('newLine')];
-      return [
-        h(
-          'span',
-          { class: 'dots', 'aria-hidden': 'true' },
-          qs.map((x, i) =>
-            h('i', { class: questionState(x, draftOf(s, x.id)) === 'skipped' ? 'skip' : i <= s.step ? 'on' : '' }),
-          ),
-        ),
-      ];
+      if (q.type === 'text') return [dots, h('span', { class: 'keys' }, h('kbd', {}, '⇧↵'), ctx.t('newLine'))];
+      return [dots];
     });
 
     // Skip is replaced by "Decide for me" on delegate questions, and never offered on required ones.
