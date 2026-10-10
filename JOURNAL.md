@@ -415,6 +415,55 @@ Clicking through the first playground build raised two things.
 
 ---
 
+## M3–M7 · Finishing the build on my delegation (10 Oct 2026)
+
+**Context:** with round 8 I handed the calls to Claude, so this stretch was built end to end. The calls Claude made are logged here for my audit.
+
+**What was added**
+- **Recovery (M4):** settled progress dashes are buttons that jump back. The dashes now show on every step, and the pick count and key hint step aside in narrow cards.
+- **Motion (M5):**
+  - the card's height animates between views
+  - steps slide 12px in the reading direction (mirrored in RTL)
+  - opening fades up
+  - nothing moves under reduced motion
+  - the animation clock was slowed through Chrome's DevTools Protocol to check it
+- **Focus rings follow page-wide input modality:** a card opened by pressing Enter shows its ring, one opened by a click doesn't.
+- **The accessibility audit (M5):** axe-core ran on 12 views in light and dark. Contrast passed everywhere once fades finished. It found four real issues, all fixed:
+  - **"Something else"** had its field nested in the radio. Claude's call: the field now opens just below the row.
+  - **`aria-required`** was on multi groups, where it isn't allowed.
+  - **The review list** had buttons inside its `dl` rows.
+  - **Button names** didn't start with the visible word.
+  - Plus a test that keys pressed while an IME is composing are ignored.
+- **`ask()` (M6):** resolves on send, skip, reply or expire, and never rejects for user actions. With a `transcript`, each ask gets its own card, which moves into the conversation as a record. Plus typed events, and opt-in JSX typings that are type-checked against React 19.
+- **Converters (M6):** first a research agent checked the current specs (Claude Agent SDK `AskUserQuestion`; MCP 2026-07-28). What it found changed the plan:
+  - Claude's multi-select answers are one `", "`-joined string.
+  - There's no official skip field, so skips go through `response`, in the user's voice.
+  - "(Recommended)" is a convention, not a field, so labels are sent back unchanged.
+  - MCP has three single-select shapes plus multi-select arrays.
+- **Claude's calls on the converters:**
+  - `toClaude()` returns the whole `canUseTool` result (one-line integration)
+  - MCP never sends an `accept` that's missing a required field (it declines instead)
+  - the converters are separate ~1.1 KB entries, with the shared id helpers split out so a converter doesn't pull in all of normalize
+- **M7:**
+  - React 19 and Vue 3 smoke tests in Chrome, plus server-side import
+  - the README (quick start verified against the built file; the Vue template syntax verified with Vue's compiler)
+  - two unused labels removed
+
+**Process fixes**
+- **The size check had been failing quietly since M2 step 1**, because I'd said "polish first". A check that's always red gets ignored, so it now guards at 20 KB, and 12 KB stays the target for a size round.
+- **The deliberate-break check** caught 5/5 injected bugs in the converters.
+
+**Numbers:** 510 tests (unit + component in real Chrome), green. Core 19.7 KB gzipped; the converters are about 1.1 KB each.
+
+**Waiting on me:**
+1. **Size:** cut behaviour to reach 12 KB, or revise the target. Claude's measurements and options are below.
+2. **Manual checks:** a VoiceOver pass, and a real phone with its keyboard.
+3. **Svelte 5:** it hasn't been tested.
+4. **Publishing:** npm and a public repo, both my go-ahead.
+5. **My audit of round 8's calls,** and a native speaker's review of the sample Arabic labels.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.

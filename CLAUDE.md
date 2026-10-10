@@ -84,8 +84,13 @@ Sequential and all-at-once flows, every input type, loading/streaming, replace a
 
 From round 8, **Mari delegates design and copy calls to Claude** and will audit the finished state later. Log each call in the journal as Claude's, with its reason. Still ask before anything public (repo visibility, npm) or any scope change.
 
-## Next
+## Status (end of the build on 10 Oct 2026)
 
-M4 leftovers, then M5 (motion: height animation and step slide; axe; IME), then M6 (`ask()`, the Claude and MCP converters, `jsx.d.ts`), then M7 (README, framework smoke examples). Then size work: the target is 12 KB and we're at about 18. Propose the cuts.
+M1–M7 are built. 510 tests are green (`pnpm check`). The Definition of done in BUILD §11 shows what's still open:
+- the size decision (19.7 KB against a 12 KB target)
+- the manual VoiceOver and real-phone passes
+- Svelte 5
+- publishing, which needs Mari's go-ahead
+- Mari's audit of the round-8 calls
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

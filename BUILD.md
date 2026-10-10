@@ -530,18 +530,21 @@ Each milestone ends with tests green, a commit, and a JOURNAL.md entry. Playgrou
 
 ## 11. Definition of done (v1)
 
-- [ ] Every playground scenario works in light and dark, at 1280 and 375 widths
-- [ ] Every PLAN §6 recovery row is covered by a component test
-- [ ] Keyboard-only, with no mouse needed anywhere; VoiceOver pass logged
-- [ ] RTL, long-content and phone-keyboard scenarios look right
-- [ ] Every default token has a reason in DESIGN.md, and no finding there is left open
-- [ ] axe: 0 violations across the scenarios
-- [ ] Zero runtime dependencies; ≤ 12 KB gzipped core
-- [ ] Works in plain HTML, React 19, Vue 3, Svelte 5 and Astro (one smoke example each in `demo/frameworks/`)
-- [ ] README complete; JOURNAL.md up to date; `process/` snapshots taken
-- [ ] Published as `@marigameo/agent-clarifier`, MIT
+Status as of round 8 (10 Oct 2026):
 
----
+- [x] Every playground scenario works in light and dark, at 1280 and 375 widths (screenshots in `process/08-claude-calls/`)
+- [~] Every PLAN §6 recovery row is covered: **all 11 by reducer scenario tests**. Component tests cover back, skip + undo, minimise and reopen, compose and take-back, reply in own words, and jumping back via the dashes. Start over, the undo window, revise and retry are covered in the reducer only
+- [x] Keyboard-only, with no mouse needed anywhere (component tests per flow)
+- [ ] **VoiceOver pass: manual, pending** (needs a person with VoiceOver)
+- [x] axe: 0 violations across 12 views × light/dark
+- [x] RTL, long-content and streaming scenarios look right
+- [ ] **Phone keyboard on a real phone: manual, pending**
+- [x] Every default token has a reason in DESIGN.md; findings F1–F15 resolved (round 8)
+- [x] Zero runtime dependencies
+- [ ] **≤ 12 KB gzipped core: currently ~19.7 KB** (guarded at 20 KB). Getting to 12 means cutting behaviour: Mari's call
+- [~] Frameworks: plain HTML (built file), React 19, Vue 3 and server-side import (Astro/Next) are tested. **Svelte 5 is not tested yet**
+- [x] README complete; JOURNAL.md up to date; `process/` snapshots taken
+- [ ] **Published as `@marigameo/agent-clarifier`: needs Mari's go-ahead** (npm login, and the repo going public for the demo)
 
 ## 12. Risks
 
