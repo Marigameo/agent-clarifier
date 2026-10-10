@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "paths": {
+      "@marigameo/agent-clarifier": ["../../src/index.ts"],
+      "@marigameo/agent-clarifier/jsx": ["../../types/jsx.d.ts"]
+    }
+  },
+  "include": ["./*.tsx", "../../src/env.d.ts"]
+}

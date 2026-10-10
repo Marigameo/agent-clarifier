@@ -45,7 +45,7 @@
   "scripts": {
     "dev": "vite --open /demo/",
     "build": "vite build && tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tests/types",
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -84,15 +84,20 @@
   ],
   "devDependencies": {
     "@size-limit/file": "^14.2.0",
+    "@types/react": "19",
+    "@types/react-dom": "19",
     "@vitest/browser-playwright": "^5.0.3",
     "@vitest/coverage-v8": "^5.0.3",
     "axe-core": "^4.14.0",
     "oxlint": "^1.87.0",
     "playwright": "^1.64.0",
     "playwright-core": "^1.64.0",
+    "react": "19",
+    "react-dom": "19",
     "size-limit": "^14.2.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "vue": "3"
   }
 }

@@ -22,5 +22,8 @@
     "tests",
     "demo",
     "*.ts"
+  ],
+  "exclude": [
+    "tests/types"
   ]
 }
