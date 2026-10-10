@@ -49,6 +49,15 @@ Owner: Mariappan (Mari), a design engineer. Pronouns: they/them unless told othe
   - copy: "Or reply in your own words…" and "write it ↗"
 - **Branching is out of v1.** So are option previews and icon slots.
 
+## Before M1
+
+BUILD.md is marked **"for review"**. When Mari approves it, or asks for changes and then approves:
+1. Apply any changes.
+2. Change its status line to "agreed".
+3. Snapshot `PLAN.md` + `BUILD.md` into `process/04-build-plan/`.
+4. Log the outcome under Round 4 in JOURNAL.md (including Mari's answers to BUILD.md §13, "calls made").
+5. Commit and push, then start M1.
+
 ## Next: M1 (BUILD.md §10)
 
 - Scaffold: Vite library mode, TS strict, Vitest, size-limit.
