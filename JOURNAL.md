@@ -15,6 +15,7 @@ process/
   00-research/         learnings draft + the Claude screenshot that started it
   01-board-v1/         first plan + board, renders before and after the review fixes
   02-draft-mode/       plan + board with draft mode added
+  03-own-words/        draft mode simplified, "Reply in your own words" removed
 ```
 
 ---
@@ -84,8 +85,31 @@ process/
 
 ---
 
+## Round 3 · Simplify: one way to answer, one way out
+
+Before building, I reviewed the board and pushed back on two things.
+
+**1 · "Reply in your own words" (C1)**
+- **My feedback:** the intent and how it works aren't clear from the link alone. It's too much control when minimise and Esc already exist.
+- **Decision:** removed it. **Minimising gives the composer back**, and its placeholder changes to **"Or reply in your own words…"**, so the input itself explains what typing does. A message sent while the card is minimised **is the answer**, along with the picks so far. Dock already worked this way, so both placements now share one rule.
+- **New state:** the record reads "Replied in your own words · 2 picks kept", with **Answer the questions** to reopen the card (board E6).
+
+**2 · Draft mode was confusing**
+- **My feedback:** What is "Edit first"? Why does Send fill the composer instead of sending? If review already lets you edit each answer, prefilling the composer with the same picks is redundant. Prefill only makes sense for answers that aren't terms, like a sentence or a detail.
+- **Decision:** dropped draft as a mode: `submit`, Edit first, Add to message, the "Filled from your answers" strip, Keep/Update draft, and `explain`. In its place:
+  - a **`compose` option**, for an answer the user should write themselves (sensitive, personal or long). Picking it minimises the card and starts the sentence in the composer, e.g. "For accessibility, I need ". It then follows rule 1. The row shows a **"write it ↗"** hint because it leaves the card.
+  - **short details stay in the card**, as a `text` question with a `default`.
+- **Why it's better:** one way to answer (the card, with review for edits) and one way out to your own words (the composer). No new strip, state or button. The compose option reuses minimise.
+
+**What came back:** `process/03-own-words/`. Board C1, C2 and D5 were updated, section 4 was rewritten as "In your own words" (H1–H3), and E6 plus a compose-option state were added. In the plan, §4b was rewritten, and the API lost `submit`, `format`, `complete()` and `clarify:draft` and gained `reply()` and `clarify:compose`.
+
+**Open:** the copy for the placeholder ("Or reply in your own words…") and the compose hint ("write it ↗").
+
+---
+
 ## Story notes (to use later)
 
-- The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → build.
+- The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → build.
 - Good before/after pairs: the v1 first render vs after the review fixes (the checkbox and radio fix is a small, clear example).
+- Round 2 → 3 is a good "less is more" beat: draft mode got simpler when I asked what each control was for.
 - The renders in each round are ready to use as story images.

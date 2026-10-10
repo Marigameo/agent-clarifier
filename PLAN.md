@@ -16,7 +16,7 @@
 - Three input types: **single select**, **multi-select**, and a free-text **"Something else"**. Plain `text` questions too.
 - Two placements: **replace** (takes over the composer) and **dock** (pinned above the composer, so it never scrolls away with messages).
 - Leaves a **record** in the conversation once answered.
-- **Draft mode** (opt-in): answers **fill the composer instead of being sent**, so the user can edit them, add context and send when ready. This is for sensitive questions, and for choices that need explaining.
+- **Your own words, always one step away**: minimise and type, or pick a **compose** option that starts a sentence in the composer for answers the user should write themselves.
 - Keyboard-complete, screen-reader friendly, touch friendly, reduced-motion safe.
 - Neutral look. Every colour, radius, space and font is a CSS variable.
 
@@ -60,7 +60,6 @@ interface Questionnaire {
   title?: string;                   // "A few questions before I search"
   flow?: 'sequential' | 'all';      // default 'sequential'
   source?: string;                  // "Claude", "Hotel search (MCP)": who is asking
-  submit?: 'send' | 'draft' | 'choice'; // default 'send'. See §4b
   questions: Question[];
 }
 
@@ -75,7 +74,6 @@ interface Question {
   min?: number; max?: number;       // multi only
   default?: string | string[];      // option id(s) or text
   description?: string;             // a helper line under the prompt
-  explain?: boolean | string;       // draft mode: leave a "why?" placeholder after this answer
 }
 
 interface Option {
@@ -85,6 +83,7 @@ interface Option {
   recommended?: boolean;            // gets a badge and is focused first
   disabled?: boolean;
   preview?: string;                 // sanitised HTML or plain text, shown beside the option
+  compose?: string;                 // picking it starts this sentence in the composer instead (see §4b)
 }
 ```
 
@@ -94,9 +93,9 @@ interface Option {
 interface ClarifyResult {
   questionnaireId: string;
   status: 'submitted' | 'skipped' | 'dismissed';   // skipped = "just go", dismissed = closed without a choice
-  delivery: 'direct' | 'draft';                   // sent from the card, or from the composer after editing
-  answers: Record<string, Answer>;                // keyed by question id: the structured picks, even in draft mode
-  message?: string;                               // the text actually sent: the edited draft, or a free reply
+  delivery: 'card' | 'composer';                  // answered in the card, or by a message sent from the composer
+  answers: Record<string, Answer>;                // keyed by question id: the picks made so far
+  message?: string;                               // the user's own words, when delivery is 'composer'
 }
 
 interface Answer {
@@ -116,7 +115,7 @@ interface Answer {
 | Axis | Values | Notes |
 |---|---|---|
 | `flow` | `sequential` · `all` | Sequential shows one question per step with a step counter. All shows every question in one scrollable card with a progress count. |
-| `placement` | `replace` · `dock` | Replace hides the composer (via a slot or a `composer` selector) and gives it back afterwards. Dock sits above the composer, which stays usable. |
+| `placement` | `replace` · `dock` | Replace hides the composer (via a slot or a `composer` selector) and gives it back when the card is minimised or done. Dock sits above the composer, which stays usable. |
 | `density` | `comfortable` · `compact` | Compact is for docked cards on small screens. |
 | Question `type` | `single` · `multi` · `text` | Plus the "Something else" row on single and multi |
 | Option extras | description · recommended · disabled · preview | A preview turns the card into a two-column layout on wide screens |
@@ -129,42 +128,28 @@ interface Answer {
 
 ---
 
-## 4b. Draft mode: prefill, edit, then send
+## 4b. Answering in your own words
 
-In some cases picking an option isn't the whole answer. The topic may be sensitive (health, money, a complaint), or the choice may need a reason. For these, the card **writes the answers into the composer** instead of sending them. The user edits, adds context and sends with the composer's normal Send button. **Nothing reaches the agent until they do.**
+There's **one way to answer** (the card, with review for edits) and **one way out to your own words** (the composer). The composer can be reached by two routes.
 
-**Opting in (`submit`)**
+**1 · Minimise, then type**
+- Minimising (Esc or ⌄) folds the card into the pill and gives the composer back. In replace mode, its placeholder becomes **"Or reply in your own words…"**, so the input itself explains what typing will do.
+- **A message sent while the card is minimised is the answer.** It goes back as `message` (`delivery: 'composer'`), together with the picks so far, and the pill turns into a record: "Replied in your own words".
+- Dock mode behaves the same way, since there the composer is always visible.
 
-| Value | Last-step button(s) | When to use |
-|---|---|---|
-| `send` (default) | **Send** | Quick, low-stakes choices |
-| `draft` | **Add to message** | Sensitive topics, or answers that need explaining. The developer decides. |
-| `choice` | **Send** + **Edit first** | Let the user decide per answer set. `⇧↵` = Edit first |
+**2 · A `compose` option** (for answers the user should write themselves: sensitive, personal, or longer than a pick)
+- `{ "label": "I'll explain", "compose": "For accessibility, I need " }`
+- Picking it **minimises the card and starts that sentence in the composer**, with the cursor at the end. From there it's route 1.
+- The row shows it leaves the card: a pencil icon and a hint on the right reading **"write it ↗"**.
+- What the user already typed is never overwritten: the sentence goes in front of it. The inserted text is briefly highlighted (600ms, none with reduced motion).
 
-`submit` can be set on the questionnaire (so the agent decides per request) or as an attribute (so the app decides for all). The questionnaire wins.
+**Short details stay in the card:** a `text` question with a `default` prefills a sentence or detail that you edit in place, and it shows in review like any other answer.
 
-**How the draft reads**
-- The default format is a short lead-in plus one line per answer. Skipped questions are left out:
-  `Here's what I'm after:` / `• Area: near King's Cross` / `• Budget: $400–600 a night`
-- `explain: true` on a question adds a **placeholder** after that answer (`— [why this area?]`), and the cursor lands on the first one. Tab jumps to the next.
-- `format(result) => string` replaces the default completely (for tone, language or a different structure).
+**Wiring the composer**
+- **Auto:** if `composer` points to a `<textarea>`, an `<input>` or a `contenteditable`, the card swaps its placeholder, inserts compose sentences, and listens for the form's submit.
+- **Manual:** the card fires `clarify:compose` with `{ text }` so the app can insert it, and the app calls `card.reply(text)` when the user sends while the card is minimised.
 
-**Working with the composer**
-- **Auto-wire:** if `composer` points to a `<textarea>`, an `<input>` or a `contenteditable`, the card writes into it, puts the cursor in place, and listens for the form's submit.
-- **Manual:** otherwise it fires `clarify:draft` with `{ text, result }`. The app puts the text in its own composer and calls `card.complete(sentText)` when the user sends.
-- **Existing text is never overwritten.** If the user had already typed something, the answers go **above** it, with a "Added above your text · Undo" message.
-- The inserted text is **briefly highlighted** (600ms, none with reduced motion) so it's clear what was added.
-
-**While drafting (the `drafting` state)**
-- The card folds into a **slim strip joined to the top of the composer**: "Filled from your answers · Back to options · Discard".
-- **Back to options** reopens the card with the answers as they were. If the user has edited the draft, the button becomes **Update draft**, and it replaces their edits, with **Undo**.
-- **Discard** clears only the inserted text and keeps anything the user typed themselves (with Undo).
-- If the user clears all the inserted text by hand, the strip stays, so Back to options still works.
-
-**What the agent gets**
-- `result.delivery = 'draft'` and `result.message` = **exactly what was sent**, with the structured `answers` alongside.
-- For Claude, `toClaude()` puts `message` into the `response` field ("The user responded: …"), so the edited text wins over the picks.
-- The sent user message **is** the record. It gets a small "From your answers" tag instead of a separate record card.
+**What the agent gets:** `toClaude()` puts `message` into Claude's `response` field ("The user responded: …"), so the user's words win over the picks. The sent message is the record, with a small "+ 2 picks" tag that shows the picks.
 
 ---
 
@@ -175,12 +160,13 @@ In some cases picking an option isn't the whole answer. The topic may be sensiti
 ```
 hidden ──open()──▶ loading ──questions ready──▶ answering ⇄ reviewing
                                    │                 │            │
-                                   │            dismiss/skip       submit ──(draft)──▶ drafting ──sent from composer──▶ answered
-                                   │                 │            │                    │ back to options → reviewing
+                                   │            dismiss/skip       submit
+                                   │                 │            │
                                    ▼                 ▼            ▼
                                 error ◀── fail ── submitting ──ok──▶ answered (record)
                                                                       │
-          minimised (pill: "3 questions waiting · Reopen") ◀── dismiss  │ edit
+          minimised (pill: "3 questions waiting · Reopen") ◀── dismiss / compose option
+             └── message sent from composer ──▶ answered (replied in own words)  │ edit
           expired (read-only: "The agent moved on")                   ▼
                                                                revising → submitting
 ```
@@ -190,11 +176,10 @@ hidden ──open()──▶ loading ──questions ready──▶ answering �
 | `loading` | Skeleton rows, with questions streaming in as they arrive | Close |
 | `answering` | The step (sequential) or the form (all) | Back, Skip, Close |
 | `reviewing` | The answers as a list, each with Edit, and skipped ones flagged | Edit any, Reset, Submit |
-| `drafting` | Answers are in the composer, and a slim strip above it reads "Filled from your answers" | Back to options, Discard, or send from the composer |
 | `submitting` | The button shows progress, and inputs are read-only | **Undo** during the grace window (default 0, can be set e.g. to 4s) |
 | `answered` | The card collapses into a **record**: chips of the answers | **Edit answers** (emits `revise`) |
 | `error` | An inline message, with **answers kept** | Retry, Edit |
-| `minimised` | A small pill above the composer: "3 questions waiting · Reopen" | Reopen (with the draft kept) |
+| `minimised` | A small pill above the composer: "2 of 4 answered · Reopen". The composer says "Or reply in your own words…" | Reopen (with the draft kept), or send a message as the answer |
 | `expired` | A read-only record: "The agent moved on without these" | None (information only) |
 | `disabled` | Dimmed, not focusable | Controlled by the app |
 
@@ -218,8 +203,8 @@ This is the part you called out. Each kind of mistake gets its own fix:
 | Hit Esc or × by accident | Nothing is lost. The card **minimises** to a pill and the draft is kept. Reopen restores the exact step. |
 | Submitted, then noticed a mistake | An optional **undo window** before the result is sent. After that, **Edit answers** on the record emits `clarify:revise` with the new result. |
 | Submit failed (the app rejected it, or the network) | The error is inline and **answers are never cleared**. Retry. |
-| Filled the composer, then wanted the options back | **Back to options** keeps the answers. If the draft was edited, **Update draft** replaces it, with Undo. |
-| Discarded the draft by mistake | Undo brings it back, and text you typed yourself is never touched |
+| Picked a compose option by mistake | **Reopen** the pill: the card comes back on that step, and the started sentence is removed if you haven't touched it |
+| Replied in your own words, then wanted to answer properly | **Answer the questions** on the record reopens the card and emits `clarify:revise` |
 | Typed in "Something else", changed your mind | Picking an option clears the field, and **Undo** brings the text back. |
 
 **How it works:** every change goes through a reducer that keeps a **history stack** (capped at 50). Back, Undo and Reset are all just moves through that history, so the UI can't get out of sync with the data.
@@ -235,8 +220,6 @@ This is the part you called out. Each kind of mistake gets its own fix:
 
 **Attributes / properties**
 - `placement`, `flow`, `density`, `review`
-- `submit` (`send|draft|choice`)
-- `format` (property: answers → draft text)
 - `undo-window` (ms)
 - `composer` (a CSS selector, for `replace` mode)
 - `questionnaire` (property, or JSON in the attribute)
@@ -251,12 +234,12 @@ This is the part you called out. Each kind of mistake gets its own fix:
 - `setError(message)`
 - `markAnswered()`
 - `expire(message?)`
-- `complete(sentText)`: draft mode, manual wiring: the user sent the draft
+- `reply(text)`: manual wiring: the user sent a message while the card was minimised
 
 **Events** (all `bubbles` + `composed`, with `detail` typed)
 - `clarify:change`: on every answer change (good for drafts or analytics)
 - `clarify:submit`: `ClarifyResult` with status `submitted`. Call `event.preventDefault()` and then `setError()` if your send fails.
-- `clarify:draft`: `{ text, result }`, fired when the answers go to the composer (draft mode)
+- `clarify:compose`: `{ text }`, when a compose option is picked (manual wiring inserts the sentence)
 - `clarify:skip`: the user chose "Skip all"
 - `clarify:dismiss`: closed (minimised)
 - `clarify:revise`: edited after it was answered
@@ -347,7 +330,7 @@ clarify-card/
 | M2 | Sequential + all flows; single, multi and text inputs | Demo works with the mouse |
 | M3 | Placements (replace, dock) + record + minimised pill | Demo works in a fake chat shell |
 | M4 | Recovery: back, review, reset, undo, the undo window, revise, error | Every row in §6 can be demoed |
-| M4b | Draft mode: `submit`, composer auto-wire + manual, placeholders, the drafting strip | Draft → edit → send round trip, with existing text kept |
+| M4b | Own words: minimise + send, compose options, composer auto-wire + manual | Both routes round-trip, with existing text kept |
 | M5 | Keyboard + a11y + motion audit | axe is clean, with a keyboard-only and VoiceOver pass |
 | M6 | Theming tokens + parts + Claude/MCP adapters | Two themes in the demo, plus an adapter round-trip test |
 | M7 | README, playground deploy, npm publish, git push | Used in the portfolio story |
@@ -361,5 +344,4 @@ clarify-card/
 3. **Undo window after submit:** off by default (fast) or 4s by default (safe)?
 4. **Previews:** in v1 or later? They add layout work.
 5. **Licence:** MIT?
-6. **Draft-mode labels:** "Add to message" / "Edit first" / "Filled from your answers". Alternatives: "Use as reply", "Write it myself", "Draft from your answers".
-7. **Draft language:** the default lead-in "Here's what I'm after:", or bare bullets with no lead-in?
+6. **Own-words copy:** the placeholder "Or reply in your own words…" and the compose hint "write it ↗". OK, or alternatives?

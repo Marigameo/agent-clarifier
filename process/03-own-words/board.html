@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clarify Card Board</title>
+<style>
+/* ── Component tokens (the public theming API, --clarify-*) ─────────────── */
+:root {
+  --clarify-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --clarify-font-title: var(--clarify-font);
+  --clarify-bg: #ffffff;
+  --clarify-fg: #1d1d1b;
+  --clarify-muted: #6b6a66;
+  --clarify-faint: #9a9893;
+  --clarify-border: #e7e5e0;
+  --clarify-hover: #f5f4f0;
+  --clarify-selected: #eeede8;
+  --clarify-key-bg: #f1f0ec;
+  --clarify-accent: #3b5bdb;
+  --clarify-accent-fg: #ffffff;
+  --clarify-accent-soft: rgba(59, 91, 219, .1);
+  --clarify-danger: #c2410c;
+  --clarify-danger-soft: rgba(194, 65, 12, .08);
+  --clarify-success: #2f7d4f;
+  --clarify-radius: 16px;
+  --clarify-radius-sm: 9px;
+  --clarify-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  --clarify-focus: 0 0 0 2px var(--clarify-bg), 0 0 0 4px var(--clarify-accent);
+
+  /* board-only tokens */
+  --board-bg: #f6f5f1;
+  --board-grid: rgba(0,0,0,.035);
+  --board-ink: #1d1d1b;
+  --board-soft: #6b6a66;
+  --board-line: #e3e1db;
+  --shell-bg: #fbfaf7;
+  --bubble-user: #efede7;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --clarify-bg: #232321; --clarify-fg: #ecebe7; --clarify-muted: #a9a7a1; --clarify-faint: #7c7a75;
+    --clarify-border: #363531; --clarify-hover: #2b2a28; --clarify-selected: #31302d; --clarify-key-bg: #2e2d2a;
+    --clarify-accent: #8ea6ff; --clarify-accent-fg: #14141a; --clarify-accent-soft: rgba(142,166,255,.14);
+    --clarify-danger: #f0895a; --clarify-danger-soft: rgba(240,137,90,.12); --clarify-success: #7cc79a;
+    --clarify-shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    --board-bg: #181816; --board-grid: rgba(255,255,255,.035); --board-ink: #ecebe7; --board-soft: #a9a7a1;
+    --board-line: #2f2e2b; --shell-bg: #1c1c1a; --bubble-user: #2c2b28; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --clarify-bg: #232321; --clarify-fg: #ecebe7; --clarify-muted: #a9a7a1; --clarify-faint: #7c7a75;
+  --clarify-border: #363531; --clarify-hover: #2b2a28; --clarify-selected: #31302d; --clarify-key-bg: #2e2d2a;
+  --clarify-accent: #8ea6ff; --clarify-accent-fg: #14141a; --clarify-accent-soft: rgba(142,166,255,.14);
+  --clarify-danger: #f0895a; --clarify-danger-soft: rgba(240,137,90,.12); --clarify-success: #7cc79a;
+  --clarify-shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  --board-bg: #181816; --board-grid: rgba(255,255,255,.035); --board-ink: #ecebe7; --board-soft: #a9a7a1;
+  --board-line: #2f2e2b; --shell-bg: #1c1c1a; --bubble-user: #2c2b28; color-scheme: dark;
+}
+
+/* ── Board chrome ───────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: var(--clarify-font); color: var(--board-ink); background: var(--board-bg);
+  background-image: linear-gradient(var(--board-grid) 1px, transparent 1px), linear-gradient(90deg, var(--board-grid) 1px, transparent 1px);
+  background-size: 24px 24px; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 40px 24px 96px; }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+.top h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -.01em; }
+.top p { margin: 0; color: var(--board-soft); max-width: 62ch; line-height: 1.5; }
+.toggle { display: inline-flex; border: 1px solid var(--board-line); border-radius: 999px; padding: 3px; background: var(--clarify-bg); }
+.toggle button { font: inherit; font-size: 13px; border: 0; background: none; color: var(--board-soft); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--clarify-selected); color: var(--board-ink); }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0; padding: 0; list-style: none; }
+.toc a { display: inline-block; font-size: 13px; color: var(--board-soft); text-decoration: none; border: 1px solid var(--board-line); border-radius: 999px; padding: 4px 11px; background: var(--clarify-bg); }
+.toc a:hover { color: var(--board-ink); }
+
+section.group { margin-top: 64px; }
+.group > h2 { font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--board-soft); font-weight: 500; margin: 0 0 4px; }
+.group > p { margin: 0 0 24px; color: var(--board-soft); max-width: 70ch; line-height: 1.5; font-size: 15px; }
+.frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 32px 28px; align-items: start; }
+.frames.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); }
+.frame { min-width: 0; }
+.frame-label { display: flex; align-items: baseline; gap: 8px; margin: 0 0 10px; font-size: 12px; color: var(--board-soft); }
+.frame-label b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 500; color: var(--clarify-accent); }
+.note { margin: 12px 2px 0; font-size: 13px; line-height: 1.5; color: var(--board-soft); }
+.note strong { color: var(--board-ink); font-weight: 600; }
+
+/* ── The card ───────────────────────────────────────────────────────────── */
+.cc { font-family: var(--clarify-font); color: var(--clarify-fg); background: var(--clarify-bg); border: 1px solid var(--clarify-border); border-radius: var(--clarify-radius); box-shadow: var(--clarify-shadow); overflow: hidden; font-size: 14px; }
+.cc-head { display: flex; align-items: flex-start; gap: 10px; padding: 16px 16px 10px 20px; }
+.cc-title { flex: 1; margin: 0; font-family: var(--clarify-font-title); font-size: 16px; line-height: 1.35; font-weight: 600; letter-spacing: -.005em; text-wrap: pretty; }
+.cc-sub { display: block; margin-top: 3px; font-size: 13px; font-weight: 400; color: var(--clarify-muted); font-family: var(--clarify-font); }
+.cc-meta { display: flex; align-items: center; gap: 2px; color: var(--clarify-faint); font-size: 13px; white-space: nowrap; padding-top: 1px; }
+.cc-step { font-variant-numeric: tabular-nums; padding: 0 6px; }
+.cc-icon { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--clarify-muted); border: 0; background: none; }
+.cc-icon:hover { background: var(--clarify-hover); }
+.cc-icon svg { width: 16px; height: 16px; }
+.cc-source { display: inline-flex; align-items: center; gap: 6px; margin: 0 20px 2px; font-size: 12px; color: var(--clarify-faint); }
+.cc-source i { width: 6px; height: 6px; border-radius: 50%; background: var(--clarify-accent); }
+
+.cc-list { list-style: none; margin: 0; padding: 0 8px 8px; }
+.cc-opt { position: relative; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 12px; border-radius: var(--clarify-radius-sm); cursor: pointer; }
+.cc-opt + .cc-opt::before { content: ""; position: absolute; top: 0; left: 12px; right: 12px; border-top: 1px solid var(--clarify-border); }
+.cc-opt.is-hover, .cc-opt.is-active, .cc-opt.is-selected { background: var(--clarify-hover); }
+.cc-opt.is-hover::before, .cc-opt.is-active::before, .cc-opt.is-selected::before,
+.cc-opt.is-hover + .cc-opt::before, .cc-opt.is-active + .cc-opt::before, .cc-opt.is-selected + .cc-opt::before { border-color: transparent; }
+.cc-opt.is-selected { background: var(--clarify-selected); }
+.cc-opt.is-focus { box-shadow: inset 0 0 0 2px var(--clarify-accent); }
+.cc-opt.is-disabled { opacity: .45; cursor: not-allowed; }
+.cc-key { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--clarify-key-bg); color: var(--clarify-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cc-key svg { width: 14px; height: 14px; }
+.cc-opt.is-selected .cc-key.radio, .cc-opt.is-selected .cc-key.box { background: var(--clarify-accent); color: var(--clarify-accent-fg); }
+.cc-key.box { border-radius: 6px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--clarify-faint); }
+.cc-key.radio { border-radius: 50%; }
+.cc-opt.is-selected .cc-key.box { box-shadow: none; }
+.cc-key.box svg, .cc-key.radio svg { opacity: 0; }
+.cc-opt.is-selected .cc-key.box svg, .cc-opt.is-selected .cc-key.radio svg { opacity: 1; }
+.cc-body { flex: 1; min-width: 0; }
+.cc-label { display: block; line-height: 1.35; }
+.cc-desc { display: block; margin-top: 2px; font-size: 13px; color: var(--clarify-muted); line-height: 1.35; }
+.cc-badge { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 500; color: var(--clarify-accent); background: var(--clarify-accent-soft); vertical-align: 1px; }
+.cc-trail { flex: none; color: var(--clarify-muted); display: grid; place-items: center; width: 20px; }
+.cc-trail svg { width: 16px; height: 16px; }
+.cc-opt:not(.is-active):not(.is-hover):not(.is-selected) .cc-trail.arrow { visibility: hidden; }
+.cc-was { font-size: 11px; color: var(--clarify-faint); white-space: nowrap; }
+
+.cc-other .cc-label { color: var(--clarify-faint); }
+.cc-input { flex: 1; min-width: 0; font: inherit; color: var(--clarify-fg); border: 0; outline: 0; background: transparent; padding: 0; }
+.cc-other.is-typing { background: var(--clarify-bg); box-shadow: inset 0 0 0 1.5px var(--clarify-accent); }
+.cc-other.is-typing::before { border-color: transparent; }
+.cc-caret { display: inline-block; width: 1.5px; height: 16px; background: var(--clarify-accent); vertical-align: -3px; margin-left: 1px; }
+.cc-enter { font-size: 12px; color: var(--clarify-faint); white-space: nowrap; }
+
+.cc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px 14px 20px; border-top: 1px solid var(--clarify-border); }
+.cc-foot-l { font-size: 13px; color: var(--clarify-muted); display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cc-foot-r { display: flex; gap: 8px; margin-left: auto; }
+.btn { font: inherit; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border-radius: 9px; border: 1px solid var(--clarify-border); background: var(--clarify-bg); color: var(--clarify-fg); cursor: pointer; white-space: nowrap; }
+.btn svg { width: 14px; height: 14px; }
+.btn.primary { background: var(--clarify-fg); color: var(--clarify-bg); border-color: var(--clarify-fg); }
+.btn.primary[disabled] { opacity: .35; cursor: not-allowed; }
+.btn.ghost { border-color: transparent; color: var(--clarify-muted); }
+.btn.link { border: 0; padding: 0; height: auto; background: none; color: var(--clarify-accent); }
+
+.cc-hint { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 12px; color: var(--board-soft); }
+.cc-hint kbd { font-family: inherit; font-size: 11px; padding: 1px 5px; border-radius: 5px; border: 1px solid var(--board-line); background: var(--clarify-bg); }
+
+/* progress dots for sequential */
+.cc-dots { display: inline-flex; gap: 4px; }
+.cc-dots i { width: 14px; height: 4px; border-radius: 2px; background: var(--clarify-border); }
+.cc-dots i.on { background: var(--clarify-fg); }
+.cc-dots i.skip { background: repeating-linear-gradient(90deg, var(--clarify-faint) 0 2px, transparent 2px 4px); }
+
+/* all-at-once form */
+.cc-q { padding: 4px 0 6px; }
+.cc-q + .cc-q { border-top: 1px solid var(--clarify-border); }
+.cc-q-head { display: flex; align-items: baseline; gap: 8px; padding: 12px 20px 6px; }
+.cc-q-num { font-size: 12px; color: var(--clarify-faint); font-variant-numeric: tabular-nums; }
+.cc-q-title { flex: 1; margin: 0; font-size: 14px; font-weight: 600; }
+.cc-q-state { font-size: 12px; color: var(--clarify-faint); }
+.cc-q-state.ok { color: var(--clarify-success); }
+.cc-q-state.err { color: var(--clarify-danger); }
+.cc-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 20px 10px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--clarify-border); font-size: 13px; color: var(--clarify-fg); background: var(--clarify-bg); }
+.chip svg { width: 12px; height: 12px; }
+.chip.on { background: var(--clarify-fg); color: var(--clarify-bg); border-color: var(--clarify-fg); }
+.chip.dashed { border-style: dashed; color: var(--clarify-muted); }
+.cc-q.is-invalid .chip:not(.on) { border-color: color-mix(in srgb, var(--clarify-danger) 45%, var(--clarify-border)); }
+.cc-err { display: flex; align-items: center; gap: 6px; padding: 0 20px 10px; font-size: 12px; color: var(--clarify-danger); }
+.cc-err svg { width: 13px; height: 13px; }
+
+/* review */
+.cc-review { list-style: none; margin: 0; padding: 0 8px 8px; }
+.cc-review li { display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center; padding: 11px 12px; border-radius: var(--clarify-radius-sm); }
+.cc-review li + li { border-top: 1px solid var(--clarify-border); }
+.cc-review .k { font-size: 12px; color: var(--clarify-faint); }
+.cc-review .v { line-height: 1.35; }
+.cc-review .v.skipped { color: var(--clarify-faint); font-style: italic; }
+.cc-review li.flag { background: var(--clarify-danger-soft); }
+.cc-review li.flag .k { color: var(--clarify-danger); }
+
+/* skeleton */
+.sk { display: block; height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--clarify-hover), var(--clarify-selected), var(--clarify-hover)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* toast inside card footer */
+.toast { display: inline-flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; border-radius: 10px; background: var(--clarify-fg); color: var(--clarify-bg); font-size: 13px; }
+.toast .btn.link { color: var(--clarify-bg); text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+
+/* error banner */
+.cc-banner { display: flex; align-items: flex-start; gap: 10px; margin: 0 16px 10px; padding: 10px 12px; border-radius: 10px; background: var(--clarify-danger-soft); color: var(--clarify-danger); font-size: 13px; line-height: 1.4; }
+.cc-banner svg { flex: none; width: 16px; height: 16px; margin-top: 1px; }
+.cc-banner b { color: var(--clarify-fg); font-weight: 600; display: block; }
+.cc-banner span { color: var(--clarify-muted); }
+
+/* spinner + undo progress */
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.undo-bar { position: relative; height: 3px; background: var(--clarify-border); }
+.undo-bar i { position: absolute; inset: 0 40% 0 0; background: var(--clarify-fg); }
+
+/* ── Record (collapsed in the transcript) ───────────────────────────────── */
+.rec { font-family: var(--clarify-font); color: var(--clarify-fg); border: 1px solid var(--clarify-border); border-radius: 14px; background: var(--clarify-bg); padding: 12px 14px; font-size: 13px; }
+.rec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--clarify-muted); }
+.rec-head svg { width: 14px; height: 14px; color: var(--clarify-success); }
+.rec-head .btn.link { margin-left: auto; font-size: 12px; }
+.rec dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.rec dt { color: var(--clarify-faint); }
+.rec dd { margin: 0; }
+.rec dd.skipped { color: var(--clarify-faint); font-style: italic; }
+.rec.expired { border-style: dashed; }
+.rec.expired .rec-head svg { color: var(--clarify-faint); }
+
+/* ── Pill (minimised) ──────────────────────────────────────────────────── */
+.pill { display: inline-flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border-radius: 999px; border: 1px solid var(--clarify-border); background: var(--clarify-bg); box-shadow: var(--clarify-shadow); font-size: 13px; color: var(--clarify-fg); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--clarify-accent); box-shadow: 0 0 0 3px var(--clarify-accent-soft); }
+.pill .btn { height: 26px; padding: 0 10px; border-radius: 999px; }
+
+/* ── Chat shell (placement demos) ──────────────────────────────────────── */
+.shell { position: relative; display: flex; flex-direction: column; height: 560px; border: 1px solid var(--board-line); border-radius: 18px; background: var(--shell-bg); overflow: hidden; font-family: var(--clarify-font); color: var(--clarify-fg); font-size: 14px; }
+.shell.phone { width: 375px; max-width: 100%; height: 720px; border-radius: 32px; margin: 0 auto; }
+.msgs { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 20px 18px 12px; }
+.msg-u { align-self: flex-end; max-width: 80%; background: var(--bubble-user); padding: 10px 14px; border-radius: 14px; line-height: 1.45; }
+.msg-a { max-width: 92%; line-height: 1.5; color: var(--clarify-fg); }
+.msg-a.thinking { color: var(--clarify-faint); display: flex; align-items: center; gap: 8px; }
+.msg-a.thinking i { width: 8px; height: 8px; border-radius: 50%; background: var(--clarify-accent); }
+.msgs.fade { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%); mask-image: linear-gradient(to bottom, transparent, #000 30%); }
+.dock { padding: 0 12px; }
+.dock .cc { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 0; box-shadow: 0 -6px 20px rgba(0,0,0,.05); }
+.dock + .composer { border-top-left-radius: 0; border-top-right-radius: 0; }
+.composer { margin: 0 12px 12px; display: flex; align-items: flex-end; gap: 8px; padding: 12px 12px 12px 16px; border: 1px solid var(--clarify-border); border-radius: 16px; background: var(--clarify-bg); }
+.composer .ph { flex: 1; color: var(--clarify-faint); padding: 6px 0; }
+.composer .send { width: 32px; height: 32px; border-radius: 9px; background: var(--clarify-fg); color: var(--clarify-bg); display: grid; place-items: center; }
+.composer .send svg { width: 16px; height: 16px; }
+.composer.is-dim { opacity: .55; }
+.replace { padding: 0 12px 12px; }
+.shell .cc-hint { margin: 8px 0 0; }
+.compact .cc-opt { min-height: 44px; padding: 8px 10px; }
+.compact .cc-head { padding: 12px 12px 6px 16px; }
+.compact .cc-title { font-size: 15px; }
+.compact .cc-foot { padding: 10px 12px 10px 16px; }
+
+/* states strip */
+.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 16px; }
+.strip .cc { box-shadow: none; }
+.strip .cc-list { padding: 6px; }
+.strip .cap { font-size: 12px; color: var(--board-soft); margin: 0 0 6px 2px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* token table */
+table.tok { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--clarify-bg); border: 1px solid var(--board-line); border-radius: 12px; overflow: hidden; }
+.tok th, .tok td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--board-line); vertical-align: middle; }
+.tok th { font-weight: 500; color: var(--board-soft); font-size: 12px; }
+.tok code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--board-line); vertical-align: -2px; margin-right: 6px; }
+
+/* alternate theme (shows restyling with tokens only) */
+.theme-warm {
+  --clarify-font: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --clarify-font-title: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --clarify-bg: #fffaf2; --clarify-fg: #2b2118; --clarify-muted: #7a6a58; --clarify-faint: #a8977f;
+  --clarify-border: #eadfcd; --clarify-hover: #f8efe1; --clarify-selected: #f3e6d1; --clarify-key-bg: #f3e6d1;
+  --clarify-accent: #d9623b; --clarify-accent-fg: #fff; --clarify-accent-soft: rgba(217,98,59,.12);
+  --clarify-radius: 6px 14px 8px 16px / 14px 6px 16px 8px; --clarify-radius-sm: 6px;
+  --clarify-shadow: 4px 4px 0 rgba(43,33,24,.12);
+}
+.theme-mono {
+  --clarify-font: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --clarify-font-title: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --clarify-bg: #0e1116; --clarify-fg: #e6edf3; --clarify-muted: #9aa6b2; --clarify-faint: #6e7781;
+  --clarify-border: #262c34; --clarify-hover: #161b22; --clarify-selected: #1c2330; --clarify-key-bg: #1c2128;
+  --clarify-accent: #3fb950; --clarify-accent-fg: #0e1116; --clarify-accent-soft: rgba(63,185,80,.14);
+  --clarify-radius: 4px; --clarify-radius-sm: 3px; --clarify-shadow: none;
+}
+.theme-warm .cc, .theme-mono .cc { font-size: 14px; }
+
+
+/* ── Own words (compose option, minimised replies) ─────────────────────────── */
+.composer .txt { flex: 1; min-width: 0; line-height: 1.5; padding: 4px 0; white-space: pre-wrap; color: var(--clarify-fg); }
+.composer mark.fill { background: var(--clarify-accent-soft); color: inherit; border-radius: 4px; box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 1px 2px; }
+.cc-out { flex: none; font-size: 12px; color: var(--clarify-faint); white-space: nowrap; }
+.cc-opt.is-active .cc-out, .cc-opt.is-hover .cc-out { color: var(--clarify-muted); }
+.msg-u .from { display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 11px; color: var(--clarify-faint); }
+.msg-u .from svg { width: 11px; height: 11px; }
+.msg-u.pre { white-space: pre-wrap; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 28px 16px 72px; }
+  .cc-review li { grid-template-columns: 1fr auto; }
+  .cc-review .k { grid-column: 1 / -1; }
+  .shell { height: 600px; }
+}
+@media (hover: none) { .cc-hint.keys { display: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 16 16"><path d="M10.5 2.5l3 3L6 13l-3.5.5L3 10z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-min" viewBox="0 0 16 16"><path d="M4 10l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 8 8)"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5 4L2.5 6.5 5 9M3 6.5h6.5a3.5 3.5 0 010 7H7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.8v3.8M8 10.9v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3.3l2 1.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 16 16"><path d="M3 8a5 5 0 109-3M12 2v3H9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-send" viewBox="0 0 16 16"><path d="M8 13V3M4 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>clarify-card · design board</h1>
+      <p>Static frames of every variant and state, for review before building. Everything you see is drawn with the component’s own <code>--clarify-*</code> tokens, so this board doubles as the token spec. Example throughout: “Plan a trip to London, recommend hotels.”</p>
+    </div>
+    <div class="toggle" role="group" aria-label="Theme">
+      <button type="button" data-t="auto" aria-pressed="true">Auto</button>
+      <button type="button" data-t="light" aria-pressed="false">Light</button>
+      <button type="button" data-t="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+  <ul class="toc">
+    <li><a href="#anatomy">1 · Anatomy</a></li>
+    <li><a href="#flows">2 · Flows &amp; inputs</a></li>
+    <li><a href="#placement">3 · Placement</a></li>
+    <li><a href="#own-words">4 · Own words</a></li>
+    <li><a href="#recovery">5 · Recovery</a></li>
+    <li><a href="#lifecycle">6 · Lifecycle</a></li>
+    <li><a href="#option-states">7 · Option states</a></li>
+    <li><a href="#theming">8 · Theming</a></li>
+    <li><a href="#phone">9 · Phone</a></li>
+  </ul>
+
+  <!-- 1 · ANATOMY ─────────────────────────────────────────────────────── -->
+  <section class="group" id="anatomy">
+    <h2>1 · Anatomy</h2>
+    <p>The default: sequential, single select. Close to Claude’s card, with three additions: a <strong>Back</strong> control, a <strong>Recommended</strong> badge, and <strong>who is asking</strong> (the MCP spec asks clients to show this).</p>
+    <div class="frames wide">
+      <div class="frame">
+        <p class="frame-label"><b>A1</b> sequential · single · step 2 of 4</p>
+        <div class="cc">
+          <div class="cc-head" style="padding-bottom:4px">
+            <span class="cc-source" style="margin:0"><i></i>Asked by Trip planner</span>
+          </div>
+          <div class="cc-head" style="padding-top:0">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">What’s your budget per night?<span class="cc-sub">Before taxes, for one room.</span></h3>
+            <div class="cc-meta"><span class="cc-step">2 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-list" role="radiogroup">
+            <li class="cc-opt is-active"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">$250–400 <span class="cc-badge">Recommended</span></span><span class="cc-desc">Boutique stays in central areas</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">$400–600</span><span class="cc-desc">Upscale, 4–5 star</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">3</span><span class="cc-body"><span class="cc-label">$600+</span><span class="cc-desc">Luxury and landmark hotels</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li>
+          </ul>
+          <div class="cc-foot">
+            <span class="cc-foot-l"><span class="cc-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip</button></div>
+          </div>
+        </div>
+        <div class="cc-hint keys"><span><kbd>1</kbd>–<kbd>4</kbd> pick</span><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> select</span><span><kbd>←</kbd> back</span><span><kbd>Esc</kbd> minimise</span></div>
+      </div>
+      <div class="frame">
+        <p class="frame-label"><b>A2</b> what each part is for</p>
+        <table class="tok">
+          <tr><th>Part</th><th>Why</th></tr>
+          <tr><td>Asked by</td><td>Who is asking: the agent, or the MCP server’s name. Optional, set with <code>source</code>.</td></tr>
+          <tr><td>Back ‹</td><td>Single select auto-advances, so a wrong click needs a one-key way back. Hidden on step 1.</td></tr>
+          <tr><td>Title + helper</td><td>The question, in full. The helper line is optional and carries units or scope.</td></tr>
+          <tr><td>2 of 4 + dots</td><td>How far along, and how much is left. Dots turn dashed for skipped steps.</td></tr>
+          <tr><td>Minimise ⌄</td><td>Replaces Claude’s ×. Nothing is lost: it folds into a pill and keeps the draft (see 5).</td></tr>
+          <tr><td>Number badges</td><td>The number is the shortcut. Up to 9 options.</td></tr>
+          <tr><td>Recommended</td><td>Focused first, so “just press Enter” is a sensible default.</td></tr>
+          <tr><td>Something else</td><td>Always the last row. It turns into a text field in place.</td></tr>
+          <tr><td>Skip</td><td>“No preference on this one.” The agent must say what it assumed.</td></tr>
+          <tr><td>Key hints</td><td>Outside the card, and hidden on touch screens.</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · FLOWS & INPUTS ─────────────────────────────────────────────── -->
+  <section class="group" id="flows">
+    <h2>2 · Flows &amp; inputs</h2>
+    <p><strong>Sequential</strong> when answers build on each other or the questions are long. <strong>All at once</strong> when order doesn’t matter and the questions are quick: everything in one view, and you answer in any order.</p>
+    <div class="frames">
+      <div class="frame">
+        <p class="frame-label"><b>B1</b> sequential · multi-select</p>
+        <div class="cc">
+          <div class="cc-head">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">What matters most in the hotel?<span class="cc-sub">Pick up to 3.</span></h3>
+            <div class="cc-meta"><span class="cc-step">3 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-list" role="group">
+            <li class="cc-opt is-selected"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Walkable to sights</span></span></li>
+            <li class="cc-opt is-selected"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Quiet at night</span></span></li>
+            <li class="cc-opt is-focus"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Gym or pool</span></span></li>
+            <li class="cc-opt"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Breakfast included</span></span></li>
+            <li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li>
+          </ul>
+          <div class="cc-foot">
+            <span class="cc-foot-l">2 of 3 picked</span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip</button><button class="btn primary">Continue <svg><use href="#i-arrow"/></svg></button></div>
+          </div>
+        </div>
+        <p class="note"><strong>Never auto-advances.</strong> Space toggles, Enter continues. A 4th pick is blocked, with a nudge reading “Up to 3”.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>B2</b> sequential · “Something else” typing</p>
+        <div class="cc">
+          <div class="cc-head">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">Which area would you like to stay in?</h3>
+            <div class="cc-meta"><span class="cc-step">1 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-list" role="radiogroup">
+            <li class="cc-opt"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">Covent Garden</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">South Bank</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">3</span><span class="cc-body"><span class="cc-label">Kensington</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt cc-other is-typing"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-input">Near King’s Cross, early train to Edinburgh<span class="cc-caret"></span></span><span class="cc-enter">↵</span></li>
+          </ul>
+          <div class="cc-foot">
+            <span class="cc-foot-l"><span class="cc-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span></span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip</button><button class="btn primary">Continue <svg><use href="#i-arrow"/></svg></button></div>
+          </div>
+        </div>
+        <p class="note">The row becomes a field in place, so nothing jumps. <strong>Number keys type normally here.</strong> Enter moves on and Esc returns to the options with the text kept.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>B3</b> sequential · text question</p>
+        <div class="cc">
+          <div class="cc-head">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">Anything else I should know?<span class="cc-sub">Optional. Accessibility needs, a special occasion…</span></h3>
+            <div class="cc-meta"><span class="cc-step">4 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <div style="padding: 0 16px 14px">
+            <div class="cc-other is-typing cc-opt" style="min-height: 92px; align-items: flex-start;"><span class="cc-input" style="line-height:1.45">It’s our anniversary, a room with a view would be lovely<span class="cc-caret"></span></span></div>
+          </div>
+          <div class="cc-foot">
+            <span class="cc-foot-l"><kbd style="font-size:11px;border:1px solid var(--clarify-border);border-radius:5px;padding:1px 5px">⇧↵</kbd> new line</span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip</button><button class="btn primary">Review <svg><use href="#i-arrow"/></svg></button></div>
+          </div>
+        </div>
+        <p class="note">On the last step the primary button says <strong>Review</strong> (or <strong>Send</strong> when the review step is off).</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>B4</b> all at once · mixed inputs</p>
+        <div class="cc">
+          <div class="cc-head">
+            <h3 class="cc-title">A few quick questions before I search<span class="cc-sub">Answer in any order. All optional except trip length.</span></h3>
+            <div class="cc-meta"><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <div class="cc-q">
+            <div class="cc-q-head"><span class="cc-q-num">1</span><h4 class="cc-q-title">Budget per night</h4><span class="cc-q-state ok">✓</span></div>
+            <div class="cc-chips" role="radiogroup"><span class="chip">$250–400</span><span class="chip on">$400–600</span><span class="chip">$600+</span><span class="chip dashed"><svg><use href="#i-pencil"/></svg>Other</span></div>
+          </div>
+          <div class="cc-q">
+            <div class="cc-q-head"><span class="cc-q-num">2</span><h4 class="cc-q-title">What matters most</h4><span class="cc-q-state">pick any</span></div>
+            <div class="cc-chips" role="group"><span class="chip on"><svg><use href="#i-check"/></svg>Walkable</span><span class="chip">Quiet</span><span class="chip on"><svg><use href="#i-check"/></svg>Breakfast</span><span class="chip">Gym</span></div>
+          </div>
+          <div class="cc-q is-invalid">
+            <div class="cc-q-head"><span class="cc-q-num">3</span><h4 class="cc-q-title">Trip length</h4><span class="cc-q-state err">required</span></div>
+            <div class="cc-chips" role="radiogroup"><span class="chip">1–2 nights</span><span class="chip">3–4 nights</span><span class="chip">5+ nights</span></div>
+            <div class="cc-err"><svg><use href="#i-alert"/></svg>Pick one to continue</div>
+          </div>
+          <div class="cc-foot">
+            <span class="cc-foot-l">2 of 3 answered</span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip all</button><button class="btn primary" disabled>Send</button></div>
+          </div>
+        </div>
+        <p class="note">Options become <strong>chips</strong> to save height. The error only shows <strong>after a Send attempt</strong>, never while you’re still answering. Tab moves between groups and arrows move within one.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · PLACEMENT ─────────────────────────────────────────────────── -->
+  <section class="group" id="placement">
+    <h2>3 · Placement</h2>
+    <p><strong>Replace</strong> takes the composer’s place: the agent is waiting on you and nothing else makes sense. <strong>Dock</strong> pins the card to the top of the composer: it never scrolls away with messages, and you can still type, which suits a nudge the agent can work without.</p>
+    <div class="frames wide">
+      <div class="frame">
+        <p class="frame-label"><b>C1</b> placement = replace</p>
+        <div class="shell">
+          <div class="msgs fade">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="msg-a thinking"><i></i>Waiting for your answers</div>
+          </div>
+          <div class="replace">
+            <div class="cc">
+              <div class="cc-head">
+                <h3 class="cc-title">Which area would you like to stay in?</h3>
+                <div class="cc-meta"><span class="cc-step">1 of 3</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+              </div>
+              <ul class="cc-list">
+                <li class="cc-opt is-active"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">Covent Garden <span class="cc-badge">Recommended</span></span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+                <li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">South Bank</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+                <li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li>
+              </ul>
+              <div class="cc-foot"><span class="cc-foot-l"><span class="cc-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span></span><div class="cc-foot-r"><button class="btn ghost">Skip</button></div></div>
+            </div>
+            <div class="cc-hint keys"><span><kbd>Enter</kbd> select</span><span><kbd>Esc</kbd> minimise</span></div>
+          </div>
+        </div>
+        <p class="note">The composer is hidden, not destroyed, so a half-typed draft survives. <strong>Minimise brings it back</strong> (see D5), and a message sent then is the answer. There’s no extra button for it.</p>
+      </div>
+      <div class="frame">
+        <p class="frame-label"><b>C2</b> placement = dock</p>
+        <div class="shell">
+          <div class="msgs fade">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="msg-a">Here are a few to start with. A couple of answers would help me narrow these down.</div>
+          </div>
+          <div class="dock">
+            <div class="cc compact">
+              <div class="cc-head">
+                <h3 class="cc-title">What’s your budget per night?</h3>
+                <div class="cc-meta"><span class="cc-step">1 of 2</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+              </div>
+              <div class="cc-chips" style="padding-left:16px"><span class="chip">$250–400</span><span class="chip">$400–600</span><span class="chip">$600+</span><span class="chip dashed"><svg><use href="#i-pencil"/></svg>Other</span></div>
+            </div>
+          </div>
+          <div class="composer"><span class="ph">Or just keep chatting…</span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+        <p class="note">The card and composer join into <strong>one surface</strong>, so the card clearly belongs to the input, not the transcript. If you send a message instead, <strong>that message is the answer</strong>, along with any picks.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 4 · OWN WORDS ─────────────────────────────────────────────────── -->
+  <section class="group" id="own-words">
+    <h2>4 · In your own words</h2>
+    <p>One way to answer (the card) and one way out to your own words (the composer). You get there by minimising (D5) or by a <strong><code>compose</code> option</strong>, which starts a sentence for answers the user should write themselves: sensitive, personal, or longer than a pick. Short details stay in the card as a <code>text</code> question with a <code>default</code> (B3).</p>
+    <div class="frames">
+      <div class="frame">
+        <p class="frame-label"><b>H1</b> a compose option</p>
+        <div class="cc">
+          <div class="cc-head">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">Do you need any accessibility features?</h3>
+            <div class="cc-meta"><span class="cc-step">3 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-list" role="radiogroup">
+            <li class="cc-opt"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">No, all good</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">Step-free access</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">3</span><span class="cc-body"><span class="cc-label">Accessible bathroom</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt is-active"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">I’ll explain</span><span class="cc-desc">Write it in your own words</span></span><span class="cc-out">write it ↗</span></li>
+          </ul>
+          <div class="cc-foot">
+            <span class="cc-foot-l"><span class="cc-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip</button></div>
+          </div>
+        </div>
+        <p class="note">The <strong>“write it ↗”</strong> hint shows this row leaves the card. Here it takes the place of Something else (<code>other: false</code>), so there aren’t two free-text rows.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>H2</b> sentence started in the composer</p>
+        <div class="shell" style="height: 400px">
+          <div class="msgs fade">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="msg-a thinking"><i></i>Waiting for your answers</div>
+          </div>
+          <div style="padding: 0 12px 8px; display:flex; justify-content:center">
+            <span class="pill"><i></i>3 of 4 answered <button class="btn">Reopen</button></span>
+          </div>
+          <div class="composer"><span class="txt"><mark class="fill">For accessibility, I need </mark><span class="cc-caret"></span></span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+        <p class="note">The card <strong>minimises</strong> and the sentence starts in the composer, with the cursor at the end. The highlight fades after 600ms. Reopen takes you back, and removes the sentence if it’s untouched.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>H3</b> sent · the message is the answer</p>
+        <div class="shell" style="height: 400px">
+          <div class="msgs">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="msg-u">For accessibility, I need a walk-in shower and a room close to the lift.<span class="from"><svg><use href="#i-check"/></svg>+ 2 picks · <span style="text-decoration:underline">Area, Budget</span></span></div>
+            <div class="msg-a">Thanks, that helps. These four have step-free rooms with walk-in showers…</div>
+          </div>
+          <div class="composer"><span class="ph">Reply…</span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+        <p class="note">The agent gets <strong>your words plus the picks so far</strong> (<code>message</code>, which becomes Claude’s <code>response</code>). The sent message is the record.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · RECOVERY ──────────────────────────────────────────────────── -->
+  <section class="group" id="recovery">
+    <h2>5 · Recovery: mistakes are cheap</h2>
+    <p>Every change goes through one history stack, so Back, Undo, Reset and Edit can’t get out of sync with each other. Nothing is ever lost with a single key.</p>
+    <div class="frames">
+      <div class="frame">
+        <p class="frame-label"><b>D1</b> back · previous choice kept</p>
+        <div class="cc">
+          <div class="cc-head">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">Which area would you like to stay in?</h3>
+            <div class="cc-meta"><span class="cc-step">1 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-list">
+            <li class="cc-opt"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">Covent Garden</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt is-selected"><span class="cc-key radio"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">South Bank</span></span><span class="cc-was">your pick</span></li>
+            <li class="cc-opt is-focus"><span class="cc-key">3</span><span class="cc-body"><span class="cc-label">Kensington</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li>
+          </ul>
+          <div class="cc-foot">
+            <span class="cc-foot-l"><span class="cc-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip</button><button class="btn primary">Keep &amp; next <svg><use href="#i-arrow"/></svg></button></div>
+          </div>
+        </div>
+        <p class="note">Going back shows <strong>what you picked</strong>. Picking something else replaces it, and later answers stay put.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>D2</b> review · edit any, reset all</p>
+        <div class="cc">
+          <div class="cc-head">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">Check your answers<span class="cc-sub">One was skipped. I’ll make a sensible guess for it.</span></h3>
+            <div class="cc-meta"><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-review">
+            <li><span class="k">Area</span><span class="v">Near King’s Cross, early train to Edinburgh</span><button class="btn link">Edit</button></li>
+            <li><span class="k">Budget</span><span class="v">$400–600</span><button class="btn link">Edit</button></li>
+            <li class="flag"><span class="k">Priorities</span><span class="v skipped">Skipped</span><button class="btn link">Answer</button></li>
+            <li><span class="k">Notes</span><span class="v">Anniversary, a room with a view</span><button class="btn link">Edit</button></li>
+          </ul>
+          <div class="cc-foot">
+            <span class="cc-foot-l"><button class="btn ghost" style="padding-left:0"><svg><use href="#i-reset"/></svg>Start over</button></span>
+            <div class="cc-foot-r"><button class="btn primary">Send answers</button></div>
+          </div>
+        </div>
+        <p class="note">Edit jumps to that step, then <strong>returns to review</strong> rather than walking every step again.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>D3</b> skipped by accident · undo</p>
+        <div class="cc">
+          <div class="cc-head">
+            <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+            <h3 class="cc-title">Anything else I should know?</h3>
+            <div class="cc-meta"><span class="cc-step">4 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <div style="padding: 0 16px 14px"><div class="cc-opt cc-other" style="min-height:72px;align-items:flex-start;box-shadow: inset 0 0 0 1px var(--clarify-border)"><span class="cc-label" style="color:var(--clarify-faint)">Type here…</span></div></div>
+          <div class="cc-foot">
+            <span class="toast" role="status">Skipped “Priorities” <button class="btn link"><svg><use href="#i-undo"/></svg>Undo</button></span>
+            <div class="cc-foot-r"><button class="btn ghost">Skip</button></div>
+          </div>
+        </div>
+        <p class="note">The toast lives <strong>inside the card footer</strong>, not as a page toast, so it’s seen where the mistake happened. It stays for 5s, or until the next action. <kbd>⌘Z</kbd> works too.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>D4</b> start over · undo</p>
+        <div class="cc">
+          <div class="cc-head">
+            <h3 class="cc-title">Which area would you like to stay in?</h3>
+            <div class="cc-meta"><span class="cc-step">1 of 4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-list">
+            <li class="cc-opt is-active"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">Covent Garden <span class="cc-badge">Recommended</span></span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">South Bank</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+            <li class="cc-opt"><span class="cc-key">3</span><span class="cc-body"><span class="cc-label">Kensington</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li>
+          </ul>
+          <div class="cc-foot">
+            <span class="toast" role="status">Answers cleared <button class="btn link"><svg><use href="#i-undo"/></svg>Undo</button></span>
+          </div>
+        </div>
+        <p class="note">Start over is <strong>one click and one undo</strong>, with no “Are you sure?” dialog. Undo is kinder than confirming.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>D5</b> minimised · draft kept</p>
+        <div class="shell" style="height: 300px">
+          <div class="msgs">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="msg-a thinking"><i></i>Waiting for your answers</div>
+          </div>
+          <div style="padding: 0 12px 8px; display:flex; justify-content:center">
+            <span class="pill"><i></i>2 of 4 answered <button class="btn">Reopen</button></span>
+          </div>
+          <div class="composer"><span class="ph">Or reply in your own words…</span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+        <p class="note">Esc or the ⌄ button <strong>folds the card into a pill</strong>. Reopen restores the exact step and answers. The <strong>placeholder says what typing does</strong>: a message sent now is the answer, with the 2 picks.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>D6</b> just sent · undo window (optional)</p>
+        <div class="cc">
+          <div class="cc-head">
+            <h3 class="cc-title">Sending your answers…<span class="cc-sub">4 answers · 1 skipped</span></h3>
+          </div>
+          <div class="cc-foot" style="border-top:0; padding-top: 4px">
+            <span class="cc-foot-l"><span class="spin"></span>Sending in 3s</span>
+            <div class="cc-foot-r"><button class="btn"><svg><use href="#i-undo"/></svg>Undo</button></div>
+          </div>
+          <div class="undo-bar"><i></i></div>
+        </div>
+        <p class="note">With <code>undo-window="4000"</code>, the result is held for 4s like Gmail’s undo send. It’s off by default, so the agent isn’t kept waiting.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · LIFECYCLE ─────────────────────────────────────────────────── -->
+  <section class="group" id="lifecycle">
+    <h2>6 · Lifecycle</h2>
+    <p>From the agent starting to ask, to the answers sitting in the transcript as a record.</p>
+    <div class="frames">
+      <div class="frame">
+        <p class="frame-label"><b>E1</b> loading · questions streaming in</p>
+        <div class="cc" aria-busy="true">
+          <div class="cc-head">
+            <h3 class="cc-title">Which area would you like to stay in?</h3>
+            <div class="cc-meta"><span class="cc-step">1 of …</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <ul class="cc-list">
+            <li class="cc-opt"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">Covent Garden</span></span></li>
+            <li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="sk" style="width: 46%"></span></span></li>
+            <li class="cc-opt"><span class="cc-key" style="opacity:.5">3</span><span class="cc-body"><span class="sk" style="width: 34%"></span></span></li>
+          </ul>
+          <div class="cc-foot"><span class="cc-foot-l">Writing questions…</span><div class="cc-foot-r"><button class="btn ghost">Skip</button></div></div>
+        </div>
+        <p class="note">Shows <strong>what has arrived so far</strong>. Rows can’t be picked until the question is complete, so a click never lands on a row that’s about to shift.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>E2</b> error · answers kept</p>
+        <div class="cc">
+          <div class="cc-head">
+            <h3 class="cc-title">Check your answers</h3>
+            <div class="cc-meta"><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+          </div>
+          <div class="cc-banner" role="alert"><svg><use href="#i-alert"/></svg><div><b>Couldn’t send your answers</b><span>The connection dropped. Your answers are still here.</span></div></div>
+          <ul class="cc-review">
+            <li><span class="k">Area</span><span class="v">King’s Cross</span><button class="btn link">Edit</button></li>
+            <li><span class="k">Budget</span><span class="v">$400–600</span><button class="btn link">Edit</button></li>
+          </ul>
+          <div class="cc-foot"><span class="cc-foot-l"></span><div class="cc-foot-r"><button class="btn primary">Try again</button></div></div>
+        </div>
+        <p class="note">The app calls <code>setError()</code> when its send fails. The message comes from the app, so it can be specific.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>E3</b> answered · record in transcript</p>
+        <div class="shell" style="height: 380px">
+          <div class="msgs">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="rec">
+              <div class="rec-head"><svg><use href="#i-check"/></svg>You answered 3 of 4 <button class="btn link">Edit answers</button></div>
+              <dl>
+                <dt>Area</dt><dd>Near King’s Cross</dd>
+                <dt>Budget</dt><dd>$400–600</dd>
+                <dt>Priorities</dt><dd class="skipped">Skipped</dd>
+                <dt>Notes</dt><dd>Anniversary, a room with a view</dd>
+              </dl>
+            </div>
+            <div class="msg-a">No priorities given, so I’ve balanced location and quiet. Here are four near King’s Cross…</div>
+          </div>
+          <div class="composer"><span class="ph">Reply…</span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+        <p class="note">The card <strong>collapses into a record</strong> where it was asked, so the transcript shows why the agent did what it did. Edit answers reopens it and emits <code>revise</code>.</p>
+      </div>
+
+      <div class="frame">
+        <p class="frame-label"><b>E4</b> expired · agent moved on</p>
+        <div class="rec expired">
+          <div class="rec-head"><svg><use href="#i-clock"/></svg>Not answered. The agent continued without these.</div>
+          <dl><dt>Area</dt><dd class="skipped">—</dd><dt>Budget</dt><dd class="skipped">—</dd></dl>
+        </div>
+        <p class="note" style="margin-bottom: 24px">Read-only, with a dashed border. Used when the agent gives up waiting, or when a newer message takes over.</p>
+
+        <p class="frame-label"><b>E5</b> skipped all</p>
+        <div class="rec">
+          <div class="rec-head"><svg style="color:var(--clarify-faint)"><use href="#i-arrow"/></svg>Skipped. The agent used its own judgement. <button class="btn link">Answer now</button></div>
+        </div>
+        <p class="note" style="margin-bottom: 24px">You can still answer later. It emits <code>revise</code> just like an edit.</p>
+
+        <p class="frame-label"><b>E6</b> replied in your own words</p>
+        <div class="rec">
+          <div class="rec-head"><svg style="color:var(--clarify-faint)"><use href="#i-pencil"/></svg>Replied in your own words · 2 picks kept <button class="btn link">Answer the questions</button></div>
+        </div>
+        <p class="note">Shown when a message was sent while the card was minimised.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · OPTION STATES ─────────────────────────────────────────────── -->
+  <section class="group" id="option-states">
+    <h2>7 · Option states</h2>
+    <p>Every row in each state. Focus is a <strong>ring</strong>, selection is a <strong>fill</strong>, so they can coexist and stay distinct for keyboard users.</p>
+    <div class="strip">
+      <div><p class="cap">default</p><div class="cc"><ul class="cc-list"><li class="cc-opt"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">South Bank</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li></ul></div></div>
+      <div><p class="cap">hover / active</p><div class="cc"><ul class="cc-list"><li class="cc-opt is-active"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">South Bank</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li></ul></div></div>
+      <div><p class="cap">focus-visible</p><div class="cc"><ul class="cc-list"><li class="cc-opt is-focus"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">South Bank</span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li></ul></div></div>
+      <div><p class="cap">selected (single)</p><div class="cc"><ul class="cc-list"><li class="cc-opt is-selected"><span class="cc-key radio"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">South Bank</span></span></li></ul></div></div>
+      <div><p class="cap">selected + focus</p><div class="cc"><ul class="cc-list"><li class="cc-opt is-selected is-focus"><span class="cc-key radio"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">South Bank</span></span></li></ul></div></div>
+      <div><p class="cap">multi · unchecked</p><div class="cc"><ul class="cc-list"><li class="cc-opt"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Quiet at night</span></span></li></ul></div></div>
+      <div><p class="cap">multi · checked</p><div class="cc"><ul class="cc-list"><li class="cc-opt is-selected"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Quiet at night</span></span></li></ul></div></div>
+      <div><p class="cap">recommended</p><div class="cc"><ul class="cc-list"><li class="cc-opt"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">Covent Garden <span class="cc-badge">Recommended</span></span></span></li></ul></div></div>
+      <div><p class="cap">with description</p><div class="cc"><ul class="cc-list"><li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">$400–600</span><span class="cc-desc">Upscale, 4–5 star</span></span></li></ul></div></div>
+      <div><p class="cap">disabled</p><div class="cc"><ul class="cc-list"><li class="cc-opt is-disabled"><span class="cc-key">4</span><span class="cc-body"><span class="cc-label">Heathrow</span><span class="cc-desc">No rooms on your dates</span></span></li></ul></div></div>
+      <div><p class="cap">something else · idle</p><div class="cc"><ul class="cc-list"><li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li></ul></div></div>
+      <div><p class="cap">compose option</p><div class="cc"><ul class="cc-list"><li class="cc-opt"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">I’ll explain</span></span><span class="cc-out">write it ↗</span></li></ul></div></div>
+      <div><p class="cap">something else · filled</p><div class="cc"><ul class="cc-list"><li class="cc-opt is-selected"><span class="cc-key radio"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Near King’s Cross</span><span class="cc-desc">Your answer · <span style="color:var(--clarify-accent)">edit</span></span></span></li></ul></div></div>
+    </div>
+  </section>
+
+  <!-- 8 · THEMING ──────────────────────────────────────────────────── -->
+  <section class="group" id="theming">
+    <h2>8 · Theming with tokens only</h2>
+    <p>The same markup in three token sets. No CSS beyond <code>--clarify-*</code> variables changed: fonts, colours, radii and shadow. Structural tweaks go through <code>::part()</code>.</p>
+    <div class="frames">
+      <div class="frame">
+        <p class="frame-label"><b>F1</b> default (neutral)</p>
+        <div class="cc">
+          <div class="cc-head"><h3 class="cc-title">What’s your budget per night?</h3><div class="cc-meta"><span class="cc-step">2 of 4</span></div></div>
+          <ul class="cc-list"><li class="cc-opt is-active"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">$250–400 <span class="cc-badge">Recommended</span></span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li><li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">$400–600</span></span></li><li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li></ul>
+          <div class="cc-foot"><span class="cc-foot-l"></span><div class="cc-foot-r"><button class="btn ghost">Skip</button></div></div>
+        </div>
+      </div>
+      <div class="frame theme-warm">
+        <p class="frame-label"><b>F2</b> warm, hand-drawn (portfolio-like)</p>
+        <div class="cc">
+          <div class="cc-head"><h3 class="cc-title">What’s your budget per night?</h3><div class="cc-meta"><span class="cc-step">2 of 4</span></div></div>
+          <ul class="cc-list"><li class="cc-opt is-active"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">$250–400 <span class="cc-badge">Recommended</span></span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li><li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">$400–600</span></span></li><li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li></ul>
+          <div class="cc-foot"><span class="cc-foot-l"></span><div class="cc-foot-r"><button class="btn ghost">Skip</button></div></div>
+        </div>
+      </div>
+      <div class="frame theme-mono">
+        <p class="frame-label"><b>F3</b> dev tool (mono, dark)</p>
+        <div class="cc">
+          <div class="cc-head"><h3 class="cc-title">Which test runner?</h3><div class="cc-meta"><span class="cc-step">2 of 4</span></div></div>
+          <ul class="cc-list"><li class="cc-opt is-active"><span class="cc-key">1</span><span class="cc-body"><span class="cc-label">Vitest <span class="cc-badge">Recommended</span></span></span><span class="cc-trail arrow"><svg><use href="#i-arrow"/></svg></span></li><li class="cc-opt"><span class="cc-key">2</span><span class="cc-body"><span class="cc-label">Jest</span></span></li><li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li></ul>
+          <div class="cc-foot"><span class="cc-foot-l"></span><div class="cc-foot-r"><button class="btn ghost">Skip</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top: 40px">Token list (draft)</h2>
+    <table class="tok" style="margin-top: 12px">
+      <tr><th>Token</th><th>Used for</th><th>Default (light)</th></tr>
+      <tr><td><code>--clarify-font</code> / <code>-font-title</code></td><td>Body and question text</td><td>system-ui</td></tr>
+      <tr><td><code>--clarify-bg</code></td><td>Card surface</td><td><span class="sw" style="background:#fff"></span>#ffffff</td></tr>
+      <tr><td><code>--clarify-fg</code></td><td>Text, primary button</td><td><span class="sw" style="background:#1d1d1b"></span>#1d1d1b</td></tr>
+      <tr><td><code>--clarify-muted</code> / <code>-faint</code></td><td>Helpers, meta, placeholders</td><td><span class="sw" style="background:#6b6a66"></span>#6b6a66 · <span class="sw" style="background:#9a9893"></span>#9a9893</td></tr>
+      <tr><td><code>--clarify-border</code></td><td>Card edge, row dividers</td><td><span class="sw" style="background:#e7e5e0"></span>#e7e5e0</td></tr>
+      <tr><td><code>--clarify-hover</code> / <code>-selected</code></td><td>Row fills</td><td><span class="sw" style="background:#f5f4f0"></span>#f5f4f0 · <span class="sw" style="background:#eeede8"></span>#eeede8</td></tr>
+      <tr><td><code>--clarify-key-bg</code></td><td>Number badges</td><td><span class="sw" style="background:#f1f0ec"></span>#f1f0ec</td></tr>
+      <tr><td><code>--clarify-accent</code> / <code>-accent-fg</code> / <code>-accent-soft</code></td><td>Focus ring, checks, recommended badge</td><td><span class="sw" style="background:#3b5bdb"></span>#3b5bdb</td></tr>
+      <tr><td><code>--clarify-danger</code> / <code>-danger-soft</code></td><td>Errors, invalid, flagged review rows</td><td><span class="sw" style="background:#c2410c"></span>#c2410c</td></tr>
+      <tr><td><code>--clarify-success</code></td><td>Answered ticks, record icon</td><td><span class="sw" style="background:#2f7d4f"></span>#2f7d4f</td></tr>
+      <tr><td><code>--clarify-radius</code> / <code>-radius-sm</code></td><td>Card, rows</td><td>16px · 9px</td></tr>
+      <tr><td><code>--clarify-shadow</code></td><td>Card elevation</td><td>soft two-layer</td></tr>
+      <tr><td><code>--clarify-duration</code> / <code>-ease</code></td><td>Step and collapse motion</td><td>160ms · cubic-bezier(.2,.7,.2,1)</td></tr>
+    </table>
+  </section>
+
+  <!-- 9 · PHONE ────────────────────────────────────────────────────── -->
+  <section class="group" id="phone">
+    <h2>9 · Phone</h2>
+    <p>Docked and compact at 375px. Rows stay 44px+ for thumbs, key hints are hidden, and Skip and Continue sit where the thumb rests.</p>
+    <div class="frames wide">
+      <div class="frame">
+        <p class="frame-label"><b>G1</b> replace · sequential · 375px</p>
+        <div class="shell phone">
+          <div class="msgs fade">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="msg-a thinking"><i></i>Waiting for your answers</div>
+          </div>
+          <div class="replace compact">
+            <div class="cc">
+              <div class="cc-head">
+                <button class="cc-icon" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+                <h3 class="cc-title">What matters most in the hotel?<span class="cc-sub">Pick up to 3.</span></h3>
+                <div class="cc-meta"><span class="cc-step">3/4</span><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div>
+              </div>
+              <ul class="cc-list">
+                <li class="cc-opt is-selected"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Walkable to sights</span></span></li>
+                <li class="cc-opt"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Quiet at night</span></span></li>
+                <li class="cc-opt is-selected"><span class="cc-key box"><svg><use href="#i-check"/></svg></span><span class="cc-body"><span class="cc-label">Breakfast included</span></span></li>
+                <li class="cc-opt cc-other"><span class="cc-key"><svg><use href="#i-pencil"/></svg></span><span class="cc-body"><span class="cc-label">Something else</span></span></li>
+              </ul>
+              <div class="cc-foot">
+                <span class="cc-foot-l"><span class="cc-dots"><i class="on"></i><i class="skip"></i><i class="on"></i><i></i></span></span>
+                <div class="cc-foot-r"><button class="btn ghost">Skip</button><button class="btn primary">Continue</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="frame">
+        <p class="frame-label"><b>G2</b> dock · all at once · 375px</p>
+        <div class="shell phone">
+          <div class="msgs fade">
+            <div class="msg-u">I’m planning a trip to London, can you give me some hotel recommendations?</div>
+            <div class="msg-a">Here are a few to start with. Two quick answers would sharpen these.</div>
+          </div>
+          <div class="dock">
+            <div class="cc compact">
+              <div class="cc-head"><h3 class="cc-title">Two quick questions</h3><div class="cc-meta"><button class="cc-icon" aria-label="Minimise"><svg><use href="#i-min"/></svg></button></div></div>
+              <div class="cc-q"><div class="cc-q-head" style="padding-left:16px"><h4 class="cc-q-title">Budget per night</h4></div><div class="cc-chips" style="padding-left:16px"><span class="chip">$250–400</span><span class="chip on">$400–600</span><span class="chip">$600+</span></div></div>
+              <div class="cc-q"><div class="cc-q-head" style="padding-left:16px"><h4 class="cc-q-title">Trip length</h4></div><div class="cc-chips" style="padding-left:16px"><span class="chip">1–2</span><span class="chip">3–4</span><span class="chip">5+ nights</span></div></div>
+              <div class="cc-foot"><span class="cc-foot-l">1 of 2</span><div class="cc-foot-r"><button class="btn primary">Send</button></div></div>
+            </div>
+          </div>
+          <div class="composer"><span class="ph">Or keep chatting…</span><span class="send"><svg><use href="#i-send"/></svg></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Theme toggle for reviewing light and dark side by side.
+  const root = document.documentElement;
+  document.querySelectorAll('.toggle button').forEach((b) => b.addEventListener('click', () => {
+    const t = b.dataset.t;
+    if (t === 'auto') root.removeAttribute('data-theme'); else root.dataset.theme = t;
+    document.querySelectorAll('.toggle button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  }));
+</script>
+</body>
+</html>
