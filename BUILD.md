@@ -74,7 +74,7 @@ agent-clarifier/
       pill.ts             # minimised pill
       record.ts           # record variants (answered / skipped / replied / expired)
       skeleton.ts         # loading view
-      motion.ts           # height animation, step slide, reduced-motion guard
+      motion.ts           # height animation, step slide, fold, toast exit, reduced-motion crossfade
       viewport.ts         # visible-screen height (visualViewport) → --_vvh; scroll-edge shadows
     composer.ts           # find, hide/show, placeholder swap, insert, flash, submit listener
     labels.ts             # default English strings + merge, plural forms, number format, lang/dir lookup
@@ -267,7 +267,7 @@ interface State {
   - pill (minimised)
   - record (answered or expired)
   - submitting and error reuse the review/step view, plus a banner or a progress footer
-- **When the view changes**, build the new view, swap it in, and animate the card height from old to new (`motion.ts`, Web Animations API, `--clarify-duration`). With reduced motion: no height or slide animation, just an instant swap.
+- **When the view changes**, build the new view, swap it in, and animate the card height from old to new (`motion.ts`, Web Animations API, `--clarify-duration`). With reduced motion: no height or slide animation, just a crossfade (nothing moves or resizes; round 9, DESIGN §7).
 - **When the step changes**, the question body slides 12px with a fade (160ms), and the height animates.
 - **Within a view**, `update()` only toggles classes, attributes and text, so focus, text selection and IME input survive.
 - **Events** fire from transitions (compare previous and next status) in one place, `emitFor(prev, next, action)`. Every event is fired exactly once.
@@ -555,7 +555,7 @@ Status as of round 8 (10 Oct 2026):
 | The app clears the textarea before the card reads it | Listen in the capture phase on `submit`. The manual `reply()` is the fallback |
 | React passing objects as attributes | Docs: set `questionnaire` and `labels` as properties (React 19 does this for custom elements). Typings in `jsx.d.ts` |
 | SSR (Astro/Next) importing it on the server | `define()` is guarded. Nothing touches `window` at import time |
-| Height animation jank | Measure with `getBoundingClientRect`, animate `height` with the Web Animations API, and fall back to an instant swap under reduced motion |
+| Height animation jank | Measure with `getBoundingClientRect`, animate `height` with the Web Animations API, and fall back to a crossfade under reduced motion |
 | Size creep | `size-limit` in CI fails the build above the budget |
 | `visualViewport` behaves differently in iOS Safari and Chrome on Android | Feature-detect and fall back to `100dvh`. Checked on a real phone in M5, not only in emulation |
 | A `left`/`right` slips into the CSS and breaks RTL | The stylesheet scan test (§8.1) |

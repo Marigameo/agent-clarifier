@@ -19,7 +19,7 @@ Each signal has **one meaning**, so it never has to be learnt twice.
 | **Fill** | State: hover is a light fill, selected is a stronger fill | The only sign of selection (the check or radio mark always shows it too) |
 | **Ring** | Keyboard focus | Selection. A ring and a fill can show at the same time (round 1) |
 | **Dashed edge** | "Not a real option" ("Other" chip) or "no longer live" (the expired record) | |
-| **Motion** | Answers "what just happened?": a pick confirmed, a step moved forward or back, the card folded into a record | Delight for its own sake. With reduced motion every animation becomes an instant change |
+| **Motion** | Answers "what just happened?": a pick confirmed, a step moved forward or back, the card folded into a record, a press landed | Delight for its own sake, or anything paced by the keyboard. With reduced motion nothing moves or resizes, but fades stay (round 9) |
 
 **Layout rules**
 - **One inline edge.** The title, the number keys, the footer text and the all-flow chips all start 20px from the card's edge (list inset 8 + row padding 12 = 20). The eye finds one straight line down the card.
@@ -110,16 +110,32 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 
 ## 7. Motion
 
+Checked against Emil Kowalski's `find-animation-opportunities` skill in round 9: every moment must name its job, stay inside its time budget, and not move anything the user is reading or acting on. Filmstrips (clock slowed 10×) in `process/09-motion-audit/renders/`, made with `scripts/motion-strips.mjs`.
+
 | Value | Where | Why |
 |---|---|---|
 | **120ms** confirm before auto-advance | single pick, Decide for me | ✅ Just above the ~100ms it takes to see a change, so the pick registers, and short enough not to feel like waiting |
-| **160ms** `--clarify-duration` | step change, height | ✅ Inside the 100–200ms range for small UI moves: it feels quick but can be followed |
-| `cubic-bezier(.2,.7,.2,1)` `--clarify-ease` | everything | ✅ A strong ease-out: it starts fast, so it answers the input at once, and settles gently |
+| **160ms** `--clarify-duration` | step change, height, toast, press | ✅ Inside the 100–200ms range for small UI moves: it feels quick but can be followed |
+| `cubic-bezier(.2,.7,.2,1)` `--clarify-ease` | everything | ✅ A strong ease-out: about 70% of the way in the first quarter of the time, so it answers the input at once, then settles gently |
 | **12px** slide | step change | ✅ Small enough to read as "next", not "a new screen" |
-| **200ms** | folding into the record | ✅ A bigger area moves, so it takes a bit longer |
-| **600ms** | compose highlight | ✅ Long enough to see where the text landed, gone before reading starts |
-| **5s** toast | Skip and Start over toasts | ❓ (F13) Fine for a glance, but the timer should pause while the toast is hovered or focused, so nobody loses Undo while reaching for it |
+| **200ms** (1.25 × `--clarify-duration`) | folding into the record or the pill, and reopening from the pill | ✅ The biggest change in size, so it takes a bit longer. Derived from the one public token, so an app that retunes speed keeps the ratio. (Until round 9 this row was written but not built: the fold ran at 160ms.) |
+| Pill: **fade only** | folding into the pill | ✅ A capsule (radius 999px) that changes height is drawn as an oval for the first ~100ms (caught in the round 9 filmstrip). The pill appears at its own size and fades in |
+| **scale .97** on press | buttons, chips, icon buttons | ✅ Feedback: the control gives under the finger. That's ~1px on a 32px button, felt more than seen. **Pointer only**: a keyboard press already shows the ring, and keyboard actions repeat too fast to animate. Text links don't shrink |
+| **4px rise + fade** | the toast, in and out | ✅ The toast carries Undo, which the whole recovery design rests on (undo instead of confirm dialogs). Swapped in where the dashes were, it's easy to miss. It leaves the way it came. The dashes come back without a fade: they're rebuilt on every update, so an entrance would replay constantly |
+| **600ms** | compose highlight | ✅ Long enough to see where the text landed, gone before reading starts. A glow, not a move, so it plays under reduced motion too |
+| **5s** toast | Skip and Start over toasts | ✅ (F13) Waits while hovered or focused, so nobody loses Undo while reaching for it |
 | 1.4s shimmer · 0.8s spinner | loading | ✅ Slow enough to feel calm. Both stop with reduced motion |
+| **Reduced motion** | everything | ✅ Nothing moves or resizes; views, the toast and the compose glow still **fade**. A fade isn't movement, and an instant swap is the very jarring change motion is here to prevent ("gentler, not zero"). Until round 9 everything was instant |
+
+**Not animated, on purpose** (each failed one of the four questions):
+
+| Candidate | Failed on | Why |
+|---|---|---|
+| Hover, selected and focus fills on option rows | How often | Arrow keys and 1–9 move through them many times per card; a fading fill would trail the key |
+| Shrinking an option row on press | Job | A full-width row shrinking reads as the whole list pulsing. The fill and the 120ms confirm already answer the press |
+| A pulsing dot on the minimised pill | Job | The pill can wait for minutes while the user writes their own reply; a pulse that never stops pulls attention from the composer |
+| Shaking a question with a missing answer | Gets in the way | The red text and the scroll to the question explain it; a shake moves the very thing the user must act on |
+| Animated "Sending in 3s" digits | Gets in the way | It's text the user reads to decide on Undo |
 
 ---
 

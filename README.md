@@ -289,7 +289,7 @@ agent-clarifier { --clarify-accent: #0b7a5f; --clarify-radius: 12px; --clarify-f
 | `--clarify-shadow` | `none` | The card in replace mode (it sits in the composer's slot) |
 | `--clarify-shadow-dock` | an upward shadow | The docked card, floating over the conversation |
 | `--clarify-shadow-float` | a soft two-layer shadow | The minimised pill |
-| `--clarify-duration`, `--clarify-ease` | `160ms`, `cubic-bezier(.2,.7,.2,1)` | Motion (none with reduced motion) |
+| `--clarify-duration`, `--clarify-ease` | `160ms`, `cubic-bezier(.2,.7,.2,1)` | Motion. The fold into the pill or record runs at 1.25×. With reduced motion, nothing moves; views crossfade |
 | `--clarify-max-height` | 60% of the visible screen | Card height before it scrolls |
 
 Dark mode follows `prefers-color-scheme`, or force it with `theme="dark"` or `theme="light"`. The reason behind each default is in [DESIGN.md](DESIGN.md).

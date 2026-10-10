@@ -464,6 +464,42 @@ Clicking through the first playground build raised two things.
 
 ---
 
+## Round 9 · Motion audit with Emil Kowalski's skill (10 Oct 2026)
+
+**Brief (mine):** the build is done. Now I want to audit and improve the experience, one external skill at a time, and be able to answer for every interaction, colour and shadow. The first skill is Emil Kowalski's `find-animation-opportunities`. It's read-only and built around restraint: an idea survives only if it passes how often, what job, speed, and whether moving it gets in the way.
+
+**What Claude found** (full report frozen in `process/09-motion-audit/audit.md`). The existing motion was already purposeful and tokenised. Four proposals, five turned down:
+1. **Toast entrance:** the toast carrying Undo swapped in unnoticed where the dashes were.
+2. **The doc said 200ms for the fold, the code used 160ms.** An honest drift between DESIGN §7 and the code.
+3. **Press feedback** on buttons, chips and icon buttons (`scale(.97)`).
+4. **Reduced motion "gentler, not zero":** keep fades, drop movement. This changed a principle in DESIGN §1, so it was flagged as my call.
+
+Turned down: fills on option rows (keyboard-paced), shrinking an option row, a pulse on the pill, an error shake, and the animated countdown. Each is logged with the question that failed it.
+
+**My decision:** take all four.
+
+**What Claude built, and the calls made along the way** (Claude's, with reasons, per round 8):
+- **Toast:** fades in with a 4px rise via `@starting-style`, and leaves the same way (`leave()` in `motion.ts`). The dashes come back without a fade, because they're rebuilt on every update and an entrance would replay constantly.
+- **Fold:** a new `fold` move at **1.25 × `--clarify-duration`** (200ms by default), not a new public token. That keeps the API unchanged (scope lock), and an app that retunes speed keeps the ratio.
+- **Press:** pointer-only, through the existing live `data-pointer` hook. Keyboard presses already show a ring and repeat too fast to animate. Text links don't shrink.
+- **Reduced motion:** views, the toast and the compose glow fade; nothing moves or resizes. The spinner and shimmer still stop, because they move.
+
+**Caught by looking, not by tests:** Claude made filmstrips with Chrome's animation clock slowed 10× (`scripts/motion-strips.mjs`). They showed **the pill turning into an oval** during the fold: a `999px` radius on an element whose height animates from the card's size. Fix: the pill fades only. The strips also made the ease-out visible, with ~70% of the distance covered in the first quarter of the time.
+
+**Caught while building:** the toast's exit fade opened a race. A timeout landing after Undo would have cleared the *next* toast, so now only the toast that was fading times out.
+
+**Tests:** 3 new component tests (fold timing and the pill not moving, the reduced-motion crossfade, and the toast's entrance, exit and race). Deliberately breaking each change made a test fail, 4/4. 511 green.
+
+**Size:** +280 B gzipped (19.95 KB against the 20 KB guard). It adds to the size decision that's already waiting on me.
+
+**Docs:** DESIGN §1 and §7 rewritten (every motion value with its reason, plus a "not animated, on purpose" table). BUILD, PLAN and README brought in line with the new reduced-motion rule.
+
+**Still for me to check by hand:** the feel. Space and Enter speed through the steps, a real phone's press, macOS "Reduce motion" on, and toast hover during the fade.
+
+**Artifacts:** `process/09-motion-audit/` (audit.md, PLAN.md, DESIGN.md, renders: five filmstrips plus toast light, dark and phone).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -473,3 +509,4 @@ Clicking through the first playground build raised two things.
 - Round 5 is the "measure, don't assume" beat: writing a reason for every token showed that the default grey failed the contrast the plan promised. It was caught on paper, before any code.
 - M1's "100% coverage, still weak tests" beat: deliberately breaking the code found two boundary blind spots that coverage couldn't see.
 - Skip vs Decide for me is a good small example of meaning over features: same outcome for the agent, different intent from the user, so a different reply.
+- Round 9 is the "restraint" beat: a motion audit whose output is mostly *no*. Five ideas turned down with reasons, four small changes taken. And the slowed-clock filmstrip caught a bug (the pill drawn as an oval) that no test was looking for.

@@ -287,6 +287,10 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 }
 .toast .msg { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; }
 .toast .btn.link { color: var(--_bg); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+/* The toast carries Undo, so it rises 4px into the spot the dashes left instead of swapping in
+   unnoticed. It leaves the same way (motion.ts leave). Reduced motion keeps the fade only (DESIGN §7). */
+.toast { transition: opacity var(--_duration) var(--_ease), transform var(--_duration) var(--_ease); }
+@starting-style { .toast { opacity: 0; } }
 
 /* ── all at once ────────────────────────────────────────────────────── */
 .form { padding-block-end: 4px; }
@@ -429,6 +433,16 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .opt:hover .trail { visibility: visible; }
 }
 @media (prefers-reduced-motion: reduce) { .spin, .sk { animation: none; } }
+/* Movement only for those who haven't asked for less. Fades stay either way (DESIGN §7). */
+@media (prefers-reduced-motion: no-preference) {
+  @starting-style { .toast { transform: translateY(4px); } }
+  /* Press feedback: the control gives a little under a pointer. Not for keyboard presses
+     (Space), which repeat fast and already show the ring. Text links don't shrink. */
+  .btn:not(.link), .chip, .icon-btn { transition: transform var(--_duration) var(--_ease); }
+  [data-pointer] .btn:not(.link):active:not(:disabled),
+  [data-pointer] .chip:active:not([aria-disabled="true"]),
+  [data-pointer] .icon-btn:active { transform: scale(.97); }
+}
 
 /* Touch: controls drawn smaller than 44px keep a 44px hit area; the drawing doesn't change (BUILD §5.3). */
 @media (pointer: coarse) {

@@ -86,11 +86,17 @@ From round 8, **Mari delegates design and copy calls to Claude** and will audit 
 
 ## Status (end of the build on 10 Oct 2026)
 
-M1–M7 are built. 508 tests are green (`pnpm check`). The Definition of done in BUILD §11 shows what's still open:
-- the size decision (19.7 KB against a 12 KB target)
+M1–M7 are built. 511 tests are green (`pnpm check`). The Definition of done in BUILD §11 shows what's still open:
+- the size decision (19.95 KB after round 9, against a 12 KB target and a 20 KB guard)
 - the manual VoiceOver and real-phone passes
 - Svelte 5
 - publishing, which needs Mari's go-ahead
 - Mari's audit of the round-8 calls
+
+## Round 9 onwards: audits with external skills
+
+Mari shares one skill at a time. Claude runs it as a read-only audit and presents findings with exact values, plus what was turned down and why. Mari picks, then Claude applies, tests, and documents (DESIGN.md, a journal round, and a `process/NN-*` snapshot).
+- **Round 9 · motion** (Emil Kowalski's `find-animation-opportunities`): toast in and out, a 200ms fold, pointer-only press feedback, and reduced motion as "fades stay, nothing moves". Report: `process/09-motion-audit/audit.md`.
+- **Checking motion:** `node scripts/motion-strips.mjs <dir>` slows Chrome's animation clock 10× and writes filmstrips.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

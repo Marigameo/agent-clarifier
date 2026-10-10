@@ -16,7 +16,7 @@ import { formView } from './view/form';
 import { reviewView } from './view/review';
 import { stepView } from './view/step';
 import { usingPointer } from './view/modality';
-import { enter, type Move } from './view/motion';
+import { enter, leave, type Move } from './view/motion';
 import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport';
 import { h, rove } from './view/dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './view/types';
@@ -286,6 +286,8 @@ export class AgentClarifier extends Base {
     if (from === 'step' && to === 'step') return this.#s.step < fromStep ? 'back' : 'forward';
     if (from === 'step' && to === 'review') return 'forward';
     if (from === 'review' && to === 'step') return 'back';
+    // Folding into the pill or the record, or opening back out of the pill.
+    if (to === 'pill' || to === 'record' || from === 'pill') return 'fold';
     return 'swap';
   }
 
@@ -462,9 +464,17 @@ export class AgentClarifier extends Base {
 
   /** A toast waits while it's hovered or focused, so nobody loses Undo while reaching for it (F13). */
   #toastDone = (): void => {
-    const toast = this.#root.querySelector('.toast');
-    if (toast?.matches(':hover, :focus-within')) this.#toastTimer = window.setTimeout(this.#toastDone, 1000);
-    else this.#dispatch({ type: 'TOAST_TIMEOUT' });
+    const toast = this.#root.querySelector<HTMLElement>('.toast');
+    if (toast?.matches(':hover, :focus-within')) {
+      this.#toastTimer = window.setTimeout(this.#toastDone, 1000);
+      return;
+    }
+    // It leaves the way it came in. Undo pressed during the fade replaces the toast, so only time
+    // out the one that was fading.
+    const fading = this.#s.toast;
+    void (toast ? leave(toast) : Promise.resolve()).then(() => {
+      if (this.#s.toast === fading) this.#dispatch({ type: 'TOAST_TIMEOUT' });
+    });
   };
 
   /** Fire clarify:submit (or clarify:revise) after the undo window. Not prevented → answered. */

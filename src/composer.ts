@@ -106,12 +106,11 @@ export class Composer {
     this.value = text + rest;
     this.field.focus();
     if (isTextField(this.field)) this.field.setSelectionRange(text.length, text.length);
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      this.container.animate(
-        [{ boxShadow: '0 0 0 3px color-mix(in srgb, currentColor 18%, transparent)' }, { boxShadow: '0 0 0 3px transparent' }],
-        { duration: 600, easing: 'ease-out' },
-      );
-    }
+    // A glow fading out moves nothing, so it plays under reduced motion too (DESIGN §7).
+    this.container.animate(
+      [{ boxShadow: '0 0 0 3px color-mix(in srgb, currentColor 18%, transparent)' }, { boxShadow: '0 0 0 3px transparent' }],
+      { duration: 600, easing: 'ease-out' },
+    );
   }
 
   /** Reopening after a compose pick: take the sentence back out, but only if the user didn't touch it. */

@@ -152,7 +152,7 @@ There's **one way to answer** (the card, with review for edits) and **one way ou
 - `{ "label": "I'll explain", "compose": "For accessibility, I need " }`
 - Picking it **minimises the card and starts that sentence in the composer**, with the cursor at the end. From there it's route 1.
 - The row shows it leaves the card: a pencil icon and a hint on the right reading **"write it ↗"**.
-- What the user already typed is never overwritten: the sentence goes in front of it. The inserted text is briefly highlighted (600ms, none with reduced motion).
+- What the user already typed is never overwritten: the sentence goes in front of it. The inserted text is briefly highlighted (600ms; a fading glow, so it stays with reduced motion).
 
 **Short details stay in the card:** a `text` question with a `default` prefills a sentence or detail that you edit in place, and it shows in review like any other answer.
 
@@ -302,7 +302,7 @@ canUseTool: async (name, input) => {
 - Focus moves into the card when it opens and back to the composer when it closes.
 - Number keys are ignored while a text field has focus.
 - All targets are 44px+ on touch, and the key-hint bar is hidden on `(hover: none)`.
-- Reduced motion turns slides into plain swaps.
+- Reduced motion turns slides into crossfades: nothing moves or resizes, but nothing teleports either.
 - WCAG AA contrast with the default tokens, checked by axe in tests.
 
 **Motion**
