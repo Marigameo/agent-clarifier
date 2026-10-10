@@ -9,6 +9,9 @@ export default defineConfig({
       formats: ['es'],
     },
     target: 'es2022',
+    // Vite leaves whitespace in ES library builds; minify fully so CDN users get a small file
+    // and size-limit measures what actually ships.
+    rolldownOptions: { output: { minify: true } },
     sourcemap: true,
   },
 });
