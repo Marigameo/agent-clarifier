@@ -37,10 +37,10 @@ body {
   background: var(--pg-chat); border: 1px solid var(--pg-line); border-radius: 20px; overflow: hidden;
 }
 .chat.framed { border-radius: 32px; }
-.msgs { flex: 1; overflow: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 20px 18px 12px; }
+.msgs { flex: 1; min-block-size: 0; overflow: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 20px 18px 12px; }
 .msg { max-inline-size: 85%; line-height: 1.5; overflow-wrap: anywhere; }
 .msg.user { align-self: flex-end; padding: 10px 14px; border-radius: 14px; background: var(--pg-bubble); }
-.dock { display: grid; gap: 10px; padding: 0 12px 12px; }
+.dock { flex: none; display: grid; gap: 10px; padding: 0 12px 12px; }
 .composer {
   display: flex; align-items: flex-end; gap: 8px; padding: 10px 10px 10px 16px;
   border: 1px solid var(--pg-line); border-radius: 16px; background: var(--pg-panel);

@@ -13,6 +13,7 @@ import { sheet } from './styles';
 import { pillView, recordView, loadingView } from './view/endings';
 import { reviewView } from './view/review';
 import { stepView } from './view/step';
+import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport';
 import { DELEGATE, OTHER, type Ctx, type View } from './view/types';
 
 /** Lets the module load on a server (Astro, Next): there's no HTMLElement there. */
@@ -51,15 +52,27 @@ export class AgentClarifier extends Base {
   #advance = 0;
   #toastTimer = 0;
   #submitTimer = 0;
+  #resize: ResizeObserver;
 
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [sheet()];
+    this.#root.adoptedStyleSheets = [sheet(), viewportSheet()];
     this.#root.addEventListener('click', (e) => this.#onClick(e));
+    this.#root.addEventListener('scroll', () => this.#edges(), true);
+    this.#resize = new ResizeObserver(() => this.#edges());
     this.#root.addEventListener('input', (e) => this.#onInput(e));
     this.#root.addEventListener('focusin', (e) => this.#onFocusIn(e));
     this.#root.addEventListener('keydown', (e) => this.#onKeyDown(e as KeyboardEvent));
+  }
+
+  connectedCallback(): void {
+    watchViewport();
+  }
+
+  disconnectedCallback(): void {
+    unwatchViewport();
+    this.#resize.disconnect();
   }
 
   // ── attributes and properties ─────────────────────────────────────────
@@ -181,9 +194,25 @@ export class AgentClarifier extends Base {
       this.#viewKey = key;
       this.#view = this.#build(name, ctx);
       this.#root.replaceChildren(...(this.#view ? [this.#view.el] : []));
+      this.#resize.disconnect();
+      const scroll = this.#root.querySelector('.scroll');
+      if (scroll) {
+        this.#resize.observe(scroll);
+        if (scroll.firstElementChild) this.#resize.observe(scroll.firstElementChild);
+      }
     }
     this.#view?.update(ctx);
     if (this.#view) this.#view.el.inert = this.disabled;
+    this.#edges();
+  }
+
+  /** Show an edge shadow only where content is hidden past the edge (DESIGN §3). */
+  #edges(): void {
+    const card = this.#view?.el;
+    const scroll = card?.querySelector('.scroll');
+    if (!card || !scroll) return;
+    card.toggleAttribute('data-above', scroll.scrollTop > 0);
+    card.toggleAttribute('data-below', scroll.scrollTop + scroll.clientHeight < scroll.scrollHeight - 1);
   }
 
   #build(name: ViewName, ctx: Ctx): View | null {
