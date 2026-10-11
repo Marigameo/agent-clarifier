@@ -17,7 +17,7 @@ Each signal has **one meaning**, so it never has to be learnt twice.
 |---|---|---|
 | **Shadow** | "This floats over the conversation" (the docked card, the pill), or "there's more content under this edge" (scroll edges) | Decoration, or anything that sits in the flow (the record, a card in the composer's place) |
 | **Accent colour** | "Yours, or here": your selection marks, keyboard focus, text links | The primary button, large fills, or anything the agent says (the Recommended badge and the source dot went grey in round 14) |
-| **Ink** (`--clarify-fg` as a fill) | "This acts": the primary button and the toast | Selection |
+| **Ink** (`--clarify-fg` as a fill) | "This acts": the primary button, and toasts that carry Undo | Selection, or a message with nothing to press (the pick-limit notice is ink *text*, round 17) |
 | **Fill** | State: hover is a light fill (rows, buttons, chips; mouse or trackpad only), selected is a stronger fill | The only sign of selection (the check or radio mark always shows it too) |
 | **Ring** | Keyboard focus | Selection. A ring and a fill can show at the same time (round 1). Drawn as a box-shadow so it follows the radius, over a transparent outline that Windows contrast themes paint instead (round 11) |
 | **Dashed edge** | "Not a real option" ("Other" chip) or "no longer live" (the expired record) | |
@@ -39,7 +39,7 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 
 | Token | Light | Dark | Role | Contrast (bg / selected) | Why |
 |---|---|---|---|---|---|
-| `--clarify-fg` | #1c1c1c | #ededed | Text, the primary button, the toast | 17.0 / 14.4 · 14.1 / 11.3 | ✅ Near-black: softer than black on white, far above AA |
+| `--clarify-fg` | #1c1c1c | #ededed | Text, the primary button, toasts with Undo, the limit notice's text | 17.0 / 14.4 · 14.1 / 11.3 | ✅ Near-black: softer than black on white, far above AA |
 | `--clarify-muted` | #666666 | #a3a3a3 | **All secondary and small text**: descriptions, step count, source, review keys, placeholders | 5.7 / 4.9 · 6.5 / 5.2 | ✅ Passes AA everywhere it's used. Hierarchy below it comes from size (12px), not a paler grey |
 | `--clarify-faint` | #888888 | #7a7a7a | **Non-text only**: checkbox rings, the text field outline, skipped-step dashes, the source dot (round 14) | edge 3.5 / 3.0 · 3.8 / 3.1 | ✅ Meets 3:1 for the edges that identify a control (WCAG 1.4.11). Never used for text (F1) |
 | `--clarify-border` | #e6e6e6 | #343434 | Card edge, row dividers | decorative | ✅ Dividers only; nothing depends on seeing them |
@@ -129,7 +129,7 @@ Checked against Emil Kowalski's `find-animation-opportunities` skill in round 9,
 | Pill: **fade only** | folding into the pill | ✅ A capsule (radius 999px) that changes height is drawn as an oval for the first ~100ms (caught in the round 9 filmstrip). The pill appears at its own size and fades in |
 | **scale .97** on press | buttons, chips, icon buttons | ✅ Feedback: the control gives under the finger. That's ~1px on a 32px button, felt more than seen. **Pointer only**: a keyboard press already shows the ring, and keyboard actions repeat too fast to animate. Text links don't shrink |
 | **Checkbox: press .95 + tick reveal** (round 15) | multi checkboxes, pointer only | ✅ Built with Emil Kowalski's `animate` skill. *Feedback*: the 16px box gives under a held press (.95, the low end of the skill's 0.95–0.98, since the box is small: ≈0.8px), at `--_duration` like the buttons. *State*: the tick is revealed left to right with `clip-path` (the sanctioned fourth property, not `stroke-dashoffset`), from the stroke's own edge, in 0.75× (120ms). **Keyboard toggles are instant** (the skill's disqualifier); **unticking is instant** (a system response snaps). Reduced motion: no press, the tick fades. Claude's own card turned out not to animate at all (the "feel" in the recording was the recorder's click circle) |
-| **4px rise + fade** | the toast: in at 160ms, out at **120ms** (0.75×) | ✅ The toast carries Undo, which the whole recovery design rests on (undo instead of confirm dialogs). Swapped in where the dashes were, it's easy to miss. It leaves the way it came, a quarter faster: on its way out it shouldn't hold attention (round 10). The dashes come back without a fade: they're rebuilt on every update, so an entrance would replay constantly |
+| **4px rise + fade** | toasts with Undo: in at 160ms, out at **120ms** (0.75×). The pick-limit notice only fades (round 17): nothing to press, so nothing to chase | ✅ The toast carries Undo, which the whole recovery design rests on (undo instead of confirm dialogs). Swapped in where the dashes were, it's easy to miss. It leaves the way it came, a quarter faster: on its way out it shouldn't hold attention (round 10). The dashes come back without a fade: they're rebuilt on every update, so an entrance would replay constantly |
 | **600ms** | compose highlight | ✅ Long enough to see where the text landed, gone before reading starts. A glow, not a move, so it plays under reduced motion too |
 | **5s** toast | Skip and Start over toasts | ✅ (F13) Waits while hovered or focused, so nobody loses Undo while reaching for it. **And while the tab is hidden** (round 10): switch away, come back, Undo is still there |
 | 1.4s shimmer · **0.6s** spinner | loading, sending | ✅ The shimmer is calm. It's a highlight band moving on `transform`, so it runs off the main thread and stays smooth while a streamed reply is being parsed (round 10; it used to repaint `background-position` every frame), and it sweeps in the reading direction. The spinner went from 0.8s to 0.6s in round 10: a faster spinner makes the wait feel shorter, and it only shows while sending. Both stop with reduced motion |
@@ -283,4 +283,19 @@ From Mari's questions comparing our card with a shadcn questionnaire and Claude'
 | **Round 16:** the field is a `<textarea>` that grows (as BUILD §8.2 specified), stacked with the row in one grid cell; the row's label leaves the layout while it's open | The re-check found a long custom label cut mid-word as a one-line placeholder. A textarea's placeholder wraps, the caret sits on line one, and a long answer wraps instead of scrolling out of sight ("never cut off what the user decides on"). Short labels look exactly as before |
 | **Round 16:** in forced colors an open "Something else" keeps a 1px `CanvasText` edge, `Highlight` while focused | Round 14 had dropped the edge round 11 gave the field: in a contrast theme the typed answer had no boundary, and on single nothing marked it as the pick |
 | No send arrow inside the row (Claude's card has one) | Claude's single questions have no footer; ours do, and two send buttons would compete. The ↵ hint stays |
+
+---
+
+## 13. The pick-limit notice (round 17)
+
+Mari asked whether "Up to 2 picks. Unpick one first" should be a warning colour. Plan: `process/17-limit-notice/round-plan.md`.
+
+| Decision | Why |
+|---|---|
+| Not danger orange | It isn't an error or a warning: a reasonable tap was refused, with how to swap. Orange would scold, and dilute the colour that means "something failed, or fix this to send" |
+| Not a black toast any more | The ink fill means "this acts" (§1); Skip and Start over earn it with Undo, this has nothing to press. Beside Continue it was a second black slab, louder than the user's own picks (round 14's principle) |
+| **Ink text, weight 500, no fill, on the card's 20px edge** | Reads as news (not muted status), sits where the count it replaces sits, and leaves Continue the only filled thing in the footer. Contrast 17.0 / 14.1 |
+| Fade only, in and out | The 4px rise was earned by Undo (round 9, "easy to miss"); a notice doesn't need chasing |
+| Same timer, pauses, live region, wording; `part="toast notice"` | Only the drawing changed. Apps styling `::part(toast)` still reach it; `::part(notice)` tells it apart |
+| No shake on the refused row (not decided before round 17) | Round 9 rejected a shake for a missing required answer; the same reasons hold: it moves what the user acts on next, and number keys make it keyboard-triggered |
 

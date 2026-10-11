@@ -300,7 +300,7 @@ Accent, danger and success each need a light and a dark value that pass 4.5:1 on
 
 Dark mode follows `prefers-color-scheme`, or force it with `theme="dark"` or `theme="light"`. The reason behind each default is in [DESIGN.md](DESIGN.md).
 
-**Parts**, for structural tweaks with `::part()`: `card`, `header`, `title`, `step`, `option`, `option-key`, `option-label`, `option-description`, `badge`, `other`, `delegate`, `footer`, `button`, `button-primary`, `toast`, `banner`, `pill`, `record`.
+**Parts**, for structural tweaks with `::part()`: `card`, `header`, `title`, `step`, `option`, `option-key`, `option-label`, `option-description`, `badge`, `other`, `delegate`, `footer`, `button`, `button-primary`, `toast`, `notice` (a toast with nothing to press: the pick limit), `banner`, `pill`, `record`.
 
 ---
 

@@ -800,6 +800,34 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 
 ---
 
+## Round 17 · The pick limit becomes a quiet notice (11 Oct 2026)
+
+**Brief (mine):** should messages like "Up to 2 picks. Unpick one first" be a different colour than black? They're warnings, right? Insights first, no change.
+
+**Claude's reading:**
+- It isn't an error or a warning. A reasonable tap was refused, with how to swap.
+- **Orange would be wrong:** it scolds, and it dilutes the colour kept for real failures. There's no amber token, and the message isn't a warning anyway.
+- **Black was off too:** the ink fill means "this acts", and this toast has nothing to press. Beside Continue it made two black slabs, louder than my own picks, which breaks my round-14 principle.
+
+**Options given:** (A) a quiet notice, recommended; (B) prevent instead of refuse (grey out the unpicked rows); (C) keep it; (D) orange.
+
+**A correction, caught by my question:** Claude had said round 9 "already turned down shaking the row". It hadn't. Round 9 rejected a shake for a *missing required answer*. A shake for the limit was never evaluated. Claude said so, and gave the reasons it would likely be rejected now (it moves what you act on next; number keys make it keyboard-triggered). It's logged in DESIGN §13 as decided in round 17.
+
+**My call: proceed with A** (Claude's recommendation):
+- The limit message is ink text (500, no fill) on the card's 20px edge, where the count sits.
+- The black fill stays only on toasts with Undo.
+- It fades in and out, without the 4px rise.
+- Same timer, pauses, live region and wording; `part="toast notice"`.
+
+**Verified:**
+- 3 tests. 6 deliberate breaks, caught 6/6: black again, muted instead of ink, off the edge, the Undo toast losing its fill, rising in, sinking out.
+- Renders in light, dark, 375px and the all-at-once flow; the Undo toast is unchanged.
+- 568 green; 21.73 KB.
+
+**Artifacts:** `process/17-limit-notice/` (round-plan.md frozen before the change, PLAN.md, DESIGN.md, `renders/before/` 4, `renders/after/` 5).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -817,4 +845,5 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 - Round 14 is the "try it, then keep what you had" beat: a monochrome redesign was prototyped and rendered side by side, and I kept the blue. The experiment still paid off by naming the real problem: blue had four jobs, and only one of them was mine. "The user's decision is the loudest thing on the card" came out of saying no to the bigger change.
 - Round 15 is the "look closer" beat: the animation I wanted to copy didn't exist. Frame by frame, Claude's checkbox fills in a single frame; the feel came from the screen recorder's click circle. We animated anyway, but by the rules: what to animate came from a skill whose first job is saying no (keyboard toggles, the single key, the uncheck, a bounce), and what's left is a 0.8px press and a 120ms tick.
 - Round 16 is the "audits expire" beat: every skill had passed, and two rounds of my own requests later, one of round 11's accessibility fixes had quietly gone (round 14 deleted the box that carried it). Re-running the checks after changes is part of the work, not a formality. And the fix for the other finding was already written down: the spec said textarea; the build had drifted to an input.
+- Round 17 is the "colour is a word" beat: I asked for a warning colour, and the answer was that the message wasn't a warning and wasn't an action either. So it lost its colour instead of gaining one. A small honesty beat too: a claimed precedent ("round 9 rejected that") turned out not to exist, and saying so mattered more than the answer.
 

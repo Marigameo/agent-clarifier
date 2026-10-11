@@ -357,6 +357,10 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 /* The message wraps rather than cutting the name of what Undo restores; Undo itself never breaks. */
 .toast .msg { min-inline-size: 0; }
 .toast .btn.link { color: var(--_bg); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+/* A toast with nothing to press (the pick limit) is a notice: ink text, no fill (round 17). The ink
+   fill means "this acts" (DESIGN §1), and a second black slab beside Continue would outshout the
+   user's own picks. Ink rather than muted, so it reads as news; on the card's one inline edge. */
+.toast.notice { padding: 0; border-radius: 0; color: var(--_fg); background: none; font-weight: 500; }
 /* The toast carries Undo, so it rises 4px into the spot the dashes left instead of swapping in
    unnoticed. It leaves the same way (motion.ts leave). Reduced motion keeps the fade only (DESIGN §7). */
 .toast { transition: opacity var(--_duration) var(--_ease), transform var(--_duration) var(--_ease); }
@@ -534,7 +538,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 @media (prefers-reduced-motion: reduce) { .spin, .sk::after { animation: none; } }
 /* Movement only for those who haven't asked for less. Fades stay either way (DESIGN §7). */
 @media (prefers-reduced-motion: no-preference) {
-  @starting-style { .toast { transform: translateY(4px); } }
+  @starting-style { .toast:not(.notice) { transform: translateY(4px); } }
   /* Press feedback: the control gives a little under a pointer. Not for keyboard presses
      (Space), which repeat fast and already show the ring. Text links don't shrink. */
   .btn:not(.link), .chip, .icon-btn { transition: transform var(--_duration) var(--_ease); }

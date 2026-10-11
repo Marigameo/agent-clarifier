@@ -52,7 +52,9 @@ export function enter(el: HTMLElement, from: number, move: Move, rtl: boolean): 
  */
 export function leave(el: HTMLElement): Promise<unknown> {
   if (typeof el.animate !== 'function') return Promise.resolve();
-  const frames = reduced() ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(4px)' }];
+  // A notice (nothing to press) only ever fades: the 4px is for toasts that carry Undo (round 17).
+  const fadeOnly = reduced() || el.classList.contains('notice');
+  const frames = fadeOnly ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(4px)' }];
   const t = timing(el);
   return el.animate(frames, { ...t, duration: t.duration * 0.75, fill: 'forwards' }).finished.catch(() => undefined);
 }
