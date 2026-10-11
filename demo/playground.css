@@ -99,9 +99,11 @@ pre {
 /* ── a third theme, made with tokens only (as an app would) ── */
 agent-clarifier.warm {
   --clarify-font: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  --clarify-bg: #fffaf2; --clarify-fg: #2b2118; --clarify-muted: #7a6a58; --clarify-faint: #a8977f;
+  /* Measured in round 12: every pair passes on the selected fill, and danger sits 18° of hue away
+     from the accent, so an error never looks like a pick. The soft fill is left to the default mix. */
+  --clarify-bg: #fffaf2; --clarify-fg: #2b2118; --clarify-muted: #746452; --clarify-faint: #92826a;
   --clarify-border: #eadfcd; --clarify-hover: #f8efe1; --clarify-selected: #f3e6d1; --clarify-key-bg: #f3e6d1;
-  --clarify-accent: #d9623b; --clarify-accent-fg: #fff; --clarify-accent-soft: rgba(217, 98, 59, .12);
+  --clarify-accent: #b54116; --clarify-accent-fg: #fff; --clarify-danger: #c53443;
   --clarify-radius: 6px 14px 8px 16px / 14px 6px 16px 8px; --clarify-radius-sm: 6px;
   --clarify-shadow: 4px 4px 0 rgba(43, 33, 24, .12);
 }

@@ -46,7 +46,7 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 | `--clarify-key-bg` | #f0f0f0 | #2c2c2c | Number-key badges | – | ✅ Between hover and selected: reads as a key, not a button |
 | `--clarify-accent` | #3b5bdb | #8ea6ff | Focus ring, checks, recommended badge, links | 5.7 / 4.8 · 7.1 / 5.7 | ✅ Passes as text, so links and the badge use it directly |
 | `--clarify-accent-soft` | accent 10% into bg | accent 14% into bg | Badge fill | badge text 4.9 · 5.5, **on every row state** | ✅ Tints without blocking. **Opaque since round 11:** it used to be a see-through tint, which stacked on a selected row's fill and dropped the badge to 4.19 · 4.39, under AA, on the most likely pick. Mixing with the background also makes it follow an app's own accent |
-| `--clarify-danger` | #c2410c | #f0895a | Errors (on their own pale fill) | 4.6 on danger-soft · 5.4 | ✅ *(Claude's reading)* Burnt orange, not red: errors here are always recoverable |
+| `--clarify-danger` | #c2410c | #f0895a | Errors (on their own pale fill: `danger-soft`, mixed 8% / 12% into the background since round 12, so it follows an app's danger colour) | 4.6 on danger-soft · 5.4 | ✅ *(Claude's reading)* Burnt orange, not red: errors here are always recoverable |
 | `--clarify-success` | #2f7d4f | #7cc79a | The answered tick | 5.0 · 8.2 | ✅ Only ever means "done" |
 
 **Temperature (F9, Claude's call in round 8): neutral.** "Neutral by default" was a promise, any brand accent sits on grey without clashing, and the warm off-whites read as Claude's look. The warm set lives on as the playground's "warm" theme, made with tokens only.
@@ -99,13 +99,15 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 
 | Size | Where | Why |
 |---|---|---|
-| **16px** / 600 | card title | ✅ One step above the body: it reads as a heading without shouting inside a chat |
+| **16px** / 600 | card title, in both densities (round 12 removed compact's 15px) | ✅ One step above the body: it reads as a heading without shouting inside a chat |
 | **14px** | body, option labels | ✅ The same size as chat messages on the board, so the card reads as part of the conversation, not a dialog over it |
 | **13px** | descriptions, footer, buttons, record | ✅ The secondary level |
 | **12px** | hints, review keys, step numbers | ✅ The tertiary level, still legible |
 | **11px** | recommended badge, "was" tag, message source | ⚠️ (F10) A fifth size, and small on phones. Folding it into 12px leaves four clear levels |
-| line-height 1.35 (UI) · 1.5 (messages) | | ✅ Tighter for short labels that sit in rows, looser for reading |
-| `tabular-nums` | step counts, keys | ✅ "9 of 10" → "10 of 10" doesn't shift the layout |
+| `max(Npx, Nrem)` for every size | everything | ✅ (round 12) Text grows with the reader's browser font size (20px root → 14px body becomes 17.5px), and never shrinks below the design size in apps that use the `html { font-size: 62.5% }` trick, where plain rem would make the card 8.75px |
+| line-height **1.4** (UI) · 1.5 (messages) | | ✅ 1.4 since round 12: prompts and descriptions do wrap (13 lines for a long prompt on a phone), and 1.4 is the floor for text that wraps. Messages stay looser for reading |
+| No italics | skipped values | ✅ (round 12) Scripts like Arabic have no italic, so the browser faked a slant. "Skipped" is already worded, muted and flagged |
+| `tabular-nums` | step counts, keys, the footer, question state, the pill | ✅ "9 of 10" → "10 of 10" doesn't shift the layout, and the "Sending in 3s" countdown no longer nudges Undo while you reach for it (extended in round 12) |
 
 ---
 
@@ -204,4 +206,38 @@ Run with Jakub Krehel's `better-interface` (six domain reviews, evidence require
 | 15 | An invalid field's edge got fainter (2.35:1) | Everyone | The edge uses `--_danger` itself (5.18), thicker while focused |
 
 **Not done here, on purpose:** the 15 smaller findings beyond the cap (copy, Intl lists, icon strokes, rem sizes and so on) are round 12. Copy changes are offered as options first.
+
+---
+
+## 10. Polish (round 12): the 21 findings beyond round 11's cap
+
+Plan frozen before any fix: `process/12-polish/round-plan.md`, with before and after renders from the same script.
+
+**Copy, Mari's picks from options:**
+
+| Before | After | Why |
+|---|---|---|
+| Limit toast "Up to 3" | "Up to 3 picks. Unpick one first" (at 1: "Only 1 pick. Unpick it first") | It says the tap was refused and how to swap, in the card's own word, "pick" |
+| "Sending…" with a spinner during the undo window | The button keeps its label, dimmed; "Sending…" only once it really sends | Status copy matches reality: it never looks too late to undo |
+| Countdown "Sending in 1s · Undo" lingering after the window closed (found while planning) | The countdown and Undo go when the window closes | That Undo did nothing; offering it was a false promise |
+| Failed send with no reason: just "Couldn't send your answers" | Adds "Your answers are kept."; spoken: "…They're kept. Try again when you're ready." | Says what's safe and what to do next, without repeating the Try again button |
+| "write it ↗" skipped by screen readers | Spoken: "Finish this in the message box" | What happens, and what you do next |
+
+**Design and code, Claude's calls:**
+
+| Change | Why |
+|---|---|
+| Answer lists via `Intl.ListFormat`; form numbers via `Intl.NumberFormat` | Arabic got a Latin comma. Option keys stay Latin: they name physical keys |
+| `--_danger-soft` derived like `--_accent-soft`; README shows a dark-mode accent | The documented example failed contrast in dark mode |
+| Sizes `max(px, rem)`; compact keeps 16px; line-height 1.4; no synthetic italics; more `tabular-nums` | See §6 |
+| Icon strokes don't scale with the icon (`vector-effect: non-scaling-stroke`); 1.75 beside button labels | Small icons got thinner strokes than big ones, and the Undo glyph sat at 1.3px next to bold text |
+| No browser tap flash | Every control draws its own press; the blue flash clashed with the neutral palette |
+| Undo icon flips in RTL; icon side of buttons 2px tighter | Consistency with every other directional icon; an icon's ink sits inside its box |
+| Dashes: 24px non-overlapping targets on touch | Mis-taps jumped to the wrong question |
+| Unavailable Continue and Send stay focusable (`aria-disabled`) | Native `disabled` dropped them from the Tab order with no reason given |
+| Replied record is one plural label | Two joined labels can't be reordered by a translation |
+| Text field and banner on the 8px list inset; compact overrides; review dividers inset | One leading edge (§1), and dividers never cut into a fill's corners |
+| Warm demo theme re-measured | It failed several pairs, and its accent shared danger's hue (playground only) |
+
+**Size:** 21.12 KB. The guard went from 21 to 22 KB, following Mari's call to polish first and do size in its own round.
 

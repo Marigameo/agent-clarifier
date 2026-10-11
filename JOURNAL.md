@@ -601,6 +601,42 @@ There were also 5 MEDIUMs in the table and 15 smaller findings beyond the cap.
 
 ---
 
+## Round 12 · Polish: the findings beyond round 11's cap (11 Oct 2026)
+
+**Brief (mine):** finish the rest of the round 11 audit.
+
+**Count corrected:** Claude had said 15 findings beyond the cap; the real count was 21 (10 MEDIUM, 11 LOW). Claude flagged its own miscount before starting.
+
+**Copy, my picks.** Claude offered options with a recommendation for each, and I took all four recommendations:
+1. **Limit toast:** "Up to 3 picks. Unpick one first".
+2. **During the undo window:** the button keeps its label, dimmed, and says "Sending…" only once it really sends.
+3. **A failed send with no reason from the app:** adds "Your answers are kept."; screen readers also hear "Try again when you're ready."
+4. **The compose cue, spoken:** "Finish this in the message box".
+
+**Found while planning (Claude):** when the app sends the answers itself, the countdown kept showing "Sending in 1s · Undo" after the window had closed, and that Undo did nothing. The before-render proves it. It's fixed with #2: the window counts as open only while it really is, and the view redraws the moment it closes.
+
+**Claude's calls (with reasons, in DESIGN §10):**
+- **Type sizes as `max(px, rem)`.** Plain rem, which the skill suggested, would shrink the card to 8.75px in apps that use the 62.5% root trick. This way the card grows with the reader's font size but never drops below the design size.
+- **Unavailable Continue and Send stay focusable** (`aria-disabled`) instead of leaving the Tab order. This extends round 11's rule for busy buttons to every unavailable one.
+- **Lists and numbers through `Intl`,** and the danger fill derived from the danger colour.
+- **Icons:** strokes that don't scale with the icon size; tighter padding on the icon side of buttons; the Undo icon flips in RTL.
+- **Layout and type:** line-height 1.4; no faked italics; tabular digits on changing counts; one leading edge in compact; review dividers inset.
+- **Phones:** 24px dash targets on touch; no blue tap flash.
+- **Playground:** the warm demo theme re-measured.
+
+**Verified:**
+- 9 new component tests, each named after what the user sees; 539 green.
+- **Deliberate breaks caught 7 of 7 on the first try.** Round 11's lesson held: each test was written to fail for the reason it names.
+- **Before and after renders** for 14 cases from one script, plus light, dark and phone.
+
+**Size:** 21.12 KB. That's over the 21 KB guard, so Claude raised it to 22 KB, following my round 10 call to polish first and do size separately. It's flagged for me to overrule.
+
+**A process slip, caught and fixed:** snapshotting `PLAN.md` into the round folder overwrote the frozen plan. macOS file names ignore case, so `plan.md` and `PLAN.md` are the same file. Nothing had been committed, so the plan was restored word for word as `round-plan.md`, with a note inside saying why. Rule for later rounds: never name a round file after a root doc.
+
+**Artifacts:** `process/12-polish/` (round-plan.md frozen before the fixes, PLAN.md, DESIGN.md, `renders/before/` 14, `renders/after/` 17).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -613,3 +649,4 @@ There were also 5 MEDIUMs in the table and 15 smaller findings beyond the cap.
 - Round 9 is the "restraint" beat: a motion audit whose output is mostly *no*. Five ideas turned down with reasons, four small changes taken. And the slowed-clock filmstrip caught a bug (the pill drawn as an oval) that no test was looking for.
 - Round 10 is the "invisible care" beat: none of its six changes is something a user would point at (a hover that answers, a toast that waits for you in another tab, a shimmer that doesn't stutter while streaming). That's the point. Good pairing with round 9's restraint: one round says no to motion, the next says yes to feedback.
 - Round 11 is the "who did we leave out" beat: polish rounds made it feel good; this one found who it failed (Windows contrast themes, keyboard, 320px phones, Arabic, screen readers), with a before/after render for each. Two sub-beats: the audit's own suggested fix (#5) would have broken undo, so judgment over checklists; and 3 of 10 tests passed while testing nothing until a deliberate break exposed them.
+- Round 12's small beat: a status that lies is worse than no status. "Sending in 1s · Undo" stayed on screen after Undo had stopped working; the fix was to make every status match reality (the button too).

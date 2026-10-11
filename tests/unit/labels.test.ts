@@ -33,16 +33,16 @@ describe('format: placeholders and numbers', () => {
   });
 
   it('a malformed language tag falls back to English instead of throwing', () => {
-    expect(format(DEFAULT_LABELS.liveLimit, { max: 1 }, 'en_US')).toBe('Up to 1 choice.');
+    expect(format(DEFAULT_LABELS.liveLimit, { max: 1 }, 'en_US')).toBe('Only 1 pick. Unpick it first.');
     expect(format('{n}', { n: 1234 }, '!!')).toBe('1,234');
   });
 });
 
 describe('format: plural forms', () => {
   it.each([
-    [1, 'Up to 1 choice.'],
-    [3, 'Up to 3 choices.'],
-    [0, 'Up to 0 choices.'],
+    [1, 'Only 1 pick. Unpick it first.'],
+    [3, 'Up to 3 picks. Unpick one first.'],
+    [0, 'Up to 0 picks. Unpick one first.'],
   ])('English, %i', (max, out) => {
     expect(format(DEFAULT_LABELS.liveLimit, { max }, 'en')).toBe(out);
   });
@@ -75,8 +75,8 @@ describe('format: plural forms', () => {
   });
 
   it('the first number in vars picks the form', () => {
-    expect(format(DEFAULT_LABELS.picksKept, { n: 1 })).toBe('1 pick kept');
-    expect(format(DEFAULT_LABELS.picksKept, { n: 2 })).toBe('2 picks kept');
+    expect(format(DEFAULT_LABELS.repliedPicks, { n: 1 })).toBe('Replied in your own words · 1 pick kept');
+    expect(format(DEFAULT_LABELS.repliedPicks, { n: 2 })).toBe('Replied in your own words · 2 picks kept');
   });
 
   it('a missing form falls back to other', () => {
@@ -102,7 +102,7 @@ describe('mergeLabels', () => {
   it('ignores unknown keys and invalid values (labels may come from JSON)', () => {
     const l = mergeLabels({ skip: 42, upTo: { one: 'no other form' }, nope: 'x' } as never);
     expect(l.skip).toBe('Skip');
-    expect(l.upTo).toBe('Up to {max}');
+    expect(l.upTo).toEqual(DEFAULT_LABELS.upTo);
     expect('nope' in l).toBe(false);
   });
 

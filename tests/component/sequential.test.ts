@@ -26,7 +26,7 @@ describe('sequential · keyboard only', () => {
     // Multi: numbers toggle, a third pick is blocked at max 2, Enter continues.
     await userEvent.keyboard('12');
     await userEvent.keyboard('3');
-    await expect.poll(() => live(m)).toBe('Up to 2 choices.');
+    await expect.poll(() => live(m)).toBe('Up to 2 picks. Unpick one first.');
     expect(row(m, 'gym').getAttribute('aria-checked')).toBe('false');
     await userEvent.keyboard('{Enter}');
     await onStep(m, 'Anything else?');

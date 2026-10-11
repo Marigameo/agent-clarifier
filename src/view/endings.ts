@@ -40,7 +40,7 @@ export function recordView(ctx: Ctx): View {
       break;
     case 'replied':
       // The message itself is the user's own chat bubble; the record only says what it answered.
-      [mark, line, action] = ['pencil', picked ? `${ctx.t('replied')} · ${ctx.t('picksKept', { n: picked })}` : ctx.t('replied'), ctx.t('answerQuestions')];
+      [mark, line, action] = ['pencil', picked ? ctx.t('repliedPicks', { n: picked }) : ctx.t('replied'), ctx.t('answerQuestions')];
       break;
     default:
       [mark, line, action] = ['clock', r.message ?? ctx.t('expiredRecord'), null];
@@ -52,7 +52,7 @@ export function recordView(ctx: Ctx): View {
     ? qs.map((q) => {
         const a = buildAnswer(q, draftOf(s, q.id));
         const gap = a.status === 'skipped';
-        const v = gap ? ctx.t('skipped') : a.status === 'delegated' ? ctx.t('delegated') : a.labels.join(', ');
+        const v = gap ? ctx.t('skipped') : a.status === 'delegated' ? ctx.t('delegated') : ctx.list(a.labels);
         // Answers wrap: a hover-only tooltip was no way to read them on touch or keyboard (round 11).
         return [h('dt', {}, bdi(q.label)), h('dd', { class: gap ? 'gap' : null }, bdi(v))];
       })

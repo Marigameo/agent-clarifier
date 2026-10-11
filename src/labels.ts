@@ -32,6 +32,7 @@ export interface Labels {
   tryAgain: Label;
   recommended: Label;
   writeIt: Label;
+  composeHint: Label;
   skipped: Label;
 
   // Counts and hints
@@ -63,10 +64,11 @@ export interface Labels {
   skippedRecord: Label;
   answerNow: Label;
   replied: Label;
-  picksKept: Label;
+  repliedPicks: Label;
   answerQuestions: Label;
   expiredRecord: Label;
   sendFailed: Label;
+  answersKept: Label;
 
   // Live region (BUILD §5.4): read aloud by screen readers
   liveStep: Label;
@@ -107,10 +109,13 @@ export const DEFAULT_LABELS: Labels = {
   tryAgain: 'Try again',
   recommended: 'Recommended',
   writeIt: 'write it ↗',
+  // Spoken for options that start a sentence in the message box (round 12, Mari's pick).
+  composeHint: 'Finish this in the message box',
   skipped: 'Skipped',
 
   // Counts and hints
-  upTo: 'Up to {max}',
+  // Says the tap was refused and how to swap (round 12, Mari's pick).
+  upTo: { one: 'Only {max} pick. Unpick it first', other: 'Up to {max} picks. Unpick one first' },
   stepOf: '{n} of {total}',
   stepOfMore: '{n} of …',
   goTo: 'Go to question {n}: {label}',
@@ -138,21 +143,24 @@ export const DEFAULT_LABELS: Labels = {
   skippedRecord: 'Skipped. The agent used its own judgement.',
   answerNow: 'Answer now',
   replied: 'Replied in your own words',
-  picksKept: { one: '{n} pick kept', other: '{n} picks kept' },
+  // One label, not two joined in code, so a translation can reorder it (round 12).
+  repliedPicks: { one: 'Replied in your own words · {n} pick kept', other: 'Replied in your own words · {n} picks kept' },
   answerQuestions: 'Answer the questions',
   expiredRecord: 'Not answered. The agent continued without these.',
   sendFailed: 'Couldn’t send your answers',
+  // Shown under it when the app gives no reason (round 12, Mari's pick).
+  answersKept: 'Your answers are kept.',
 
   // Live region (BUILD §5.4): read aloud by screen readers
   liveStep: 'Question {n} of {total}: {prompt}',
   liveSkipped: 'Skipped {label}. Undo available.',
   liveCleared: 'Answers cleared. Undo available.',
-  liveLimit: { one: 'Up to {max} choice.', other: 'Up to {max} choices.' },
+  liveLimit: { one: 'Only {max} pick. Unpick it first.', other: 'Up to {max} picks. Unpick one first.' },
   liveDelegated: '{label}: left to the agent.',
   liveReview: 'Review your answers.',
   liveSent: 'Answers sent.',
   liveMinimised: 'Questions minimised. Type a message to reply in your own words.',
-  liveFailed: 'Couldn’t send your answers.',
+  liveFailed: 'Couldn’t send your answers. They’re kept. Try again when you’re ready.',
 };
 
 const isLabel = (v: unknown): v is Label =>
@@ -172,6 +180,19 @@ export function mergeLabels(overrides?: Partial<Record<LabelKey, unknown>>): Lab
 // Intl objects are slow to create, so keep one per language.
 const plurals = new Map<string, Intl.PluralRules>();
 const numbers = new Map<string, Intl.NumberFormat>();
+const lists = new Map<string, Intl.ListFormat>();
+
+/** A number written the local way ("٣" on an Arabic page). Never built by hand (round 12). */
+export function formatNumber(n: number, lang = 'en'): string {
+  return intl(lang).number.format(n);
+}
+
+/** Answers joined the local way: "Walkable, Quiet" in English, "إيطالي، وياباني" in Arabic (round 12). */
+export function formatList(items: string[], lang = 'en'): string {
+  let list = lists.get(lang);
+  if (!list) lists.set(lang, (list = new Intl.ListFormat(safeLang(lang), { type: 'unit' })));
+  return list.format(items);
+}
 
 /** A usable language tag: malformed ones (like "en_US") fall back to English instead of throwing. */
 function safeLang(lang: string): string {

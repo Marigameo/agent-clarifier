@@ -5,7 +5,7 @@
 // from the transition.
 
 import { Composer, findComposer } from './composer';
-import { format, mergeLabels, type LabelKey, type Labels } from './labels';
+import { format, formatList, formatNumber, mergeLabels, type LabelKey, type Labels } from './labels';
 import { formatWarning, normalize } from './model/normalize';
 import { initialState, reducer } from './model/reducer';
 import { buildResult, canContinue, draftOf } from './model/selectors';
@@ -241,7 +241,13 @@ export class AgentClarifier extends Base {
   #ctx(): Ctx {
     const el = this.closest('[lang]');
     const lang = el?.getAttribute('lang') || document.documentElement.lang || 'en';
-    return { s: this.#s, review: this.review, t: (key, vars) => format(this.#labels[key], vars, lang) };
+    return {
+      s: this.#s,
+      review: this.review,
+      t: (key, vars) => format(this.#labels[key], vars, lang),
+      list: (items) => formatList(items, lang),
+      num: (n) => formatNumber(n, lang),
+    };
   }
 
   #render(force = false): void {
@@ -489,6 +495,8 @@ export class AgentClarifier extends Base {
     const revising = s.revising;
     const fire = (): void => {
       if (this.#s.status !== 'submitting') return; // undone in the window
+      // The window just closed: the countdown and its Undo go, and the button says Sending… (round 12).
+      this.#render();
       const ok = this.#emit(revising ? 'revise' : 'submit', buildResult(this.#s, 'submitted'), true);
       if (ok) this.#dispatch({ type: 'SUBMIT_OK' });
     };

@@ -270,7 +270,13 @@ The look is neutral by default and restyled with CSS variables. Set them anywher
 
 ```css
 agent-clarifier { --clarify-accent: #0b7a5f; --clarify-radius: 12px; --clarify-font: "Inter", sans-serif; }
+
+/* Colours that carry meaning need a value per appearance: #0b7a5f is too dark to read on the dark card. */
+@media (prefers-color-scheme: dark) { agent-clarifier:not([theme="light"]) { --clarify-accent: #5fa48d; } }
+agent-clarifier[theme="dark"] { --clarify-accent: #5fa48d; }
 ```
+
+Accent, danger and success each need a light and a dark value that pass 4.5:1 on the card. The soft fills behind the badge and errors are mixed from them automatically, so they follow your colours.
 
 | Token | Default (light / dark) | Used for |
 |---|---|---|

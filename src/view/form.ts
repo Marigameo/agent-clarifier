@@ -3,7 +3,7 @@
 
 import { canContinue, draftOf, isInvalid, picks, progress } from '../model/selectors';
 import type { NormalizedQuestion } from '../model/types';
-import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine } from './chrome';
+import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
 import { attr, bdi, h, icon, rove, text } from './dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './types';
 
@@ -20,7 +20,7 @@ interface Block {
   delegate: HTMLElement | null;
 }
 
-function chip(id: string, role: string, label: string, opts: { quiet?: boolean; icon?: 'pencil' | 'delegate'; disabled?: boolean; out?: string; rec?: boolean } = {}): HTMLElement {
+function chip(id: string, role: string, label: string, opts: { quiet?: boolean; icon?: 'pencil' | 'delegate'; disabled?: boolean; out?: string; hint?: string; rec?: boolean } = {}): HTMLElement {
   return h(
     'span',
     {
@@ -29,6 +29,8 @@ function chip(id: string, role: string, label: string, opts: { quiet?: boolean; 
       role,
       [role === 'button' ? 'aria-pressed' : 'aria-checked']: 'false',
       'aria-disabled': opts.disabled ? 'true' : null,
+      // The visible ↗ is decorative; this says what picking it does (round 12).
+      'aria-description': opts.hint ?? null,
       tabindex: '-1',
       'data-opt': id,
       'data-rec': opts.rec ? '' : null,
@@ -43,7 +45,7 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
   const titleId = `q-${i}`;
   const role = q.type === 'multi' ? 'checkbox' : 'radio';
   const chips: HTMLElement[] = q.options.map((o) =>
-    chip(o.id, role, o.label, { disabled: o.disabled, rec: o.recommended, ...(o.compose !== null ? { out: '↗' } : {}) }),
+    chip(o.id, role, o.label, { disabled: o.disabled, rec: o.recommended, ...(o.compose !== null ? { out: '↗', hint: init.t('composeHint') } : {}) }),
   );
   let other: HTMLInputElement | null = null;
   if (q.other) {
@@ -89,7 +91,7 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
     h(
       'div',
       { class: 'q-head' },
-      h('span', { class: 'q-num', 'aria-hidden': 'true' }, String(i + 1)),
+      h('span', { class: 'q-num', 'aria-hidden': 'true' }, init.num(i + 1)),
       h('h3', { class: 'q-title', id: titleId }, bdi(q.prompt), q.description ? h('span', { class: 'sub' }, bdi(q.description)) : null),
       state,
     ),
@@ -169,8 +171,9 @@ export function formView(init: Ctx): View {
     // Skip all isn't offered when the agent needs an answer (a required question).
     setButton(skipAll, qs.some((q) => q.required) ? null : ctx.t('skipAll'), { disabled: busy || failed });
     send.dataset.act = failed ? 'retry' : 'send';
-    const label = busy ? ctx.t('sending') : failed ? ctx.t('tryAgain') : ctx.t('send');
-    setButton(send, label, { disabled: busy || p.answered === 0, busy, arrow: !busy && !failed });
+    const sending = busy && !undoOpen(s); // see review.ts
+    const label = sending ? ctx.t('sending') : failed ? ctx.t('tryAgain') : ctx.t('send');
+    setButton(send, label, { disabled: busy || p.answered === 0, busy: sending, arrow: !sending && !failed });
   }
 
   return { el, update };

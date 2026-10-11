@@ -1,6 +1,7 @@
 // The parts every card shares: the "asked by" line, the header and the footer.
 
 import { attr, bdi, h, icon, text } from './dom';
+import type { State } from '../model/types';
 import type { Ctx } from './types';
 
 export function sourceLine(ctx: Ctx): HTMLElement | null {
@@ -42,7 +43,8 @@ export function failBanner(): HTMLElement {
 export function setFailBanner(b: HTMLElement, ctx: Ctx): void {
   const failed = ctx.s.status === 'error';
   b.hidden = !failed;
-  if (failed) b.replaceChildren(icon('alert'), h('span', {}, h('b', {}, ctx.t('sendFailed')), ctx.s.error ?? ''));
+  // With no reason from the app, it still says the answers are safe (round 12).
+  if (failed) b.replaceChildren(icon('alert'), h('span', {}, h('b', {}, ctx.t('sendFailed')), ctx.s.error || ctx.t('answersKept')));
 }
 
 /** A footer button that is built once and shown, hidden, enabled or relabelled on update. */
@@ -57,21 +59,28 @@ export function setButton(
 ): void {
   attr(b, 'hidden', label === null);
   if (label === null) return;
-  // While busy the button stays focusable (aria-disabled, not disabled): disabling the focused
-  // button would drop keyboard focus to the page, far from Undo and Try again (round 11).
-  b.disabled = !!opts.disabled && !opts.busy;
-  attr(b, 'aria-disabled', opts.busy ? 'true' : null);
+  // Unavailable buttons stay focusable (aria-disabled, never disabled): disabling a focused button
+  // drops keyboard focus to the page (round 11), and a disabled one leaves the Tab order with no
+  // reason given (round 12). Clicks on them are ignored in element.ts.
+  b.disabled = false;
+  attr(b, 'aria-disabled', opts.disabled || opts.busy ? 'true' : null);
   const key = `${label}|${opts.arrow ? 1 : 0}|${opts.busy ? 1 : 0}`;
   if (b.dataset.key === key) return;
   b.dataset.key = key;
   b.replaceChildren(opts.busy ? h('span', { class: 'spin', 'aria-hidden': 'true' }) : '', label, opts.arrow ? icon('arrow', 'flip') : '');
 }
 
+/**
+ * Is the undo window after Send still open? Only then is there an Undo to offer; once it closes
+ * the answers are on their way, even while the app is still sending them (round 12).
+ */
+export const undoOpen = (s: State): boolean => s.status === 'submitting' && s.undoUntil !== null && Date.now() < s.undoUntil;
+
 /** The footer's left side: a toast when there is one, otherwise the given content. */
 export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | string)[]): void {
   const toast = ctx.s.toast;
   // The undo window after Send: a countdown with Undo, in the same place as a toast.
-  const until = ctx.s.status === 'submitting' ? ctx.s.undoUntil : null;
+  const until = undoOpen(ctx.s) ? ctx.s.undoUntil : null;
   if (until) {
     const s = Math.max(1, Math.ceil((until - Date.now()) / 1000));
     const msg = ctx.t('sendingIn', { s });
@@ -80,7 +89,7 @@ export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | strin
     else {
       el.replaceChildren(
         h('span', { class: 'toast', part: 'toast' }, h('span', { class: 'msg' }, msg),
-          h('button', { class: 'btn link', type: 'button', 'data-act': 'undo-send' }, icon('undo'), ctx.t('undo'))),
+          h('button', { class: 'btn link', type: 'button', 'data-act': 'undo-send' }, icon('undo', 'flip'), ctx.t('undo'))),
       );
     }
     return;
@@ -99,7 +108,7 @@ export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | strin
   const undo =
     toast.kind === 'limit'
       ? null
-      : h('button', { class: 'btn link', type: 'button', 'data-act': 'undo' }, icon('undo'), ctx.t('undo'));
+      : h('button', { class: 'btn link', type: 'button', 'data-act': 'undo' }, icon('undo', 'flip'), ctx.t('undo'));
   const current = el.firstElementChild;
   if (current?.classList.contains('toast') && current.textContent === msg + (undo ? ctx.t('undo') : '')) return;
   // The message wraps if it must (it names what Undo restores); Undo always stays whole.

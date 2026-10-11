@@ -22,7 +22,7 @@
   /* Opaque, so the badge keeps its contrast on a hovered or selected row (round 11). */
   --_accent-soft: var(--clarify-accent-soft, color-mix(in srgb, var(--_accent) 10%, var(--_bg)));
   --_danger: var(--clarify-danger, #c2410c);
-  --_danger-soft: var(--clarify-danger-soft, rgba(194, 65, 12, .08));
+  --_danger-soft: var(--clarify-danger-soft, color-mix(in srgb, var(--_danger) 8%, var(--_bg)));
   --_success: var(--clarify-success, #2f7d4f);
   --_float: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px rgba(0, 0, 0, .06);
   --_shadow: var(--clarify-shadow, none);
@@ -34,13 +34,21 @@
   --_radius: var(--clarify-radius, 16px);
   /* 16 (card) − 8 (list inset) = 8: rows sit concentric inside the card (DESIGN §5). */
   --_radius-sm: var(--clarify-radius-sm, 8px);
+  /* Type sizes grow with the reader's browser font size (rem), and never drop below the design
+     size in apps that shrink the root (the 62.5% trick), which plain rem would follow (round 12). */
+  --_t12: max(12px, .75rem);
+  --_t13: max(13px, .8125rem);
+  --_t14: max(14px, .875rem);
+  --_t16: max(16px, 1rem);
   --_duration: var(--clarify-duration, 160ms);
   --_ease: var(--clarify-ease, cubic-bezier(.2, .7, .2, 1));
   --_focus: 0 0 0 2px var(--_bg), 0 0 0 4px var(--_accent);
   display: block;
-  font: 14px/1.35 var(--_font);
+  font: var(--_t14)/1.4 var(--_font);
   color: var(--_fg);
   -webkit-font-smoothing: antialiased;
+  /* Every control draws its own press, so the browser's blue tap flash only clashes (round 12). */
+  -webkit-tap-highlight-color: transparent;
 }
 :host([hidden]) { display: none; }
 :host([theme="dark"]) { 
@@ -56,7 +64,7 @@
   --_accent-fg: var(--clarify-accent-fg, #14141a);
   --_accent-soft: var(--clarify-accent-soft, color-mix(in srgb, var(--_accent) 14%, var(--_bg)));
   --_danger: var(--clarify-danger, #f0895a);
-  --_danger-soft: var(--clarify-danger-soft, rgba(240, 137, 90, .12));
+  --_danger-soft: var(--clarify-danger-soft, color-mix(in srgb, var(--_danger) 12%, var(--_bg)));
   --_success: var(--clarify-success, #7cc79a);
   /* Shadows barely show on dark surfaces, so floating things also get a faint top highlight. */
   --_float: inset 0 1px 0 rgba(255, 255, 255, .06), 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
@@ -78,7 +86,7 @@
   --_accent-fg: var(--clarify-accent-fg, #14141a);
   --_accent-soft: var(--clarify-accent-soft, color-mix(in srgb, var(--_accent) 14%, var(--_bg)));
   --_danger: var(--clarify-danger, #f0895a);
-  --_danger-soft: var(--clarify-danger-soft, rgba(240, 137, 90, .12));
+  --_danger-soft: var(--clarify-danger-soft, color-mix(in srgb, var(--_danger) 12%, var(--_bg)));
   --_success: var(--clarify-success, #7cc79a);
   /* Shadows barely show on dark surfaces, so floating things also get a faint top highlight. */
   --_float: inset 0 1px 0 rgba(255, 255, 255, .06), 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
@@ -111,7 +119,7 @@ button { font: inherit; color: inherit; }
 .source {
   display: flex; align-items: center; gap: 6px;
   margin: 14px 20px 0;
-  font-size: 12px; color: var(--_muted);
+  font-size: var(--_t12); color: var(--_muted);
 }
 .source::before {
   content: ""; inline-size: 6px; block-size: 6px; border-radius: 50%;
@@ -147,17 +155,17 @@ button { font: inherit; color: inherit; }
 }
 .title {
   flex: 1; min-inline-size: 0; margin: 0;
-  font: 600 16px/1.35 var(--_font-title); letter-spacing: -.005em;
+  font: 600 var(--_t16)/1.4 var(--_font-title); letter-spacing: -.005em;
   text-wrap: pretty; overflow-wrap: anywhere;
 }
 .sub {
   display: block; margin-block-start: 3px;
-  font: 400 13px/1.35 var(--_font); color: var(--_muted);
+  font: 400 var(--_t13)/1.4 var(--_font); color: var(--_muted);
 }
 .meta {
   display: flex; align-items: center; gap: 2px;
   padding-block-start: 1px;
-  font-size: 13px; color: var(--_muted); white-space: nowrap;
+  font-size: var(--_t13); color: var(--_muted); white-space: nowrap;
 }
 .step { padding-inline: 6px; font-variant-numeric: tabular-nums; }
 
@@ -166,6 +174,8 @@ button { font: inherit; color: inherit; }
   fill: none; stroke: currentColor; stroke-width: 1.5;
   stroke-linecap: round; stroke-linejoin: round;
 }
+/* Strokes keep their weight at every icon size, instead of thinning as icons shrink (round 12). */
+.i * { vector-effect: non-scaling-stroke; }
 :host(:dir(rtl)) .flip { transform: scaleX(-1); }
 
 .icon-btn {
@@ -203,27 +213,27 @@ button { font: inherit; color: inherit; }
   flex: none; display: grid; place-items: center;
   inline-size: 26px; block-size: 26px; border-radius: 7px;
   background: var(--_key-bg); color: var(--_muted);
-  font-size: 12px; font-variant-numeric: tabular-nums;
+  font-size: var(--_t12); font-variant-numeric: tabular-nums;
 }
 .key .i { inline-size: 14px; block-size: 14px; }
 .opt[aria-checked="true"] > .key:not(.plain) { background: var(--_accent); color: var(--_accent-fg); }
 .key.box { border-radius: 6px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--_faint); }
-.key.box .i { opacity: 0; stroke-width: 1.8; }
+.key.box .i { opacity: 0; stroke-width: 1.6; }
 .opt[aria-checked="true"] > .key.box { box-shadow: none; }
 .opt[aria-checked="true"] > .key.box .i { opacity: 1; }
 
 .body { flex: 1; min-inline-size: 0; }
 .label { display: block; overflow-wrap: anywhere; }
-.desc { display: block; margin-block-start: 2px; font-size: 13px; color: var(--_muted); overflow-wrap: anywhere; }
+.desc { display: block; margin-block-start: 2px; font-size: var(--_t13); color: var(--_muted); overflow-wrap: anywhere; }
 .badge {
   display: inline-block; margin-inline-start: 6px; padding: 1px 7px;
   border-radius: 999px; vertical-align: 1px;
-  font-size: 12px; font-weight: 500;
+  font-size: var(--_t12); font-weight: 500;
   color: var(--_accent); background: var(--_accent-soft);
 }
 .trail { flex: none; display: grid; place-items: center; inline-size: 20px; color: var(--_muted); visibility: hidden; }
 .opt:focus-visible .trail { visibility: visible; }
-.out { flex: none; font-size: 12px; color: var(--_muted); white-space: nowrap; }
+.out { flex: none; font-size: var(--_t12); color: var(--_muted); white-space: nowrap; }
 
 .quiet .label { color: var(--_muted); }
 .quiet[aria-checked="true"] .label, .quiet[aria-pressed="true"] .label { color: var(--_fg); }
@@ -236,11 +246,11 @@ button { font: inherit; color: inherit; }
   flex: 1; min-inline-size: 0; padding: 0;
   font: inherit; color: var(--_fg); background: transparent; border: 0; outline: 0;
 }
-.enter { font-size: 12px; color: var(--_muted); }
+.enter { font-size: var(--_t12); color: var(--_muted); }
 :host([density="compact"]) .other-field { padding: 8px 10px; }
 
 /* ── text question ──────────────────────────────────────────────────── */
-.field { padding: 0 16px 14px; }
+.field { padding: 0 8px 14px; } /* box on the 8px inset, text on the 20px edge (round 12) */
 textarea {
   display: block; inline-size: 100%; min-block-size: 92px; max-block-size: calc(5lh + 20px);
   field-sizing: content; resize: none;
@@ -261,16 +271,19 @@ textarea::placeholder, input::placeholder { color: var(--_muted); }
   padding-block: 12px 14px; padding-inline: 20px 16px;
   border-block-start: 1px solid var(--_border);
 }
-.foot-l { display: flex; align-items: center; gap: 8px; min-inline-size: 0; font-size: 13px; color: var(--_muted); }
+.foot-l { display: flex; align-items: center; gap: 8px; min-inline-size: 0; font-size: var(--_t13); color: var(--_muted); font-variant-numeric: tabular-nums; }
 .foot-r { display: flex; gap: 8px; margin-inline-start: auto; }
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
   block-size: 32px; padding-inline: 13px;
   border: 1px solid var(--_border); border-radius: var(--_radius-sm);
-  font-size: 13px; font-weight: 500; white-space: nowrap;
+  font-size: var(--_t13); font-weight: 500; white-space: nowrap;
   color: var(--_fg); background: var(--_bg); cursor: pointer;
 }
-.btn .i { inline-size: 14px; block-size: 14px; }
+/* An icon's ink sits inside its box, so the icon side looks wider at even padding (round 12). */
+.btn:not(.link):has(> .i:last-child) { padding-inline-end: 11px; }
+.btn:not(.link):has(> .i:first-child) { padding-inline-start: 11px; }
+.btn .i { inline-size: 14px; block-size: 14px; stroke-width: 1.75; } /* beside 500–600 labels */
 .btn.primary { color: var(--_bg); background: var(--_fg); border-color: var(--_fg); }
 .btn.ghost { color: var(--_muted); background: transparent; border-color: transparent; }
 .btn.link { block-size: auto; padding: 0; border: 0; background: none; color: var(--_accent); }
@@ -279,7 +292,7 @@ textarea::placeholder, input::placeholder { color: var(--_muted); }
 .keys { display: inline-flex; align-items: center; gap: 6px; }
 /* No physical keyboard on touch screens, so key hints would only be clutter. */
 @media (hover: none) { .keys { display: none; } }
-kbd { font: inherit; font-size: 12px; padding: 1px 5px; border: 1px solid var(--_border); border-radius: 5px; }
+kbd { font: inherit; font-size: var(--_t12); padding: 1px 5px; border: 1px solid var(--_border); border-radius: 5px; }
 
 .dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .dot { display: block; inline-size: 14px; block-size: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--_border); }
@@ -293,7 +306,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .toast {
   display: inline-flex; align-items: center; gap: 10px;
   padding-block: 6px; padding-inline: 12px 8px; border-radius: var(--_radius-sm);
-  font-size: 13px; color: var(--_bg); background: var(--_fg);
+  font-size: var(--_t13); color: var(--_bg); background: var(--_fg);
 }
 /* The message wraps rather than cutting the name of what Undo restores; Undo itself never breaks. */
 .toast .msg { min-inline-size: 0; }
@@ -308,9 +321,9 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .q { padding-block: 4px 6px; }
 .q + .q { border-block-start: 1px solid var(--_border); }
 .q-head { display: flex; align-items: baseline; gap: 8px; padding-block: 12px 8px; padding-inline: 20px; }
-.q-num { font-size: 12px; color: var(--_muted); font-variant-numeric: tabular-nums; }
-.q-title { flex: 1; min-inline-size: 0; margin: 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
-.q-state { font-size: 12px; color: var(--_muted); white-space: nowrap; }
+.q-num { font-size: var(--_t12); color: var(--_muted); font-variant-numeric: tabular-nums; }
+.q-title { flex: 1; min-inline-size: 0; margin: 0; font-size: var(--_t14); font-weight: 600; overflow-wrap: anywhere; }
+.q-state { font-size: var(--_t12); color: var(--_muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .q-state.ok { color: var(--_success); }
 .q-state.err { color: var(--_danger); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 20px 10px; }
@@ -319,7 +332,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   display: inline-flex; align-items: center; gap: 6px;
   min-block-size: 32px; padding-inline: 12px;
   border: 1px solid var(--_border); border-radius: 999px;
-  font-size: 13px; color: var(--_fg); background: var(--_bg);
+  font-size: var(--_t13); color: var(--_fg); background: var(--_bg);
   cursor: pointer; user-select: none; overflow-wrap: anywhere;
 }
 .chip .i { inline-size: 12px; block-size: 12px; }
@@ -334,7 +347,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .chip-input {
   display: block; margin: -2px 20px 10px; inline-size: calc(100% - 40px);
   padding: 8px 12px; border: 0; border-radius: var(--_radius-sm);
-  font: inherit; font-size: 13px; color: var(--_fg); background: var(--_bg);
+  font: inherit; font-size: var(--_t13); color: var(--_fg); background: var(--_bg);
   box-shadow: inset 0 0 0 1.5px var(--_accent); outline: none;
 }
 .q-field { padding: 0 20px 10px; }
@@ -343,7 +356,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .q.invalid .chip:not([aria-checked="true"]) { border-color: color-mix(in srgb, var(--_danger) 45%, var(--_border)); }
 .q.invalid textarea { box-shadow: inset 0 0 0 1px var(--_danger); }
 .q.invalid textarea:focus { box-shadow: inset 0 0 0 1.5px var(--_danger); }
-.q-err { display: flex; align-items: center; gap: 6px; padding: 0 20px 10px; font-size: 12px; color: var(--_danger); }
+.q-err { display: flex; align-items: center; gap: 6px; padding: 0 20px 10px; font-size: var(--_t12); color: var(--_danger); }
 .q-err .i { inline-size: 13px; block-size: 13px; }
 
 /* ── loading ────────────────────────────────────────────────────────── */
@@ -378,10 +391,13 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center;
   padding: 11px 12px; border-radius: var(--_radius-sm);
 }
-.review .row + .row { border-block-start: 1px solid var(--_border); }
-.review dt { font-size: 12px; color: var(--_muted); overflow-wrap: anywhere; }
+.review .row { position: relative; }
+/* Dividers start where the text starts and never cut into a fill's corners, like option rows (round 12). */
+.review .row + .row::before { content: ""; position: absolute; inset-block-start: 0; inset-inline: 12px; border-block-start: 1px solid var(--_border); }
+.review .flag::before, .review .flag + .row::before { border-color: transparent; }
+.review dt { font-size: var(--_t12); color: var(--_muted); overflow-wrap: anywhere; }
 .review dd { margin: 0; overflow-wrap: anywhere; }
-.review .gap dd:not(.act) { color: var(--_muted); font-style: italic; }
+.review .gap dd:not(.act) { color: var(--_muted); }
 .review .flag { background: var(--_danger-soft); }
 .review .flag dt { color: var(--_danger); }
 /* Narrow cards (phones, sidebars): the footer keeps the dashes and buttons; the pick count
@@ -397,8 +413,8 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 
 .banner {
   display: flex; align-items: flex-start; gap: 10px;
-  margin: 0 16px 10px; padding: 10px 12px; border-radius: var(--_radius-sm);
-  font-size: 13px; line-height: 1.4; color: var(--_danger); background: var(--_danger-soft);
+  margin: 0 8px 10px; padding: 10px 12px; border-radius: var(--_radius-sm);
+  font-size: var(--_t13); line-height: 1.4; color: var(--_danger); background: var(--_danger-soft);
 }
 .banner .i { margin-block-start: 1px; }
 .banner b { display: block; font-weight: 600; color: var(--_fg); }
@@ -414,7 +430,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   display: inline-flex; align-items: center; gap: 10px;
   padding-block: 6px; padding-inline: 12px 6px;
   border: 1px solid var(--_border); border-radius: 999px;
-  background: var(--_bg); box-shadow: var(--clarify-shadow-float, var(--_float)); font-size: 13px;
+  background: var(--_bg); box-shadow: var(--clarify-shadow-float, var(--_float)); font-size: var(--_t13); font-variant-numeric: tabular-nums;
 }
 .pill::before {
   content: ""; inline-size: 7px; block-size: 7px; border-radius: 50%;
@@ -423,7 +439,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .pill .btn { block-size: 26px; padding-inline: 10px; border-radius: 999px; }
 .record {
   padding: 12px 14px; border: 1px solid var(--_border); border-radius: var(--_radius);
-  background: var(--_bg); font-size: 13px;
+  background: var(--_bg); font-size: var(--_t13);
 }
 .record:focus { outline: none; }
 .record.expired { border-style: dashed; }
@@ -431,20 +447,24 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .record-head .i { color: var(--_muted); }
 .record.answered .record-head .i { color: var(--_success); }
 .record-line { flex: 1; min-inline-size: 0; overflow-wrap: anywhere; }
-.record-head .btn { flex: none; font-size: 12px; }
+.record-head .btn { flex: none; font-size: var(--_t12); }
 .record dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 10px 0 0; }
 .record dt { color: var(--_muted); }
 .record dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
-.record dd.gap { color: var(--_muted); font-style: italic; }
+.record dd.gap { color: var(--_muted); }
 
 /* ── compact density: one 16px inline edge (6 inset + 10 row padding), 44px rows (DESIGN §4) ── */
 :host([density="compact"]) .head { padding-block: 12px 6px; padding-inline: 16px 12px; }
-:host([density="compact"]) .title { font-size: 15px; }
 :host([density="compact"]) .source { margin-inline: 16px; }
 :host([density="compact"]) .list, :host([density="compact"]) .review { padding-inline: 6px; }
 :host([density="compact"]) .opt { min-block-size: 44px; padding: 8px 10px; }
 :host([density="compact"]) .opt + .opt::before { inset-inline: 10px; }
-:host([density="compact"]) .field { padding-inline: 16px; }
+:host([density="compact"]) .field { padding-inline: 6px; }
+:host([density="compact"]) .field textarea { padding-inline: 10px; }
+:host([density="compact"]) .banner { margin-inline: 6px; padding-inline: 10px; }
+:host([density="compact"]) .review .row { padding-inline: 10px; }
+:host([density="compact"]) .q-field, :host([density="compact"]) .q-err { padding-inline: 16px; }
+:host([density="compact"]) .chip-input { margin-inline: 16px; inline-size: calc(100% - 32px); }
 :host([density="compact"]) .q-head, :host([density="compact"]) .chips { padding-inline: 16px; }
 :host([density="compact"]) .foot { padding-block: 10px; padding-inline: 16px 12px; }
 
@@ -474,8 +494,11 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 
 /* Touch: controls drawn smaller than 44px keep a 44px hit area; the drawing doesn't change (BUILD §5.3). */
 @media (pointer: coarse) {
+  /* The jump-back dashes get 24px targets that don't overlap (round 12). */
+  .dots { gap: 10px; }
+  button.dot::after { inset: -10px -5px; }
   /* Below 16px, iOS zooms the whole page when a field is focused (round 11). */
-  textarea, .other-field input, .chip-input { font-size: 16px; }
+  textarea, .other-field input, .chip-input { font-size: var(--_t16); }
   .btn, .icon-btn { position: relative; }
   .chip::after, .btn::after, .icon-btn::after {
     content: ""; position: absolute; inset-inline: -2px; inset-block: calc((100% - 44px) / 2);

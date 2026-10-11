@@ -1,7 +1,7 @@
 // Review: every answer in one list, each with Edit (PLAN §5, §6).
 
 import { buildAnswer, draftOf } from '../model/selectors';
-import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine } from './chrome';
+import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
 import { bdi, h, icon } from './dom';
 import type { Ctx, View } from './types';
 
@@ -29,7 +29,7 @@ export function reviewView(init: Ctx): View {
         ...qs.map((q) => {
           const a = buildAnswer(q, draftOf(s, q.id));
           const gap = a.status === 'skipped';
-          const value = gap ? ctx.t('skipped') : a.status === 'delegated' ? ctx.t('delegated') : a.labels.join(', ');
+          const value = gap ? ctx.t('skipped') : a.status === 'delegated' ? ctx.t('delegated') : ctx.list(a.labels);
           return h(
             'div',
             { class: `row${gap ? ' gap flag' : ''}` },
@@ -60,11 +60,14 @@ export function reviewView(init: Ctx): View {
     setFailBanner(banner, ctx);
 
     footLeft(left, ctx, () => [
-      h('button', { class: 'btn ghost', type: 'button', 'data-act': 'start-over', disabled: busy }, icon('undo'), ctx.t('startOver')),
+      h('button', { class: 'btn ghost', type: 'button', 'data-act': 'start-over', disabled: busy }, icon('undo', 'flip'), ctx.t('startOver')),
     ]);
-    const label = busy ? ctx.t('sending') : s.status === 'error' ? ctx.t('tryAgain') : ctx.t('sendAnswers');
+    // During the undo window the button keeps its label, dimmed; "Sending…" only once it really
+    // sends, so it never looks too late to undo (round 12, Mari's pick).
+    const sending = busy && !undoOpen(s);
+    const label = sending ? ctx.t('sending') : s.status === 'error' ? ctx.t('tryAgain') : ctx.t('sendAnswers');
     send.dataset.act = s.status === 'error' ? 'retry' : 'send';
-    setButton(send, label, { disabled: busy, busy, arrow: !busy && s.status !== 'error' });
+    setButton(send, label, { disabled: busy, busy: sending, arrow: !sending && s.status !== 'error' });
   }
 
   return { el, update };

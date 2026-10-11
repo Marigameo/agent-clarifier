@@ -7,6 +7,10 @@ export interface Ctx {
   review: ReviewMode;
   /** A label in the page's language, with values filled in. */
   t: (key: LabelKey, vars?: Record<string, string | number>) => string;
+  /** Answers joined the local way. */
+  list: (items: string[]) => string;
+  /** A number written the local way. */
+  num: (n: number) => string;
 }
 
 /** A view builds its DOM once, then `update` only changes what moved, so focus and typing survive. */

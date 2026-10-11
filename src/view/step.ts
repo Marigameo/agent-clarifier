@@ -2,7 +2,7 @@
 
 import { canContinue, draftOf, isSettled, needsReview, picks, questionState } from '../model/selectors';
 import type { NormalizedOption, NormalizedQuestion } from '../model/types';
-import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine } from './chrome';
+import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
 import { attr, bdi, h, icon, rove, text } from './dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './types';
 
@@ -16,6 +16,8 @@ function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: C
       role: multi ? 'checkbox' : 'radio',
       'aria-checked': 'false',
       'aria-disabled': o.disabled ? 'true' : null,
+      // The visible "write it ↗" is decorative; this says what picking it does (round 12).
+      'aria-description': o.compose !== null ? ctx.t('composeHint') : null,
       tabindex: '-1',
       'data-opt': o.id,
       'data-rec': o.recommended ? '' : null,
@@ -206,7 +208,8 @@ export function stepView(init: Ctx): View {
           : needsReview(s, ctx.review)
             ? ctx.t('review')
             : ctx.t('send');
-    setButton(primary, showPrimary ? (busy ? ctx.t('sending') : label) : null, { disabled: !failed && (!ready || busy), arrow: !busy && !failed, busy });
+    const sending = busy && !undoOpen(s); // see review.ts
+    setButton(primary, showPrimary ? (sending ? ctx.t('sending') : label) : null, { disabled: !failed && (!ready || busy), arrow: !sending && !failed, busy: sending });
   }
 
   return { el, update };

@@ -55,12 +55,12 @@
   },
   "size-limit": [
     {
-      "name": "core (gzipped; guard 21 KB until the size round, target 12 KB)",
+      "name": "core (gzipped; guard 22 KB until the size round, target 12 KB)",
       "path": [
         "dist/index.js",
         "dist/ids-*.js"
       ],
-      "limit": "21 KB",
+      "limit": "22 KB",
       "gzip": true
     },
     {
