@@ -269,7 +269,10 @@ button { font: inherit; color: inherit; }
   color: var(--_muted); background: var(--_bg); box-shadow: inset 0 0 0 1px var(--_border);
 }
 .trail { flex: none; display: grid; place-items: center; inline-size: 20px; color: var(--_muted); visibility: hidden; }
-.opt:focus-visible .trail { visibility: visible; }
+/* The arrow travels with its partner: the fill under a mouse, the ring for the keyboard. After a
+   click or tap the ring is hidden, so the focused row's arrow is too; it used to stay behind on a row
+   the mouse had left (round 20). */
+.card:not([data-pointer]) .opt:focus-visible .trail { visibility: visible; }
 .out { flex: none; font-size: var(--_t12); color: var(--_muted); white-space: nowrap; }
 
 .quiet .label { color: var(--_muted); }

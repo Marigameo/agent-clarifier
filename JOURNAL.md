@@ -881,6 +881,31 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 
 ---
 
+## Round 20 · Hover and the arrow stay in sync (11 Oct 2026)
+
+**Brief (mine):** Emil Kowalski's "7 practical animation tips", section 6 (*Keep your animations fast*), has a note about select and hover states. Make sure ours follows it: when I hover rapidly, the arrow and the fill should show up in sync.
+
+**Claude's check:**
+- The article's rule: hover seen tens of times a day should be instant.
+- Our CSS has no transition on a row's fill or arrow (round 9 already decided hover is instant).
+- Verified in a real browser, not just in the code: the mouse stepped across the rows one frame at a time. The hovered row's fill and arrow switch in the same frame, with zero animations running.
+
+**Found:** a lone arrow. The card focuses a row when it opens. With a mouse, its focus ring is hidden (rings are for the keyboard), but its arrow wasn't, so an arrow stayed on a row the mouse had left. That's the out-of-sync I'd noticed.
+
+**Fix (Claude's call):**
+- The arrow only shows with its partner: the fill under a mouse, the ring for the keyboard.
+- Kept on purpose: after keyboard use there are two arrows, each with its own partner (ring + arrow, fill + arrow). Hiding the keyboard one while the mouse is over the list would take it away from keyboard users whose mouse rests on the card.
+
+**Verified:**
+- 3 tests: rapid hover with fill and arrow together in the same frame and nothing animating; no lone arrow with a mouse; keyboard keeps ring + arrow.
+- 3 deliberate breaks, caught 3/3: the lone arrow, a fading fill that lags the arrow, the keyboard losing its arrow. One break first missed its target (a wrong anchor string) and was redone, so that pass doesn't count as evidence.
+- Frame strips before/after, light and dark (`hover-frames.mjs`).
+- 577 green.
+
+**Artifacts:** `process/20-hover-sync/` (hover-frames.mjs, `renders/before/` 1, `renders/after/` 2).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.

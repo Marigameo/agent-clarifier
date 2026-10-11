@@ -322,3 +322,15 @@ Mari: filled neighbours "look like they overlap, in multiple places". Exploratio
 | `background-color`, never the `background` shorthand, on row states | The shorthand resets `background-clip`: selected rows painted into the gap again. Caught by a test, not by the renders (a focus ring hid it) |
 | Contrast themes: no border, padding back | Transparent borders are painted in the system text colour there (round 11's focus trick relies on it), which would have lined every row |
 
+---
+
+## 16. Hover and the arrow stay in sync (round 20)
+
+Mari asked to check the hover states against Emil Kowalski's "7 practical animation tips", #6 *Keep your animations fast*: hover seen tens of times a day should be instant or not animate.
+
+| Checked | Result |
+|---|---|
+| Row fill and arrow on hover | ✅ No transition on either (round 9: "hover fills are instant"). Measured frame by frame while stepping the mouse across rows: the fill and the arrow switch in the same frame, with zero running animations |
+| **The focused row's arrow, with a mouse** | ❌ → fixed. The card focuses a row when it opens; with a mouse the focus ring is hidden (rings are for keyboard users), but that row's arrow wasn't, so a lone arrow stayed on a row the mouse had left. Now the arrow shows only with its partner: the fill under the mouse, the ring for the keyboard (`.card:not([data-pointer]) .opt:focus-visible .trail`) |
+| Two arrows after keyboard use | Kept, on purpose: the keyboard row shows ring + arrow ("Enter picks this"), the hovered row fill + arrow ("a click picks this"). Hiding the keyboard row's arrow while the mouse is over the list would take it from keyboard users whose mouse rests on the card |
+
