@@ -722,6 +722,47 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 
 ---
 
+## Round 15 · Checkbox motion, with Emil Kowalski's animation skills (11 Oct 2026)
+
+**Brief (mine):** Claude's checkbox seemed to animate a little on click, which gave it a feel; ours looked plain. Should we animate? Then: yes, but adhere to Emil Kowalski's skills (emilkowal.ski/skill). The right animation, at the right level, only where it makes sense.
+
+**What the recording actually showed:**
+- Claude went through it at 60fps, one frame every 16ms, and measured the blue pixels in each frame. **Claude's checkbox doesn't animate:** it's fully checked in one frame.
+- The "feel" was the **screen recorder's click circle** (macOS "show mouse clicks").
+- I still wanted motion; the skills decide how much.
+
+**How it was built:** with Emil's `animate` skill (repo `emilkowalski/skill` at `e8a175d`), then checked with his `review-animations` skill. The decisions, in the skill's order (full table in `process/15-checkbox-motion/round-plan.md`):
+- **Gate:** frequent toggles are "near-imperceptible only". **Keyboard toggles are a disqualifier,** so Space and the number keys stay instant.
+- **Purpose:** feedback (a press) and state indication (the tick).
+- **Ingredients:**
+  - CSS transitions.
+  - The press: `transform: scale(.95)` at our 160ms.
+  - The tick: revealed left to right by `clip-path`, in 120ms (0.75×), starting from the stroke's edge.
+  - Our existing ease-out token.
+  - Unticking: instant.
+  - Reduced motion: no press, and the tick fades.
+- **Turned down:** animating the single-choice key (single moves on at 120ms), a fading row fill (round 9's reason), a bounce, a tick wipe on the all-flow chips, an animated uncheck.
+- **Self-review against the skill's 10 standards: approve.** One note: the press is symmetric, as in the skill's own button recipe. The asymmetric-timing rule is for hold interactions, and the tick itself is asymmetric (in 120ms, out instantly).
+
+**Verified:**
+- 5 component tests, using the browser's DevTools protocol to hold a real mouse press and to emulate reduced motion. 7 deliberate breaks, caught 7/7:
+  - a keyboard toggle that animates
+  - an animated untick
+  - a press that's too deep
+  - no press at all
+  - an off-token duration
+  - no fade under reduced motion
+  - motion that ignores reduced motion
+- Measured: the box is 16 → 15.2px while held, and stays 16px under reduced motion.
+- Filmstrips with the clock slowed 10× (before/after; light, dark, reduced motion, and keyboard): `process/15-checkbox-motion/renders/`, made with `strip.mjs` in the same folder.
+- 560 green; 21.59 KB.
+
+**For me to feel-check** (the skill says feel can't be settled from code): click a few checkboxes in `pnpm dev` at normal speed, then with DevTools' animation panel at 10%, and again tomorrow with fresh eyes.
+
+**Artifacts:** `process/15-checkbox-motion/` (round-plan.md frozen before the change, PLAN.md, DESIGN.md, strip.mjs, `renders/before/` 3, `renders/after/` 3).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -737,4 +778,5 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 - Round 12's small beat: a status that lies is worse than no status. "Sending in 1s · Undo" stayed on screen after Undo had stopped working; the fix was to make every status match reality (the button too).
 - Round 13 is the "fixes have side effects" beat: the worst break the stress page found (an answer squeezed to one character per line) was created by round 11's own fix (answers wrap instead of truncating). Audits judge rules; a stress page shows what the content does to them.
 - Round 14 is the "try it, then keep what you had" beat: a monochrome redesign was prototyped and rendered side by side, and I kept the blue. The experiment still paid off by naming the real problem: blue had four jobs, and only one of them was mine. "The user's decision is the loudest thing on the card" came out of saying no to the bigger change.
+- Round 15 is the "look closer" beat: the animation I wanted to copy didn't exist. Frame by frame, Claude's checkbox fills in a single frame; the feel came from the screen recorder's click circle. We animated anyway, but by the rules: what to animate came from a skill whose first job is saying no (keyboard toggles, the single key, the uncheck, a bounce), and what's left is a 0.8px press and a 120ms tick.
 

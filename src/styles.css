@@ -532,6 +532,19 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   [data-pointer] .btn:not(.link):active:not(:disabled):not([aria-disabled="true"]),
   [data-pointer] .chip:active:not([aria-disabled="true"]),
   [data-pointer] .icon-btn:active { transform: scale(.97); }
+  /* Checkbox (round 15, Emil Kowalski's animate skill): pointer only, since keyboard toggles never
+     animate. The box gives under the press (.95: the low end of the subtle range, for a 16px box),
+     and the tick is revealed left to right like a pen, from the stroke's own edge (~16% of the icon
+     box), in 0.75x the duration. Unticking is instant: no transition on the unchecked state. */
+  .key.box { transition: transform var(--_duration) var(--_ease); }
+  [data-pointer] .opt:active:not([aria-disabled="true"]) > .key.box { transform: scale(.95); }
+  .key.box .i { clip-path: inset(0 84% 0 0); }
+  .opt[aria-checked="true"] > .key.box .i { clip-path: inset(0); }
+  [data-pointer] .opt[aria-checked="true"] > .key.box .i { transition: clip-path calc(var(--_duration) * .75) var(--_ease); }
+}
+/* Reduced motion: no press, and the tick fades in instead of wiping (fades stay, nothing moves). */
+@media (prefers-reduced-motion: reduce) {
+  [data-pointer] .opt[aria-checked="true"] > .key.box .i { transition: opacity calc(var(--_duration) * .75) var(--_ease); }
 }
 
 /* Touch: controls drawn smaller than 44px keep a 44px hit area; the drawing doesn't change (BUILD §5.3). */
