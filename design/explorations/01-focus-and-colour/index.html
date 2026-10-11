@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><title>Focus and Colour</title>
+<style>
+body{font:14px/1.4 system-ui;margin:24px;background:#fff;color:#1c1c1c}
+h1{font-size:18px;margin:0 0 4px} p{margin:0 0 20px;color:#666}
+table{border-collapse:separate;border-spacing:12px 8px}
+th{font-weight:600;text-align:start;vertical-align:bottom;padding-bottom:4px}
+th small{display:block;font-weight:400;color:#666}
+td.row{font-weight:600;vertical-align:middle;width:110px;color:#444}
+.cell{width:380px;height:450px;overflow:hidden;border-radius:10px;border:1px solid #e6e6e6;position:relative}
+.cell img{position:absolute;inset-inline:0;bottom:0;width:100%}
+.cell.phone img{width:100%}
+</style>
+<h1>Exploration 01 · Focus and colour</h1>
+<p><b>Question (Mari, 11 Oct 2026):</b> why mix a black primary button with a blue active state? Prompted by
+<a href="reference/question-blue-and-black.png">our card</a> next to a
+<a href="reference/shadcn-questionnaire.png">monochrome shadcn questionnaire</a> with a soft halo focus ring.</p>
+<p><b>Tried (Claude's prototype):</b> 1a, the accent defaults to ink (monochrome), and 2a, a focus ring drawn as an edge plus a soft halo outside the row,
+in two colours: following the accent, and a fixed grey. Injected as extra CSS on the live component (<code>css/</code>); <code>src/</code> was not changed.</p>
+<p><b>Outcome:</b> Mari kept the <b>blue accent</b>: it carries "your pick / where you are" better than grey or black.
+The ink ring made three black things compete (pick, ring, button); the grey ring was the calmest but lost that meaning. What did carry over to round 14: the badge and source dot go grey, since <i>the user's decision is the loudest thing on the card</i>, and the divider stubs at a focused row's corners got fixed.</p>
+<p style="color:#666">Each row is a keyboard state. Ring = keyboard focus; grey fill + filled mark = selected.</p>
+<table>
+<tr><th></th><th>Today<small>blue accent, inner ring</small></th><th>1a + 2a · ring follows accent<small>ink by default, edge + halo</small></th><th>1a + 2a · grey ring<small>shadcn feel, #767676 edge (4.5:1)</small></th></tr>
+<tr><td class=row>Single · picked + recommended + focus on row 2 (light)</td><td><div class="cell"><img src="today/rec-light.png"></div></td><td><div class="cell"><img src="ink/rec-light.png"></div></td><td><div class="cell"><img src="grey/rec-light.png"></div></td></tr><tr><td class=row>Multi · checked + focus (light)</td><td><div class="cell"><img src="today/multi-light.png"></div></td><td><div class="cell"><img src="ink/multi-light.png"></div></td><td><div class="cell"><img src="grey/multi-light.png"></div></td></tr><tr><td class=row>Focus on Continue (light)</td><td><div class="cell"><img src="today/btn-light.png"></div></td><td><div class="cell"><img src="ink/btn-light.png"></div></td><td><div class="cell"><img src="grey/btn-light.png"></div></td></tr><tr><td class=row>Single (dark)</td><td><div class="cell"><img src="today/rec-dark.png"></div></td><td><div class="cell"><img src="ink/rec-dark.png"></div></td><td><div class="cell"><img src="grey/rec-dark.png"></div></td></tr><tr><td class=row>Focus on Continue (dark)</td><td><div class="cell"><img src="today/btn-dark.png"></div></td><td><div class="cell"><img src="ink/btn-dark.png"></div></td><td><div class="cell"><img src="grey/btn-dark.png"></div></td></tr><tr><td class=row>Phone 375 (light)</td><td><div class="cell"><img src="today/rec-phone.png"></div></td><td><div class="cell"><img src="ink/rec-phone.png"></div></td><td><div class="cell"><img src="grey/rec-phone.png"></div></td></tr>
+</table>
+<h2 style="font-size:15px;margin-top:28px">CSS used</h2>
+<p>Rendered with <code>shots-with-css.mjs</code> (a copy of <code>scripts/shots.mjs</code> that adds one CSS file). <code>css/mono.css</code> (1a) · <code>css/ring.css</code> (2a) · <code>css/ring-accent.css</code> or <code>css/ring-grey.css</code> (ring colour).</p>

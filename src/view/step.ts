@@ -40,32 +40,37 @@ function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: C
 }
 
 /**
- * "Something else": a radio/checkbox row, plus a text field that opens just below it.
- * The field is a sibling, not inside the row: a text box nested inside a radio confuses screen
- * readers (axe: nested-interactive). Round 8, Claude's call.
+ * "Something else": a radio/checkbox row whose label area turns into a text field (round 14).
+ * The field is a sibling drawn over the row, not inside it: a text box nested inside a radio
+ * confuses screen readers (axe: nested-interactive, round 8). The wrapper holds the two together.
  */
-function otherRow(q: NormalizedQuestion, ctx: Ctx): [HTMLElement, HTMLElement] {
+function otherRow(q: NormalizedQuestion, ctx: Ctx): [HTMLElement, HTMLElement, HTMLElement] {
+  const multi = q.type === 'multi';
   const label = q.other?.label ?? ctx.t('somethingElse');
   const row = h(
     'div',
     {
       class: 'opt other quiet',
       part: 'other',
-      role: q.type === 'multi' ? 'checkbox' : 'radio',
+      role: multi ? 'checkbox' : 'radio',
       'aria-checked': 'false',
       tabindex: '-1',
       'data-opt': OTHER,
     },
-    h('span', { class: 'key plain', 'aria-hidden': 'true' }, icon('pencil')),
+    // Multi: a checkbox like its neighbours, which is also where a click unticks it (the text area types).
+    multi
+      ? h('span', { class: 'key box', 'aria-hidden': 'true' }, icon('check'))
+      : h('span', { class: 'key plain', 'aria-hidden': 'true' }, icon('pencil')),
     h('span', { class: 'body' }, h('span', { class: 'label' }, bdi(label))),
   );
   const field = h(
     'div',
     { class: 'other-field', hidden: true },
-    h('input', { type: 'text', 'aria-label': label, placeholder: q.other?.placeholder ?? '', 'data-input': OTHER, enterkeyhint: 'next' }),
+    // The label doubles as the placeholder, so opening the field looks like the caret dropping into it.
+    h('input', { type: 'text', 'aria-label': label, placeholder: q.other?.placeholder ?? label, 'data-input': OTHER, enterkeyhint: 'next' }),
     h('span', { class: 'enter', 'aria-hidden': 'true' }, '↵'),
   );
-  return [row, field];
+  return [h('div', { class: 'other-wrap' }, row, field), row, field];
 }
 
 function delegateRow(q: NormalizedQuestion, ctx: Ctx): HTMLElement {
@@ -111,18 +116,19 @@ export function stepView(init: Ctx): View {
     body = h('div', { class: 'field' }, area);
   } else {
     q.options.forEach((o, i) => rows.push(optionRow(q, o, i, init)));
+    let wrap: HTMLElement | null = null;
     if (q.other) {
-      [other, field] = otherRow(q, init);
+      [wrap, other, field] = otherRow(q, init);
       input = field.querySelector('input');
-      rows.push(other);
     }
     body = h(
       'div',
       // aria-required is only allowed on radiogroup (single); a required multi says so in its error.
       { class: 'list', role: q.type === 'multi' ? 'group' : 'radiogroup', 'aria-labelledby': 'title', 'aria-required': q.required && q.type === 'single' ? 'true' : null },
       rows,
-      field,
+      wrap,
     );
+    if (other) rows.push(other);
   }
   const delegate = q.delegate ? delegateRow(q, init) : null;
   if (delegate) body.append(delegate);
@@ -158,6 +164,9 @@ export function stepView(init: Ctx): View {
     if (field && input) {
       field.hidden = !d.otherActive;
       if (active !== input && input.value !== d.other) input.value = d.other;
+      // On single, typed text replaces any pick, so the other options step back (round 14).
+      // Not on multi: there the text is added to the ticks, and fading them would say they don't count.
+      attr(body, 'data-aside', q.type === 'single' && d.otherActive && d.other.trim() !== '');
     }
     if (area && active !== area && area.value !== d.text) area.value = d.text;
     if (delegate) attr(delegate, delegate.getAttribute('role') === 'button' ? 'aria-pressed' : 'aria-checked', String(d.delegated));

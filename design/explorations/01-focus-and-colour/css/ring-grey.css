@@ -1,0 +1,3 @@
+:host, :host([theme="light"]) { --_ring: #767676; }
+:host([theme="dark"]) { --_ring: #8f8f8f; }
+@media (prefers-color-scheme: dark) { :host(:not([theme="light"])) { --_ring: #8f8f8f; } }

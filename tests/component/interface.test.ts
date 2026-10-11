@@ -151,7 +151,8 @@ describe('controls keep their promises', () => {
     const other = row(m, '__other');
     await userEvent.click(other);
     await userEvent.keyboard('Burmese');
-    await userEvent.click(other);
+    // Once ticked, the label area is the text field (round 14); the checkbox is where it unticks.
+    await userEvent.click(other.querySelector('.key')!);
     expect(other.getAttribute('aria-checked')).toBe('false');
     await userEvent.click(other);
     expect(other.getAttribute('aria-checked')).toBe('true');

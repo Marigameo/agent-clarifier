@@ -135,7 +135,7 @@ button { font: inherit; color: inherit; }
   /* Sits on the first line and keeps its size when a long source wraps (round 13). */
   flex: none; margin-block-start: calc((1lh - 6px) / 2);
   content: ""; inline-size: 6px; block-size: 6px; border-radius: 50%;
-  background: var(--_accent);
+  background: var(--_faint); /* grey: who's asking isn't a call to act, nor the user's pick (round 14) */
 }
 .head {
   display: flex; align-items: flex-start; gap: 10px;
@@ -206,13 +206,23 @@ button { font: inherit; color: inherit; }
   border-radius: var(--_radius-sm);
   cursor: pointer; user-select: none;
 }
-.opt + .opt::before {
+/* "Something else" sits in a wrapper (with its field), so it's reached as `.opt + .other-wrap > .opt`. */
+.opt + .opt::before, .opt + .other-wrap > .opt::before, .other-wrap + .opt::before {
   content: ""; position: absolute; inset-block-start: 0; inset-inline: 12px;
   border-block-start: 1px solid var(--_border);
 }
 .opt[aria-checked="true"], .opt[aria-pressed="true"] { background: var(--_selected); }
-.opt[aria-checked="true"]::before, .opt[aria-checked="true"] + .opt::before,
-.opt[aria-pressed="true"]::before, .opt[aria-pressed="true"] + .opt::before { border-color: transparent; }
+/* A filled or keyboard-focused row hides the hairlines on both its edges, so none poke out at its
+   corners (focus added in round 14). */
+.opt:is([aria-checked="true"], [aria-pressed="true"])::before,
+.other-wrap > .opt:is([aria-checked="true"], [aria-pressed="true"])::before,
+.opt:is([aria-checked="true"], [aria-pressed="true"]) + .opt::before,
+.opt:is([aria-checked="true"], [aria-pressed="true"]) + .other-wrap > .opt::before,
+.other-wrap:has(> .opt:is([aria-checked="true"], [aria-pressed="true"])) + .opt::before,
+.card:not([data-pointer]) .opt:focus-visible::before,
+.card:not([data-pointer]) .opt:focus-visible + .opt::before,
+.card:not([data-pointer]) .opt:focus-visible + .other-wrap > .opt::before,
+.card:not([data-pointer]) .other-wrap:has(> .opt:focus-visible) + .opt::before { border-color: transparent; }
 /* Rings are box-shadows (they follow the radius); the transparent outline is what forced-colors
    mode paints instead, since it removes shadows (round 11). */
 .opt:focus-visible, .chip:focus-visible, button.dot:focus-visible { outline: 2px solid transparent; outline-offset: -2px; }
@@ -229,8 +239,13 @@ button { font: inherit; color: inherit; }
 }
 .key .i { inline-size: 14px; block-size: 14px; }
 .opt[aria-checked="true"] > .key:not(.plain) { background: var(--_accent); color: var(--_accent-fg); }
-.key.box { border-radius: 6px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--_faint); }
-.key.box .i { opacity: 0; stroke-width: 1.6; }
+/* 16px, the common checkbox size, centred in the 26px key slot so labels keep their edge. The whole
+   row is the target, so the box needn't be big (round 14; it was the full 26px). */
+.key.box {
+  inline-size: 16px; block-size: 16px; margin-inline: 5px; border-radius: 4px;
+  background: transparent; box-shadow: inset 0 0 0 1.5px var(--_faint);
+}
+.key.box .i { inline-size: 12px; block-size: 12px; opacity: 0; stroke-width: 2; }
 .opt[aria-checked="true"] > .key.box { box-shadow: none; }
 .opt[aria-checked="true"] > .key.box .i { opacity: 1; }
 
@@ -241,7 +256,9 @@ button { font: inherit; color: inherit; }
   display: inline-block; margin-inline-start: 6px; padding: 1px 7px;
   border-radius: 999px; vertical-align: 1px;
   font-size: var(--_t12); font-weight: 500;
-  color: var(--_accent); background: var(--_accent-soft);
+  /* Grey, not the accent: it's the agent's suggestion, and the user's pick should be the loudest
+     thing on the card (round 14). Background-filled, so it stands out on a filled row too. */
+  color: var(--_muted); background: var(--_bg); box-shadow: inset 0 0 0 1px var(--_border);
 }
 .trail { flex: none; display: grid; place-items: center; inline-size: 20px; color: var(--_muted); visibility: hidden; }
 .opt:focus-visible .trail { visibility: visible; }
@@ -249,17 +266,23 @@ button { font: inherit; color: inherit; }
 
 .quiet .label { color: var(--_muted); }
 .quiet[aria-checked="true"] .label, .quiet[aria-pressed="true"] .label { color: var(--_fg); }
+/* "Something else" becomes the field in place: the field is drawn over the row's label area, from
+   just after the key to the end (row padding + 26px key + 12px gap). Round 14. */
+.other-wrap { position: relative; --_field-start: 50px; }
 .other-field {
-  display: flex; align-items: center; gap: 12px;
-  margin-block: 2px 4px; padding: 10px 12px; border-radius: var(--_radius-sm);
-  background: var(--_bg); box-shadow: inset 0 0 0 1.5px var(--_accent);
+  position: absolute; inset-block: 0; inset-inline: var(--_field-start) 0;
+  display: flex; align-items: center; gap: 12px; padding-inline-end: 12px;
 }
+.other-wrap:has(> .other-field:not([hidden])) > .opt .label { opacity: 0; } /* still its accessible name */
+.other-wrap:focus-within > .opt { box-shadow: inset 0 0 0 2px var(--_accent); } /* a text field always shows focus */
 .other-field input {
   flex: 1; min-inline-size: 0; padding: 0;
   font: inherit; color: var(--_fg); background: transparent; border: 0; outline: 0;
 }
 .enter { font-size: var(--_t12); color: var(--_muted); }
-:host([density="compact"]) .other-field { padding: 8px 10px; }
+:host([density="compact"]) .other-wrap { --_field-start: 48px; }
+/* Single with typed text: the other options step back, still readable and clickable (round 14). */
+.list[data-aside] > .opt .label { color: var(--_muted); }
 
 /* ── text question ──────────────────────────────────────────────────── */
 .field { padding: 0 8px 14px; } /* box on the 8px inset, text on the 20px edge (round 12) */
@@ -474,7 +497,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 :host([density="compact"]) .source { margin-inline: 16px; }
 :host([density="compact"]) .list, :host([density="compact"]) .review { padding-inline: 6px; }
 :host([density="compact"]) .opt { min-block-size: 44px; padding: 8px 10px; }
-:host([density="compact"]) .opt + .opt::before { inset-inline: 10px; }
+:host([density="compact"]) .opt::before { inset-inline: 10px; }
 :host([density="compact"]) .field { padding-inline: 6px; }
 :host([density="compact"]) .field textarea { padding-inline: 10px; }
 :host([density="compact"]) .banner { margin-inline: 6px; padding-inline: 10px; }
@@ -525,8 +548,9 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
    fields, checkboxes, picks and the progress dashes are drawn. Give them system-colour edges and
    fills instead (round 11). */
 @media (forced-colors: active) {
-  textarea, .other-field, .chip-input { border: 1px solid CanvasText; }
-  textarea:focus, .other-field:focus-within, .chip-input:focus { outline: 2px solid Highlight; }
+  textarea, .chip-input { border: 1px solid CanvasText; }
+  textarea:focus, .chip-input:focus { outline: 2px solid Highlight; }
+  .other-wrap:focus-within > .opt { outline: 2px solid Highlight; outline-offset: -2px; }
   .key.box { border: 1.5px solid CanvasText; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"], .dot { forced-color-adjust: none; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"] { background: Highlight; color: HighlightText; border-color: Highlight; }

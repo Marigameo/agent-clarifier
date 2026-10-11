@@ -1,0 +1,4 @@
+/* 1a · accent defaults to ink */
+:host, :host([theme="dark"]) { --_accent: var(--clarify-accent, var(--_fg)); --_accent-fg: var(--clarify-accent-fg, var(--_bg)); }
+@media (prefers-color-scheme: dark) { :host(:not([theme="light"])) { --_accent: var(--clarify-accent, var(--_fg)); --_accent-fg: var(--clarify-accent-fg, var(--_bg)); } }
+.btn.link { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }

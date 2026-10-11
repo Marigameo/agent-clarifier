@@ -1,0 +1,6 @@
+/* 2a · edge + soft halo, outside the row */
+:host { --_halo: color-mix(in srgb, var(--_ring) 22%, transparent);
+  --_focus: 0 0 0 2px var(--_bg), 0 0 0 3.5px var(--_ring), 0 0 0 6.5px var(--_halo); }
+.opt:focus-visible { z-index: 1; box-shadow: 0 0 0 1.5px var(--_ring), 0 0 0 4.5px var(--_halo); }
+.opt:focus-visible::before, .opt:focus-visible + .opt::before { border-color: transparent; }
+.list { padding-block-start: 5px; }

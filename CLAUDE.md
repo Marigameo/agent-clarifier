@@ -86,8 +86,8 @@ From round 8, **Mari delegates design and copy calls to Claude** and will audit 
 
 ## Status (end of the build on 10 Oct 2026)
 
-M1–M7 are built. 544 tests are green (`pnpm check`). The Definition of done in BUILD §11 shows what's still open:
-- the size decision (21.28 KB after round 13, against a 12 KB target; the guard is 22 KB until the size round, which Mari wants to do separately after polish)
+M1–M7 are built. 552 tests are green (`pnpm check`, after round 14). The Definition of done in BUILD §11 shows what's still open:
+- the size decision (21.5 KB after round 14, against a 12 KB target; the guard is 22 KB until the size round, which Mari wants to do separately after polish)
 - the manual VoiceOver and real-phone passes
 - Svelte 5
 - publishing, which needs Mari's go-ahead
@@ -101,6 +101,7 @@ Mari shares one skill at a time. Claude runs it as a read-only audit and present
 - **Round 11 · interface** (Jakub Krehel's `better-interface`: six domain reviews, run as parallel read-only sub-agents): 10 HIGH and 5 MEDIUM fixed (forced colors, focus under the sticky header, focus lost on Send, silent send failure, lost Undo, toast and footer at 320, long questions, badge contrast, error copy, record truncation, and more). Report frozen before the fixes: `process/11-interface-audit/audit.md`; DESIGN §9. 
 - **Round 12 · polish:** all 21 findings beyond round 11's cap (it was 21, not 15). Mari picked the copy from options. Also fixed: a stale "Sending in 1s · Undo" after the window had closed. Plan frozen first: `process/12-polish/round-plan.md`; DESIGN §10.
 - **Round 13 · break** (Jakub Krehel's `break`): a stress page, `demo/break.html`, renders the real component under 34 worst-case scenarios. 6 breaks fixed (record label column, flex collapse, English labels in RTL, disabled look, source dot, record icon). Report: `process/13-break/report.md`. **Keep `demo/break.*` until Mari says to delete it.**
+- **Round 14 · quiet chrome, inline "Something else"** (from Mari's questions, comparing a shadcn card and a recording of Claude's card). **Principle (Mari): the user's decision is the loudest thing on the card**, so the Recommended badge and the source dot are grey, and blue is kept for picks and focus (a monochrome trial was turned down: `design/explorations/01-focus-and-colour/`). "Something else" is typed in place (the field is a sibling drawn over the row; single fades the other labels to muted once there's text, multi doesn't). The checkbox is 16px in the 26px slot. Plan: `process/14-quiet-and-inline/round-plan.md`; DESIGN §12.
 - **Checking motion:** `node scripts/motion-strips.mjs <dir>` slows Chrome's animation clock 10× and writes filmstrips. `scripts/shots.mjs` also takes `hover:`, `tap:` and `touch=1`.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

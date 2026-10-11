@@ -276,7 +276,7 @@ agent-clarifier { --clarify-accent: #0b7a5f; --clarify-radius: 12px; --clarify-f
 agent-clarifier[theme="dark"] { --clarify-accent: #5fa48d; }
 ```
 
-Accent, danger and success each need a light and a dark value that pass 4.5:1 on the card. The soft fills behind the badge and errors are mixed from them automatically, so they follow your colours.
+Accent, danger and success each need a light and a dark value that pass 4.5:1 on the card. The soft fills behind the answered tick and errors are mixed from them automatically, so they follow your colours. The Recommended badge is grey on purpose: the user's pick should be the loudest thing on the card (restyle it with `::part(badge)` if you must).
 
 | Token | Default (light / dark) | Used for |
 |---|---|---|
@@ -288,7 +288,7 @@ Accent, danger and success each need a light and a dark value that pass 4.5:1 on
 | `--clarify-border` | `#e6e6e6` / `#343434` | Card edge, dividers |
 | `--clarify-hover`, `--clarify-selected` | `#f5f5f5`, `#ececec` / `#292929`, `#303030` | Row fills |
 | `--clarify-key-bg` | `#f0f0f0` / `#2c2c2c` | Number-key badges |
-| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `#3b5bdb` / `#8ea6ff` | Focus, checks, the Recommended badge, links. `-accent-soft` must be opaque: by default it's the accent mixed into the background, so a badge keeps its contrast on a selected row |
+| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `#3b5bdb` / `#8ea6ff` | The user's picks, focus, links. `-accent-soft` (the answered tick's halo) must be opaque: by default it's the accent mixed into the background |
 | `--clarify-danger`, `-danger-soft` | `#c2410c` / `#f0895a` | Errors |
 | `--clarify-success` | `#2f7d4f` / `#7cc79a` | The answered tick |
 | `--clarify-radius`, `--clarify-radius-sm` | `16px`, `8px` | Card, rows (concentric: 16 − 8 inset) |

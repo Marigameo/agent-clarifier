@@ -11,10 +11,12 @@
 
 Each signal has **one meaning**, so it never has to be learnt twice.
 
+**The user's decision is the loudest thing on the card** (Mari, round 14). What the agent says (its Recommended badge, who's asking) stays quiet and grey. Colour goes to what the user did, and to where they are.
+
 | Signal | Means | Never used for |
 |---|---|---|
 | **Shadow** | "This floats over the conversation" (the docked card, the pill), or "there's more content under this edge" (scroll edges) | Decoration, or anything that sits in the flow (the record, a card in the composer's place) |
-| **Accent colour** | "Look here": keyboard focus, your selection marks, the agent's recommendation, text links | The primary button, or large fills |
+| **Accent colour** | "Yours, or here": your selection marks, keyboard focus, text links | The primary button, large fills, or anything the agent says (the Recommended badge and the source dot went grey in round 14) |
 | **Ink** (`--clarify-fg` as a fill) | "This acts": the primary button and the toast | Selection |
 | **Fill** | State: hover is a light fill (rows, buttons, chips; mouse or trackpad only), selected is a stronger fill | The only sign of selection (the check or radio mark always shows it too) |
 | **Ring** | Keyboard focus | Selection. A ring and a fill can show at the same time (round 1). Drawn as a box-shadow so it follows the radius, over a transparent outline that Windows contrast themes paint instead (round 11) |
@@ -39,13 +41,14 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 |---|---|---|---|---|---|
 | `--clarify-fg` | #1c1c1c | #ededed | Text, the primary button, the toast | 17.0 / 14.4 · 14.1 / 11.3 | ✅ Near-black: softer than black on white, far above AA |
 | `--clarify-muted` | #666666 | #a3a3a3 | **All secondary and small text**: descriptions, step count, source, review keys, placeholders | 5.7 / 4.9 · 6.5 / 5.2 | ✅ Passes AA everywhere it's used. Hierarchy below it comes from size (12px), not a paler grey |
-| `--clarify-faint` | #888888 | #7a7a7a | **Non-text only**: checkbox rings, the text field outline, skipped-step dashes | edge 3.5 / 3.0 · 3.8 / 3.1 | ✅ Meets 3:1 for the edges that identify a control (WCAG 1.4.11). Never used for text (F1) |
+| `--clarify-faint` | #888888 | #7a7a7a | **Non-text only**: checkbox rings, the text field outline, skipped-step dashes, the source dot (round 14) | edge 3.5 / 3.0 · 3.8 / 3.1 | ✅ Meets 3:1 for the edges that identify a control (WCAG 1.4.11). Never used for text (F1) |
 | `--clarify-border` | #e6e6e6 | #343434 | Card edge, row dividers | decorative | ✅ Dividers only; nothing depends on seeing them |
 | `--clarify-hover` / `-selected` | #f5f5f5 / #ececec | #292929 / #303030 | Row fills | – | ✅ Selected is a step darker than hover. The fill is never the only sign of a pick |
 | Primary button hover | `color-mix(fg 88%, bg)` → #373737 | #d4d4d4 | The primary button under a mouse | text 11.9 · 11.1 (rest 17.0 · 14.1) | ✅ (round 10) A step toward the background reads as "lit" on both themes, stays far above AA, and is derived from the tokens, so a brand `--clarify-fg` gets a matching hover for free. Secondary and ghost buttons and chips use `--clarify-hover` (text 15.6 · 12.4) |
 | `--clarify-key-bg` | #f0f0f0 | #2c2c2c | Number-key badges | – | ✅ Between hover and selected: reads as a key, not a button |
-| `--clarify-accent` | #3b5bdb | #8ea6ff | Focus ring, checks, recommended badge, links | 5.7 / 4.8 · 7.1 / 5.7 | ✅ Passes as text, so links and the badge use it directly |
-| `--clarify-accent-soft` | accent 10% into bg | accent 14% into bg | Badge fill | badge text 4.9 · 5.5, **on every row state** | ✅ Tints without blocking. **Opaque since round 11:** it used to be a see-through tint, which stacked on a selected row's fill and dropped the badge to 4.19 · 4.39, under AA, on the most likely pick. Mixing with the background also makes it follow an app's own accent |
+| `--clarify-accent` | #3b5bdb | #8ea6ff | Focus ring, picks (filled key, checkbox), links | 5.7 / 4.8 · 7.1 / 5.7 | ✅ Passes as text, so links use it directly. **Kept blue in round 14** after a monochrome trial (`design/explorations/01-focus-and-colour/`): it carries "your pick / where you are" better than grey or black |
+| `--clarify-accent-soft` | accent 10% into bg | accent 14% into bg | The halo around the answered record's tick | – | ✅ Opaque (round 11), so it follows an app's own accent. It was the badge fill until round 14 |
+| Recommended badge | muted text on bg, 1px `border` edge | same | The agent's suggestion | 5.7 · 6.5 (it carries its own bg, so every row state reads the same) | ✅ (round 14) Grey: a suggestion must not look like a pick. Its own background keeps it visible on a filled row |
 | `--clarify-danger` | #c2410c | #f0895a | Errors (on their own pale fill: `danger-soft`, mixed 8% / 12% into the background since round 12, so it follows an app's danger colour) | 4.6 on danger-soft · 5.4 | ✅ *(Claude's reading)* Burnt orange, not red: errors here are always recoverable |
 | `--clarify-success` | #2f7d4f | #7cc79a | The answered tick | 5.0 · 8.2 | ✅ Only ever means "done" |
 
@@ -77,6 +80,7 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 | **52px** row (comfortable) | option rows | ❓ 44px (the touch minimum) + 8px. It feels calm, but the reason is weak. Keep it, or derive it (F12) |
 | **44px** row (compact) | option rows | ✅ The minimum comfortable touch target (Apple HIG, WCAG 2.5.5) |
 | **26px** key badge | number keys | ❓ It fits a 12px numeral with even space around it. No stronger reason |
+| **16px** checkbox, centred in the 26px key slot | multi rows | ✅ (round 14; was the full 26px) The common checkbox size. The whole row is the target, so a bigger box bought nothing and seven of them read as a heavy form. The slot keeps every label on one edge |
 | **12px** gap, key to label | rows | ✅ About half the badge width, enough to separate the "key" from the "answer" without breaking the row |
 | **32px** buttons, chips · **28px** icon buttons | footer, all flow, header | ✅ visually, since they're secondary to the rows. ⚠️ for touch: below 44px. Fixed by the hit-area rule (BUILD §5.3) |
 | **60%** max height | card | ✅ At least part of the conversation stays visible above the card, so the user keeps their context |
@@ -89,7 +93,7 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 |---|---|---|
 | **16px** `--clarify-radius` | card | ✅ The same as the composer on the board, so a card in the composer's place feels like the same object |
 | **9px** `--clarify-radius-sm` | rows, buttons | ⚠️ (F7) The concentric radius is 16 − 8 (inset) = **8px**. 9 is close but not derived |
-| 7px key badge · 6px checkbox · 50% radio | inside rows | ✅ The square box vs the round radio tell multi from single at a glance (round 1 fix) |
+| 7px key badge · 4px checkbox (6px before round 14's smaller box) · 50% radio | inside rows | ✅ The square box vs the round radio tell multi from single at a glance (round 1 fix) |
 | 999px | chips, pill, badge | ✅ Fully round means "small, self-contained object" |
 | **14px** record · 10px toast and banner | record, toast, error | ⚠️ (F8) Hard-coded, not from a token, so a theme with square corners still gets round ones here |
 
@@ -254,4 +258,21 @@ Plan frozen before any fix: `process/12-polish/round-plan.md`, with before and a
 | Built-in English labels on a right-to-left page read "of 1 1" | `unicode-bidi: plaintext` on label text | Text takes its direction from its own words: an untranslated English label reads left to right, and an Arabic one right to left, on any page |
 | A disabled card looked enabled | Dimmed to .55, not-allowed cursor | The same signal as disabled options and buttons (§1) |
 | The source dot squashed, and the record icon floated mid-paragraph, on long text | Fixed size, on the first line | A marker belongs to the start of what it marks |
+
+---
+
+## 12. Quiet chrome, inline "Something else" (round 14)
+
+From Mari's questions comparing our card with a shadcn questionnaire and Claude's own question card. Plan: `process/14-quiet-and-inline/round-plan.md`.
+
+| Change | Why |
+|---|---|
+| The Recommended badge and the source dot go grey (Mari's call) | **The user's decision is the loudest thing on the card.** Blue had four jobs on one card; a blue badge next to a blue pick blurred "what I chose" with "what the agent suggests", and nudged |
+| "Something else" becomes the field in place: the field is drawn over the row's label area | One object, not a second box below it: no jump in layout, about 50px shorter. In the DOM the field stays a sibling of the radio (axe `nested-interactive`, round 8), in a wrapper that holds both |
+| Single: once there's text, the other labels go from ink to muted | Typed text replaces the pick, so they really won't count. Muted, not see-through: they stay 4.5:1 and clickable, and opacity already means *disabled* (§1) |
+| Multi: no fade, and "Something else" gets a checkbox | The text is added to the ticks, so a fade would lie. The checkbox matches its neighbours and is where a click unticks it (the text area types) |
+| The placeholder defaults to the label | Opening the field looks like the caret dropping into the same words |
+| The row shows the focus ring while you type | A text field needs a visible focus indicator (WCAG 2.4.7); the old separate field had one too |
+| A keyboard-focused row hides the dividers on both edges | They poked out at the ring's corners; only filled rows hid them before |
+| No send arrow inside the row (Claude's card has one) | Claude's single questions have no footer; ours do, and two send buttons would compete. The ↵ hint stays |
 

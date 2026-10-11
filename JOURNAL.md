@@ -677,6 +677,40 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 
 ---
 
+## Round 14 · Quiet chrome, inline "Something else" (11 Oct 2026)
+
+**Brief (mine):** a few doubts about the finished card, posted one at a time, to discuss before changing anything.
+
+**1. "Why mix blue and black?"** The CTAs are black and the active state is blue.
+- Claude explained the split (DESIGN §1: ink means "this acts", the accent means "look here"). It also pointed out what was actually wrong: blue had four jobs on one card (the source dot, my pick, the agent's Recommended badge, focus). A blue badge next to a blue pick blurred "what I chose" with "what the agent suggests".
+- **I showed a shadcn questionnaire** (monochrome, a soft halo focus ring). Claude prototyped a monochrome card (the accent defaulting to ink) and a halo ring in ink and in grey. It injected the CSS into the live component, so `src/` wasn't touched, and rendered light, dark and 375px side by side.
+- **My call: keep the blue.** It conveys "your pick / where you are" better than grey or black. The board is kept for the record in `design/explorations/01-focus-and-colour/`.
+- **My call: the badge and the "Asked by" dot turn grey. The user's decision should be the loudest thing on the card.** That's now a principle at the top of DESIGN §1.
+
+**2. Claude's own card** (a screen recording on my desktop; Claude pulled 44 frames out of it with headless Chrome, since there's no ffmpeg here). I wanted two things from it:
+- **"Something else" turns into the input in the same row,** and the other options fade. Ours opened a second box below the row.
+- **The checkbox looked too big.** It was 26px, the size of the number-key slot. Claude found no reason for it beyond that.
+
+**Claude's picks for the details (I said go ahead with them):**
+- Fade the other options **only on single**, and only once there's text. On multi, the text is added to the ticks, so a fade would say they don't count when they do.
+- **Fade = ink to muted.** Nothing turns see-through: opacity already means disabled, and Claude's own fade is under 2:1 on options you can still click.
+- **No send arrow inside the row:** Claude's single questions have no footer; ours do, and two send buttons would compete.
+- The field stays a DOM sibling of the radio, drawn over the row's label area. That respects round 8's `nested-interactive` reason. Keyboard and ARIA are unchanged.
+- Multi's "Something else" gets a checkbox like its neighbours; it's where a click unticks it.
+- The placeholder defaults to the label. A 16px checkbox, centred in the 26px slot so the labels keep one edge.
+- Also fixed: divider stubs at the corners of a keyboard-focused row. Claude spotted them in its own prototype screenshots.
+
+**Verified:**
+- 8 new component tests. 10 deliberate breaks, caught 10/10: a blue badge, a blue dot, a fade on multi, a fade by opacity, a fade while still empty, the field dropping below the row, a 26px box, an off-centre box, the stub, an empty placeholder.
+- One existing test changed on purpose: unticking a multi "Something else" is now a click on its checkbox, because the text area types.
+- 552 green, 100% lines. 21.5 KB (+0.22 KB).
+
+**Not in this round:** the all-at-once flow's "Something else" chip still opens a field under the chips. Other details from Claude's card (no footer on single, Skip inside the Other row, "0 selected", a fade between steps) were noted, not asked for.
+
+**Artifacts:** `process/14-quiet-and-inline/` (round-plan.md frozen before the changes, PLAN.md, DESIGN.md, `reference/` 3, `renders/before/` 8, `renders/after/` 8). `design/explorations/01-focus-and-colour/`.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -691,3 +725,5 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 - Round 11 is the "who did we leave out" beat: polish rounds made it feel good; this one found who it failed (Windows contrast themes, keyboard, 320px phones, Arabic, screen readers), with a before/after render for each. Two sub-beats: the audit's own suggested fix (#5) would have broken undo, so judgment over checklists; and 3 of 10 tests passed while testing nothing until a deliberate break exposed them.
 - Round 12's small beat: a status that lies is worse than no status. "Sending in 1s · Undo" stayed on screen after Undo had stopped working; the fix was to make every status match reality (the button too).
 - Round 13 is the "fixes have side effects" beat: the worst break the stress page found (an answer squeezed to one character per line) was created by round 11's own fix (answers wrap instead of truncating). Audits judge rules; a stress page shows what the content does to them.
+- Round 14 is the "try it, then keep what you had" beat: a monochrome redesign was prototyped and rendered side by side, and I kept the blue. The experiment still paid off by naming the real problem: blue had four jobs, and only one of them was mine. "The user's decision is the loudest thing on the card" came out of saying no to the bigger change.
+
