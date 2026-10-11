@@ -451,8 +451,9 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 /* Hover only for a real mouse or trackpad: some touch screens claim hover, and a tapped control
    would keep its fill. Hover fills are instant: they happen tens of times a day (DESIGN §7). */
 @media (hover: hover) and (pointer: fine) {
-  .icon-btn:hover, .btn:not(.primary):not(.link):not(:disabled):hover { background: var(--_hover); }
-  .btn.primary:not(:disabled):hover { background: color-mix(in srgb, var(--_fg) 88%, var(--_bg)); border-color: transparent; }
+  /* A busy button is aria-disabled, not disabled (round 11), so both are excluded. */
+  .icon-btn:hover, .btn:not(.primary):not(.link):not(:disabled):not([aria-disabled="true"]):hover { background: var(--_hover); }
+  .btn.primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in srgb, var(--_fg) 88%, var(--_bg)); border-color: transparent; }
   .btn.link:hover { text-decoration: underline; text-underline-offset: 2px; }
   .chip:not([aria-checked="true"]):not([aria-pressed="true"]):not([aria-disabled="true"]):hover { background: var(--_hover); }
   .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--_hover); }
@@ -466,7 +467,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   /* Press feedback: the control gives a little under a pointer. Not for keyboard presses
      (Space), which repeat fast and already show the ring. Text links don't shrink. */
   .btn:not(.link), .chip, .icon-btn { transition: transform var(--_duration) var(--_ease); }
-  [data-pointer] .btn:not(.link):active:not(:disabled),
+  [data-pointer] .btn:not(.link):active:not(:disabled):not([aria-disabled="true"]),
   [data-pointer] .chip:active:not([aria-disabled="true"]),
   [data-pointer] .icon-btn:active { transform: scale(.97); }
 }

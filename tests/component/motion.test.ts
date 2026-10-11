@@ -102,4 +102,20 @@ describe('hover', () => {
     await expect.poll(() => getComputedStyle(skip).backgroundColor).toBe('rgb(245, 245, 245)');
     expect(before).not.toBe('rgb(245, 245, 245)');
   });
+
+  it('a busy Send (aria-disabled since round 11) stops answering hover', async () => {
+    const m = mount({ id: 'one', questions: [HOTEL.questions[0]!] }, { theme: 'light', review: 'always' });
+    m.el.addEventListener('clarify:submit', (e) => e.preventDefault());
+    await userEvent.click(row(m, 'covent'));
+    await onStep(m, 'Check your answers');
+    const send = button(m, 'send');
+    const rest = getComputedStyle(send).backgroundColor;
+    await userEvent.hover(send); // the pointer rests on Send…
+    expect(getComputedStyle(send).backgroundColor).not.toBe(rest);
+    send.focus();
+    await userEvent.keyboard('{Enter}'); // …while it's sent
+    await expect.poll(() => send.getAttribute('aria-disabled')).toBe('true');
+    expect(send.matches(':hover')).toBe(true);
+    expect(getComputedStyle(send).backgroundColor).toBe(rest);
+  });
 });

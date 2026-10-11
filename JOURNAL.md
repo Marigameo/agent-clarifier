@@ -581,6 +581,16 @@ There were also 5 MEDIUMs in the table and 15 smaller findings beyond the cap.
 - **A capture artifact, not a bug:** a Playwright click scrolled a chip under the header. Probing showed only Playwright's own scroll-into-view helper does this; real mouse and DOM clicks don't.
 - **Size:** 20.67 KB (+600 B), under the 21 KB guard.
 
+**Cross-check against rounds 9–10 (asked by me afterwards):**
+- I asked whether round 11 undid anything from the earlier audits.
+- Claude diffed what round 11 touched against the round 9–10 rules. The motion code (`motion.ts`, the compose glow, every transition and keyframe) was untouched.
+- **It found one interaction:**
+  - Round 11 marks a busy Send `aria-disabled` instead of `disabled`, so it keeps focus.
+  - Round 10's hover rule and round 9's press rule only skipped `:disabled`.
+  - So a busy "Sending…" button darkened on hover and shrank on press, as if it could be pressed.
+- **Fixed:** both rules now skip `[aria-disabled="true"]` too. A test was added, and deliberately breaking the fix makes it fail.
+- The first version of that test passed while testing nothing: Playwright won't hover a control it considers disabled. It now hovers before the send.
+
 **Not verified:** real screen readers (and whether announcements survive the live region being re-attached on view swaps), a real Windows contrast theme, real iOS focus-zoom, Firefox and Safari.
 
 **Docs:**
