@@ -1,15 +1,15 @@
 // Review: every answer in one list, each with Edit (PLAN §5, §6).
 
 import { buildAnswer, draftOf } from '../model/selectors';
-import { button, footLeft, header, setButton, sourceLine } from './chrome';
-import { h, icon } from './dom';
+import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine } from './chrome';
+import { bdi, h, icon } from './dom';
 import type { Ctx, View } from './types';
 
 export function reviewView(init: Ctx): View {
   const qs = init.s.q?.questions ?? [];
   const head = header(init, init.t('checkAnswers'), undefined, { back: true });
   const list = h('dl', { class: 'review' });
-  const banner = h('div', { class: 'banner', part: 'banner', hidden: true });
+  const banner = failBanner();
   const left = h('span', { class: 'foot-l' });
   const send = button('send', 'primary');
   const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, send));
@@ -33,8 +33,8 @@ export function reviewView(init: Ctx): View {
           return h(
             'div',
             { class: `row${gap ? ' gap flag' : ''}` },
-            h('dt', {}, q.label),
-            h('dd', {}, value),
+            h('dt', {}, bdi(q.label)),
+            h('dd', {}, bdi(value)),
             // A second dd holds the action: dl rows may only contain dt and dd.
             h(
               'dd',
@@ -57,13 +57,7 @@ export function reviewView(init: Ctx): View {
       );
     }
 
-    banner.hidden = s.status !== 'error';
-    if (s.status === 'error') {
-      banner.replaceChildren(
-        icon('alert'),
-        h('span', {}, h('b', {}, ctx.t('sendFailed')), s.error ?? ''),
-      );
-    }
+    setFailBanner(banner, ctx);
 
     footLeft(left, ctx, () => [
       h('button', { class: 'btn ghost', type: 'button', 'data-act': 'start-over', disabled: busy }, icon('undo'), ctx.t('startOver')),

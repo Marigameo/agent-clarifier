@@ -41,7 +41,8 @@ export interface Labels {
   goTo: Label;
   answeredOf: Label;
   pickedOf: Label;
-  pickOne: Label;
+  answerToSend: Label;
+  pickAtLeast: Label;
   checkAnswers: Label;
   formTitle: Label;
   required: Label;
@@ -115,7 +116,8 @@ export const DEFAULT_LABELS: Labels = {
   goTo: 'Go to question {n}: {label}',
   answeredOf: '{n} of {total} answered',
   pickedOf: '{n} of {total} picked',
-  pickOne: 'Pick one to continue',
+  answerToSend: 'Answer this to send',
+  pickAtLeast: 'Pick at least {min}',
   checkAnswers: 'Check your answers',
   formTitle: 'A few questions', // working copy, still to settle
   required: 'Required',
@@ -210,6 +212,8 @@ export function format(label: Label, vars: Record<string, string | number> = {},
   }
   return template.replace(/\{(\w+)\}/g, (match, name: string) => {
     const v = vars[name];
-    return v === undefined ? match : typeof v === 'number' ? number.format(v) : v;
+    // Words are isolated (FSI…PDI, the text form of <bdi>), so an app's Latin label keeps its
+    // order inside a right-to-left sentence, and the other way round (round 11).
+    return v === undefined ? match : typeof v === 'number' ? number.format(v) : `\u2068${v}\u2069`;
   });
 }

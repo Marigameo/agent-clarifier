@@ -17,7 +17,7 @@ Each signal has **one meaning**, so it never has to be learnt twice.
 | **Accent colour** | "Look here": keyboard focus, your selection marks, the agent's recommendation, text links | The primary button, or large fills |
 | **Ink** (`--clarify-fg` as a fill) | "This acts": the primary button and the toast | Selection |
 | **Fill** | State: hover is a light fill (rows, buttons, chips; mouse or trackpad only), selected is a stronger fill | The only sign of selection (the check or radio mark always shows it too) |
-| **Ring** | Keyboard focus | Selection. A ring and a fill can show at the same time (round 1) |
+| **Ring** | Keyboard focus | Selection. A ring and a fill can show at the same time (round 1). Drawn as a box-shadow so it follows the radius, over a transparent outline that Windows contrast themes paint instead (round 11) |
 | **Dashed edge** | "Not a real option" ("Other" chip) or "no longer live" (the expired record) | |
 | **Motion** | Answers "what just happened?": a pick confirmed, a step moved forward or back, the card folded into a record, a press landed | Delight for its own sake, or anything paced by the keyboard. With reduced motion nothing moves or resizes, but fades stay (round 9) |
 
@@ -45,7 +45,7 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 | Primary button hover | `color-mix(fg 88%, bg)` → #373737 | #d4d4d4 | The primary button under a mouse | text 11.9 · 11.1 (rest 17.0 · 14.1) | ✅ (round 10) A step toward the background reads as "lit" on both themes, stays far above AA, and is derived from the tokens, so a brand `--clarify-fg` gets a matching hover for free. Secondary and ghost buttons and chips use `--clarify-hover` (text 15.6 · 12.4) |
 | `--clarify-key-bg` | #f0f0f0 | #2c2c2c | Number-key badges | – | ✅ Between hover and selected: reads as a key, not a button |
 | `--clarify-accent` | #3b5bdb | #8ea6ff | Focus ring, checks, recommended badge, links | 5.7 / 4.8 · 7.1 / 5.7 | ✅ Passes as text, so links and the badge use it directly |
-| `--clarify-accent-soft` | 10% | 14% | Badge fill | badge text 4.9 · 5.5 | ✅ Tints without blocking |
+| `--clarify-accent-soft` | accent 10% into bg | accent 14% into bg | Badge fill | badge text 4.9 · 5.5, **on every row state** | ✅ Tints without blocking. **Opaque since round 11:** it used to be a see-through tint, which stacked on a selected row's fill and dropped the badge to 4.19 · 4.39, under AA, on the most likely pick. Mixing with the background also makes it follow an app's own accent |
 | `--clarify-danger` | #c2410c | #f0895a | Errors (on their own pale fill) | 4.6 on danger-soft · 5.4 | ✅ *(Claude's reading)* Burnt orange, not red: errors here are always recoverable |
 | `--clarify-success` | #2f7d4f | #7cc79a | The answered tick | 5.0 · 8.2 | ✅ Only ever means "done" |
 
@@ -174,7 +174,34 @@ Mari delegated these calls in round 8 and will audit the result. Each line is my
 - **Copy kept as working copy** ("Left to the agent", "A few questions", "Required"). They're plain, and the audit can revisit them.
 - **The Decide-for-me icon is a hand-off arrow (→|):** "pass it on", rather than an AI sparkle, which is overused and says nothing about handing over.
 - **Record designs:**
-  - answered: a ✓ line plus the answers, one line each, with full text on hover
+  - answered: a ✓ line plus the answers, each wrapping in full (round 11: they were one line with a hover-only tooltip, which nobody on touch or keyboard could open)
   - skipped and replied: a single line with the way back
   - replied: the user's message is their own chat bubble
   - expired: dashed, listing picks only if there were any
+
+---
+
+## 9. Interface audit (round 11): what broke for real users, and the fix
+
+Run with Jakub Krehel's `better-interface` (six domain reviews, evidence required). Full report: `process/11-interface-audit/audit.md`; before and after renders beside it. Every fix below has a component test that fails when the fix is undone.
+
+| # | What broke | For whom | The fix, and why it's the cheapest that works |
+|---|---|---|---|
+| 1 | Focus rings, picks, field edges, checkboxes and the progress dashes vanished | Windows contrast themes (forced colors) | A transparent outline under every ring, plus one `forced-colors` block using system colours (`Highlight`, `CanvasText`). Normal mode looks exactly the same |
+| 2 | ↑ or Shift+Tab could focus a row hidden under the sticky header | Keyboard users on long lists | `scroll-padding-block-start` = the header's height, set where the header is already measured |
+| 3 | Pressing Send by keyboard dropped focus to the page | Keyboard and screen-reader users, right when Undo or Try again matters | A busy button stays focusable (`aria-disabled`) instead of being disabled under the cursor |
+| 4 | A card with no review step showed nothing when the send failed | Everyone using one-question cards (yes/no) | The step view shows the same failure banner and Try again as review, from one shared helper |
+| 5 | Skipping into a text question lost its Undo toast at once | Everyone | The undo step for typing moved from *focusing* the field to its **first keystroke**, so focusing changes nothing and can't dismiss a toast (or swallow an Undo) |
+| 6 | At 320px the toast read "↶ Und"; dashes overlapped Skip with 6+ questions | Phones, long labels, translations | The footer wraps, the toast wraps, and the ellipsis is deleted. Undo itself never breaks |
+| 7 | A long question opened scrolled past its own start | Phones, 200% zoom | Don't scroll to the focused row while the header is tall, and keep a top-edge cue for that case |
+| 8 | The Recommended badge fell under AA on a selected row | Everyone (it's the likeliest pick) | An opaque `--_accent-soft` (see §2) |
+| 9 | "Pick one to continue" under a text box, and under a multi that already had a pick | Everyone | "Answer this to send", "Pick at least {min}"; the step footer says what unlocks Continue |
+| 10 | Expired-record answers clipped, with the full text only in a hover tooltip | Touch and keyboard users | Answers wrap |
+| 11 | A blocked Send was silent; optional questions were described by an error | Screen-reader users | `aria-invalid`/`describedby` only while invalid; focus moves to the first question that needs an answer |
+| 12 | The multi "Something else" checkbox couldn't be unticked | Everyone; its role promised a toggle | Pressing it again unticks it; its text stays in the draft |
+| 13 | "C++" showed as "++C" in an Arabic card | RTL languages with Latin names | App text in `<bdi>`; label placeholders isolated with FSI…PDI |
+| 14 | iOS zoomed the page when a field was focused | iPhone users | Fields are 16px under `(pointer: coarse)` |
+| 15 | An invalid field's edge got fainter (2.35:1) | Everyone | The edge uses `--_danger` itself (5.18), thicker while focused |
+
+**Not done here, on purpose:** the 15 smaller findings beyond the cap (copy, Intl lists, icon strokes, rem sizes and so on) are round 12. Copy changes are offered as options first.
+

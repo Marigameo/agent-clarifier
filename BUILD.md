@@ -482,7 +482,7 @@ The component **never** injects global styles or changes the composer's own styl
 | Content | Rule |
 |---|---|
 | Prompt, option label, description | Wrap. `overflow-wrap: anywhere` so long words and URLs break. `text-wrap: pretty` on prompts. Never clamped |
-| Record chips, review values, pill text | One line with an ellipsis. The full text goes in the accessible name and `title` |
+| Record and review values | Wrap, like everything the user decided (round 11: the one-line ellipsis left the full value behind a hover-only `title`, which touch and keyboard can't open) |
 | "Something else" and text questions | `<textarea>` that grows with its content (`field-sizing: content` where supported, else a measured height) up to 5 lines, then scrolls |
 | The card | `max-height: var(--clarify-max-height, 60%)` **of the visible screen** (`--_vvh` from `viewport.ts`). The footer is fixed and the body scrolls (`overscroll-behavior: contain`). **The header sticks while it's short and scrolls away when it's taller than a third of the card** (round 7), so a long question never crowds out the options |
 | Scroll edges | A 1px hairline plus a soft shadow at the top or bottom of the body, **shown only while content is hidden past that edge** (a scroll listener sets `data-scroll-top/bottom`). No overflow, no shadow |
@@ -500,7 +500,7 @@ The component **never** injects global styles or changes the composer's own styl
 
 Every user-visible string has a key. The defaults:
 
-> Something else · Decide for me · Left to the agent *(working copy)* · Skip · Skip all · Continue · Review · Send · Send answers · Start over · Edit · Answer · Back · Minimise · Reopen · Undo · Try again · Recommended · write it ↗ · Up to {max} · {n} of {total} · {n} of {total} answered · {n} of {total} picked · Pick one to continue · Check your answers · Sending in {s}s · Or reply in your own words… · You answered {n} of {total} · Edit answers · Skipped. The agent used its own judgement. · Answer now · Replied in your own words · {n} picks kept · Answer the questions · Not answered. The agent continued without these. · Couldn't send your answers · Writing questions… · plus the live-region strings in §5.4
+> Something else · Decide for me · Left to the agent *(working copy)* · Skip · Skip all · Continue · Review · Send · Send answers · Start over · Edit · Answer · Back · Minimise · Reopen · Undo · Try again · Recommended · write it ↗ · Up to {max} · {n} of {total} · {n} of {total} answered · {n} of {total} picked · Answer this to send · Pick at least {min} · Check your answers · Sending in {s}s · Or reply in your own words… · You answered {n} of {total} · Edit answers · Skipped. The agent used its own judgement. · Answer now · Replied in your own words · {n} picks kept · Answer the questions · Not answered. The agent continued without these. · Couldn't send your answers · Writing questions… · plus the live-region strings in §5.4
 
 **Plurals, numbers, language and direction** (round 5)
 - A label is either a string or a set of plural forms: `{ one: 'Up to {max} choice', other: 'Up to {max} choices' }`. The form is chosen with `Intl.PluralRules(lang)` using the number in the string. `other` is required, and any language's forms (`zero`, `two`, `few`, `many`) are accepted.

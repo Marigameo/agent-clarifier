@@ -282,7 +282,7 @@ agent-clarifier { --clarify-accent: #0b7a5f; --clarify-radius: 12px; --clarify-f
 | `--clarify-border` | `#e6e6e6` / `#343434` | Card edge, dividers |
 | `--clarify-hover`, `--clarify-selected` | `#f5f5f5`, `#ececec` / `#292929`, `#303030` | Row fills |
 | `--clarify-key-bg` | `#f0f0f0` / `#2c2c2c` | Number-key badges |
-| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `#3b5bdb` / `#8ea6ff` | Focus, checks, the Recommended badge, links |
+| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `#3b5bdb` / `#8ea6ff` | Focus, checks, the Recommended badge, links. `-accent-soft` must be opaque: by default it's the accent mixed into the background, so a badge keeps its contrast on a selected row |
 | `--clarify-danger`, `-danger-soft` | `#c2410c` / `#f0895a` | Errors |
 | `--clarify-success` | `#2f7d4f` / `#7cc79a` | The answered tick |
 | `--clarify-radius`, `--clarify-radius-sm` | `16px`, `8px` | Card, rows (concentric: 16 − 8 inset) |

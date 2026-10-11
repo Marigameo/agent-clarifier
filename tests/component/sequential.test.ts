@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import type { ClarifyResult } from '../../src/index';
-import { HOTEL, button, focused, live, mount, onStep, row, title } from './helpers';
+import { HOTEL, button, focused, live, mount, onStep, plain, row, title } from './helpers';
 
 describe('sequential · keyboard only', () => {
   it('answers every input type and sends, without touching the mouse', async () => {
@@ -147,7 +147,7 @@ describe('sequential · mouse only', () => {
     await onStep(m, 'What matters most?');
     const dots = m.root.querySelectorAll('.dots button');
     expect(dots).toHaveLength(2); // the two answered steps; the current and later ones aren't buttons
-    expect(dots[0]!.getAttribute('aria-label')).toBe('Go to question 1: Area');
+    expect(plain(dots[0]!.getAttribute('aria-label'))).toBe('Go to question 1: Area');
     await userEvent.click(dots[0] as HTMLElement);
     await onStep(m, 'Which area?');
   });

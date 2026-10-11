@@ -4,7 +4,12 @@ import { DEFAULT_LABELS, format, mergeLabels, type PluralForms } from '../../src
 describe('format: placeholders and numbers', () => {
   it('fills placeholders', () => {
     expect(format(DEFAULT_LABELS.answeredOf, { n: 2, total: 4 })).toBe('2 of 4 answered');
-    expect(format(DEFAULT_LABELS.skippedToast, { label: 'Budget' })).toBe('Skipped “Budget”');
+    // Words arrive isolated (FSI…PDI), so they keep their order in either direction (round 11).
+    expect(format(DEFAULT_LABELS.skippedToast, { label: 'Budget' })).toBe('Skipped “\u2068Budget\u2069”');
+  });
+
+  it('isolates words but not numbers, which are written the local way', () => {
+    expect(format('{n}: {label}', { n: 3, label: 'C++' }, 'ar-EG')).toBe('٣: \u2068C++\u2069');
   });
 
   it('a placeholder with no value is left visible, so a typo is noticed', () => {

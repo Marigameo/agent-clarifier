@@ -3,14 +3,16 @@
 
 import { canContinue, draftOf, isInvalid, picks, progress } from '../model/selectors';
 import type { NormalizedQuestion } from '../model/types';
-import { button, footLeft, header, setButton, sourceLine } from './chrome';
-import { attr, h, icon, rove, text } from './dom';
+import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine } from './chrome';
+import { attr, bdi, h, icon, rove, text } from './dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './types';
 
 interface Block {
   q: NormalizedQuestion;
   el: HTMLElement;
   chips: HTMLElement[];
+  /** What the error describes: the text field, or the chip group. */
+  ctrl: HTMLElement;
   state: HTMLElement;
   error: HTMLElement;
   other: HTMLInputElement | null;
@@ -32,7 +34,7 @@ function chip(id: string, role: string, label: string, opts: { quiet?: boolean; 
       'data-rec': opts.rec ? '' : null,
     },
     opts.icon ? icon(opts.icon, opts.icon === 'delegate' ? 'flip' : '') : role === 'checkbox' ? icon('check', 'tick') : null,
-    label,
+    bdi(label),
     opts.out ? h('span', { class: 'out', 'aria-hidden': 'true' }, opts.out) : null,
   );
 }
@@ -65,7 +67,9 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
       ? h('textarea', { 'aria-labelledby': titleId, 'aria-required': q.required ? 'true' : null, 'data-input': 'text', rows: 2 })
       : null;
   const state = h('span', { class: 'q-state' });
-  const error = h('div', { class: 'q-err', id: `${titleId}-err`, hidden: true }, icon('alert'), init.t('pickOne'));
+  // The error says what would fix it: a minimum to reach, or simply an answer (round 11).
+  const fix = q.type === 'multi' && q.min > 1 ? init.t('pickAtLeast', { min: q.min }) : init.t('answerToSend');
+  const error = h('div', { class: 'q-err', id: `${titleId}-err`, hidden: true }, icon('alert'), fix);
   const group =
     q.type === 'text'
       ? h('div', { class: 'q-field' }, area, delegate)
@@ -75,7 +79,6 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
             class: 'chips',
             role: q.type === 'multi' ? 'group' : 'radiogroup',
             'aria-labelledby': titleId,
-            'aria-describedby': `${titleId}-err`,
             'aria-required': q.required && q.type === 'single' ? 'true' : null,
           },
           chips,
@@ -87,14 +90,15 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
       'div',
       { class: 'q-head' },
       h('span', { class: 'q-num', 'aria-hidden': 'true' }, String(i + 1)),
-      h('h3', { class: 'q-title', id: titleId }, q.prompt, q.description ? h('span', { class: 'sub' }, q.description) : null),
+      h('h3', { class: 'q-title', id: titleId }, bdi(q.prompt), q.description ? h('span', { class: 'sub' }, bdi(q.description)) : null),
       state,
     ),
     group,
     other,
     error,
   );
-  return { q, el, chips, state, error, other, area, delegate };
+  const ctrl = area ?? group;
+  return { q, el, chips, ctrl, state, error, other, area, delegate };
 }
 
 export function formView(init: Ctx): View {
@@ -106,7 +110,7 @@ export function formView(init: Ctx): View {
   const send = button('send', 'primary');
   const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, skipAll, send));
   const top = h('div', { class: 'top' }, sourceLine(init), head.el);
-  const banner = h('div', { class: 'banner', part: 'banner', hidden: true });
+  const banner = failBanner();
   const el = h(
     'div',
     { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title', tabindex: '-1' },
@@ -139,6 +143,9 @@ export function formView(init: Ctx): View {
       const invalid = s.attempted && isInvalid(b.q, d);
       b.el.classList.toggle('invalid', invalid);
       b.error.hidden = !invalid;
+      // Linked only while it shows, so an optional question is never described by an error.
+      attr(b.ctrl, 'aria-describedby', invalid ? b.error.id : null);
+      if (b.area || b.q.type === 'single') attr(b.ctrl, 'aria-invalid', invalid ? 'true' : null);
       const done = canContinue(b.q, d);
       text(
         b.state,
@@ -155,8 +162,7 @@ export function formView(init: Ctx): View {
     }
 
     const failed = s.status === 'error';
-    banner.hidden = !failed;
-    if (failed) banner.replaceChildren(icon('alert'), h('span', {}, h('b', {}, ctx.t('sendFailed')), s.error ?? ''));
+    setFailBanner(banner, ctx);
 
     const p = progress(s);
     footLeft(left, ctx, () => [ctx.t('answeredOf', { n: p.answered, total: p.total })]);

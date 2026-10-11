@@ -199,6 +199,11 @@ export interface State {
   undoUntil: number | null;
   /** Newest last, capped at 50. */
   history: Snapshot[];
+  /**
+   * The text question being typed in. Its first keystroke saved one undo step for the whole
+   * session; anything else ends the session (round 11).
+   */
+  typing: string | null;
 }
 
 /**

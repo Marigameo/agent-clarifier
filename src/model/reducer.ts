@@ -48,6 +48,7 @@ export function initialState(): State {
     compose: null,
     undoUntil: null,
     history: [],
+    typing: null,
   };
 }
 
@@ -64,7 +65,12 @@ export function initialDrafts(q: NormalizedQuestionnaire | null): Record<string,
 }
 
 export function reducer(state: State, action: Action, env: Env): State {
-  const next = reduce(state, action, env);
+  let next = reduce(state, action, env);
+  // Focusing a field isn't an edit, so it never dismisses a toast: skipping into a text question
+  // used to lose its Undo at once (round 11).
+  if (action.type === 'TEXT_FOCUS') return next;
+  // Anything but typing ends a typing session, so the next keystroke saves a fresh undo step.
+  if (next !== state && next.typing !== null && action.type !== 'TEXT_INPUT') next = { ...next, typing: null };
   // The previous toast goes away on any action that changed something, unless it set a new one.
   return next !== state && next.toast !== null && next.toast === state.toast
     ? { ...next, toast: null }
@@ -216,6 +222,9 @@ function reduce(s: State, a: Action, env: Env): State {
       if (q.type === 'multi' && !d.otherActive && picks(q, d) >= q.max) {
         return { ...s, toast: { kind: 'limit', max: q.max } };
       }
+      // A checkbox toggles: pressing a ticked "Something else" unticks it. Its text stays in the
+      // draft, so ticking it again (or Undo) brings it back (round 11).
+      if (q.type === 'multi' && d.otherActive) return edit(s, q.id, { otherActive: false }, 'always');
       const single = q.type === 'single' ? { values: [] } : {};
       return edit(s, q.id, { otherActive: true, delegated: false, skipped: false, ...single }, 'always');
     }
@@ -232,16 +241,19 @@ function reduce(s: State, a: Action, env: Env): State {
       );
     }
 
+    // Focus starts a new typing session; the undo step is saved by its first keystroke, not by the
+    // focus, so focusing changes nothing an Undo could step back over (round 11).
     case 'TEXT_FOCUS': {
       const q = find(a.questionId);
-      if (!answering || q?.type !== 'text') return s;
-      return edit(s, q.id, {}, 'always');
+      if (!answering || q?.type !== 'text' || s.typing === null) return s;
+      return { ...s, typing: null };
     }
 
     case 'TEXT_INPUT': {
       const q = find(a.questionId);
       if (!answering || q?.type !== 'text') return s;
-      return edit(s, q.id, { text: a.text, delegated: false, skipped: false }, 'never');
+      const next = edit(s, q.id, { text: a.text, delegated: false, skipped: false }, s.typing === q.id ? 'never' : 'always');
+      return next.typing === q.id ? next : { ...next, typing: q.id };
     }
 
     case 'DELEGATE': {

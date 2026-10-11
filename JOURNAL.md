@@ -533,6 +533,64 @@ Turned down: fills on option rows (keyboard-paced), shrinking an option row, a p
 
 ---
 
+## Round 11 · Interface audit with Jakub Krehel's `better-interface` (11 Oct 2026)
+
+**Brief (mine):** improve the interface itself. The skill is an orchestrator: it runs six domain skills (accessibility, layout, writing, typography, colors, UI), requires evidence for every claim, merges findings that share a root cause, ranks by user impact, caps the report at 15, and ends in Block or Approve. I asked for everything to be tracked.
+
+**How Claude ran it:**
+- Six read-only reviewers, one per domain, each loaded its own skill (3,520 lines of rules) and rendered the playground in real Chrome.
+- Between them, ~30 measurement scripts covered: 320px; 200% and 400% zoom; Windows contrast themes (forced colors); the accessibility tree; German-length labels; Arabic; touch; pixel-sampled contrast.
+- Claude then merged the overlaps and re-rated two findings:
+  - "send failed gives no next step": HIGH → MEDIUM, because the visible Try again is right there
+  - the warm theme's failures rank last, since they're demo-only
+- Claude also re-checked the surprising findings in code and screenshots before reporting.
+- The frozen report and before-renders were saved **before any fix**: `process/11-interface-audit/`.
+
+**What it found:** Block, with 10 HIGH. Unlike rounds 9–10 (feel), these are places the component **broke** for real users:
+1. Windows contrast themes lost every focus ring and pick.
+2. Keyboard focus could land on rows hidden under the sticky header.
+3. Pressing Send by keyboard dropped focus to the page.
+4. A one-question card failed to send silently.
+5. Skipping into a text question lost its Undo at once.
+6. The toast read "↶ Und" at 320px.
+7. Long questions opened scrolled past their own start.
+8. The Recommended badge failed AA on a selected row.
+9. "Pick one to continue" appeared under a text box.
+10. Expired-record answers sat behind a hover-only tooltip.
+
+There were also 5 MEDIUMs in the table and 15 smaller findings beyond the cap.
+
+**My decision:** fix the 10 HIGHs and the 5 MEDIUMs now, and leave the rest for round 12. For the copy I took Claude's suggestion: "Answer this to send" and "Pick at least {min}".
+
+**Claude's calls while building (with reasons):**
+- **The audit's fix for #5 would have broken undo.** It said "make focusing do nothing". But focusing a text field is what saved the undo step for typing, and keeping it as it was made the toast's Undo step back over an empty focus snapshot. That's a second bug the audit didn't see: Undo looked dead after a skip. Fix: the undo step moves to the **first keystroke** of a typing session. Focusing changes nothing, the toast stays, and Undo undoes the skip.
+- **#7 was narrowed rather than deleted.** The row is only left out of view while the header is tall (when the question itself needs the space); short questions still scroll the focused row into view.
+- **Shared code:** the failure banner is now one helper used by all three views that can send, instead of a third copy.
+- **#13 has two layers:** `<bdi>` in the views, and FSI…PDI marks in label placeholders. The marks are invisible; tests strip them where they compare text.
+- **An extra detail:** a focused invalid field gets a thicker danger edge, so focus stays visible in the error state.
+
+**Verified:**
+- 13 new component tests, one per fix, each named after the failure it prevents. 529 green.
+- **Deliberate breaks caught 7 of 10 at first.** The three misses were weak tests, not weak fixes:
+  - Send never actually got pressed by the keyboard.
+  - The break I made removed only a backup guard.
+  - The toast test didn't check that the toast stays inside the card. With the old CSS the toast spilled out of the card instead of being cut, which the test wasn't looking at.
+
+  All three were rewritten; 10 of 10 now fail when their fix is undone.
+- **After-renders** (`renders/after/`), the same cases as before: forced colors (focus, picks, fields), the toast at 320, long-open at 375, the footer with 8 questions at 320, yes/no failure, badge, Arabic with Latin values, the blocked-send copy, plus regular light, dark and phone.
+- **A capture artifact, not a bug:** a Playwright click scrolled a chip under the header. Probing showed only Playwright's own scroll-into-view helper does this; real mouse and DOM clicks don't.
+- **Size:** 20.67 KB (+600 B), under the 21 KB guard.
+
+**Not verified:** real screen readers (and whether announcements survive the live region being re-attached on view swaps), a real Windows contrast theme, real iOS focus-zoom, Firefox and Safari.
+
+**Docs:**
+- DESIGN §1, §2 and §8 updated, plus a new **§9**: what broke, for whom, and the fix.
+- BUILD §8.2 and the copy list, and the README token row.
+
+**Artifacts:** `process/11-interface-audit/`: audit.md (frozen before the fixes), PLAN.md, DESIGN.md, `renders/before/` (16), `renders/after/` (15).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -544,3 +602,4 @@ Turned down: fills on option rows (keyboard-paced), shrinking an option row, a p
 - Skip vs Decide for me is a good small example of meaning over features: same outcome for the agent, different intent from the user, so a different reply.
 - Round 9 is the "restraint" beat: a motion audit whose output is mostly *no*. Five ideas turned down with reasons, four small changes taken. And the slowed-clock filmstrip caught a bug (the pill drawn as an oval) that no test was looking for.
 - Round 10 is the "invisible care" beat: none of its six changes is something a user would point at (a hover that answers, a toast that waits for you in another tab, a shimmer that doesn't stutter while streaming). That's the point. Good pairing with round 9's restraint: one round says no to motion, the next says yes to feedback.
+- Round 11 is the "who did we leave out" beat: polish rounds made it feel good; this one found who it failed (Windows contrast themes, keyboard, 320px phones, Arabic, screen readers), with a before/after render for each. Two sub-beats: the audit's own suggested fix (#5) would have broken undo, so judgment over checklists; and 3 of 10 tests passed while testing nothing until a deliberate break exposed them.

@@ -51,7 +51,9 @@ export function mount(q: Questionnaire, attrs: Record<string, string> = {}): Mou
 
 export const title = (m: Mounted) => m.root.querySelector('.title')?.textContent ?? '';
 export const focused = (m: Mounted) => m.root.activeElement as HTMLElement | null;
-export const live = (m: Mounted) => m.root.querySelector('.live')?.textContent ?? '';
+/** Text without the invisible direction marks that isolate app-supplied words (round 11). */
+export const plain = (s: string | null | undefined) => (s ?? '').replace(/[\u2066-\u2069]/g, '');
+export const live = (m: Mounted) => plain(m.root.querySelector('.live')?.textContent);
 export const row = (m: Mounted, id: string) => m.root.querySelector<HTMLElement>(`[data-opt="${id}"]`)!;
 export const button = (m: Mounted, act: string) => m.root.querySelector<HTMLButtonElement>(`[data-act="${act}"]:not([hidden])`)!;
 

@@ -1,6 +1,6 @@
 // The parts every card shares: the "asked by" line, the header and the footer.
 
-import { attr, h, icon, text } from './dom';
+import { attr, bdi, h, icon, text } from './dom';
 import type { Ctx } from './types';
 
 export function sourceLine(ctx: Ctx): HTMLElement | null {
@@ -23,7 +23,7 @@ export function header(
     'div',
     { class: 'head', part: 'header' },
     back,
-    h('h2', { class: 'title', id: 'title', part: 'title' }, title, sub ? h('span', { class: 'sub' }, sub) : null),
+    h('h2', { class: 'title', id: 'title', part: 'title' }, bdi(title), sub ? h('span', { class: 'sub' }, bdi(sub)) : null),
     h(
       'div',
       { class: 'meta' },
@@ -32,6 +32,17 @@ export function header(
     ),
   );
   return { el, back, step };
+}
+
+/** The send-failed banner, shared by every view that can send. Hidden until a send fails. */
+export function failBanner(): HTMLElement {
+  return h('div', { class: 'banner', part: 'banner', hidden: true });
+}
+
+export function setFailBanner(b: HTMLElement, ctx: Ctx): void {
+  const failed = ctx.s.status === 'error';
+  b.hidden = !failed;
+  if (failed) b.replaceChildren(icon('alert'), h('span', {}, h('b', {}, ctx.t('sendFailed')), ctx.s.error ?? ''));
 }
 
 /** A footer button that is built once and shown, hidden, enabled or relabelled on update. */
@@ -46,7 +57,10 @@ export function setButton(
 ): void {
   attr(b, 'hidden', label === null);
   if (label === null) return;
-  b.disabled = !!opts.disabled;
+  // While busy the button stays focusable (aria-disabled, not disabled): disabling the focused
+  // button would drop keyboard focus to the page, far from Undo and Try again (round 11).
+  b.disabled = !!opts.disabled && !opts.busy;
+  attr(b, 'aria-disabled', opts.busy ? 'true' : null);
   const key = `${label}|${opts.arrow ? 1 : 0}|${opts.busy ? 1 : 0}`;
   if (b.dataset.key === key) return;
   b.dataset.key = key;
@@ -88,8 +102,8 @@ export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | strin
       : h('button', { class: 'btn link', type: 'button', 'data-act': 'undo' }, icon('undo'), ctx.t('undo'));
   const current = el.firstElementChild;
   if (current?.classList.contains('toast') && current.textContent === msg + (undo ? ctx.t('undo') : '')) return;
-  // One line: the message shortens with an ellipsis, Undo always stays whole.
-  el.replaceChildren(h('span', { class: 'toast', part: 'toast' }, h('span', { class: 'msg', title: msg }, msg), undo));
+  // The message wraps if it must (it names what Undo restores); Undo always stays whole.
+  el.replaceChildren(h('span', { class: 'toast', part: 'toast' }, h('span', { class: 'msg' }, msg), undo));
 }
 
 export { text };

@@ -45,6 +45,12 @@ export function rove(items: HTMLElement[], active: Element | null): void {
   for (const i of items) attr(i, 'tabindex', i === pick ? '0' : '-1');
 }
 
+/**
+ * Text the app supplies (a prompt, a label, an answer), isolated from the text around it, so a
+ * Latin "C++" stays "C++" inside an Arabic card (round 11). <bdi> takes its own direction.
+ */
+export const bdi = (value: string): HTMLElement => h('bdi', {}, value);
+
 export function text(el: Element, value: string): void {
   if (el.textContent !== value) el.textContent = value;
 }

@@ -318,7 +318,8 @@ export class AgentClarifier extends Base {
     // happen in the middle of a render.
     queueMicrotask(() => {
       target.focus({ preventScroll: true });
-      target.scrollIntoView?.({ block: 'nearest' });
+      // A tall question opens at its start; arrow keys scroll to the rows from there (round 11).
+      if (!v.hasAttribute('data-tall')) target.scrollIntoView?.({ block: 'nearest' });
     });
   }
 
@@ -375,7 +376,10 @@ export class AgentClarifier extends Base {
     // A header taller than a third of the card scrolls away instead of sticking (round 7).
     const top = card.querySelector<HTMLElement>('.top');
     const max = parseFloat(getComputedStyle(card).maxHeight);
-    card.toggleAttribute('data-tall', !!top && max > 0 && top.offsetHeight > max / 3);
+    const tall = !!top && max > 0 && top.offsetHeight > max / 3;
+    card.toggleAttribute('data-tall', tall);
+    // Focus scrolls stop below the sticky header, never under it (round 11).
+    (scroll as HTMLElement).style.scrollPaddingBlockStart = top && !tall ? `${top.offsetHeight}px` : '';
     card.toggleAttribute('data-above', scroll.scrollTop > 0);
     card.toggleAttribute('data-below', scroll.scrollTop + scroll.clientHeight < scroll.scrollHeight - 1);
   }
@@ -522,7 +526,7 @@ export class AgentClarifier extends Base {
   #onClick(e: Event): void {
     const target = e.target as Element;
     const act = target.closest<HTMLElement>('[data-act]');
-    if (act && !(act as HTMLButtonElement).disabled) return this.#onAct(act.dataset.act!, act.dataset.q, act.dataset.step);
+    if (act && !(act as HTMLButtonElement).disabled && act.getAttribute('aria-disabled') !== 'true') return this.#onAct(act.dataset.act!, act.dataset.q, act.dataset.step);
 
     const row = target.closest<HTMLElement>('[data-opt]');
     const q = row ? this.#questionOf(row) : undefined;
@@ -531,6 +535,7 @@ export class AgentClarifier extends Base {
 
     if (id === OTHER) {
       this.#dispatch({ type: 'OTHER_FOCUS', questionId: q.id });
+      if (!draftOf(this.#s, q.id).otherActive) return; // unticked: nothing to type into
       (row.nextElementSibling?.querySelector<HTMLInputElement>('input[data-input]') ??
         row.closest('[data-q]')?.querySelector<HTMLInputElement>('input[data-input]'))?.focus();
     } else if (id === DELEGATE) {
@@ -556,7 +561,14 @@ export class AgentClarifier extends Base {
       case 'undo-send': return this.#dispatch({ type: 'UNDO_SUBMIT' });
       case 'skip': return q ? this.#dispatch({ type: 'SKIP', questionId: q.id }) : undefined;
       case 'next': return this.#dispatch({ type: 'NEXT' });
-      case 'send': return this.#dispatch({ type: 'SUBMIT' });
+      case 'send':
+        this.#dispatch({ type: 'SUBMIT' });
+        // A blocked send moves focus to the first question that needs an answer: the move itself
+        // is what a screen reader announces, with the error it now describes (round 11).
+        if (this.#s.attempted && this.#s.status === 'answering') {
+          this.#root.querySelector<HTMLElement>('.q.invalid textarea, .q.invalid [data-opt][tabindex="0"]')?.focus();
+        }
+        return;
       case 'skip-all': return this.#dispatch({ type: 'SKIP_ALL' });
       case 'retry': return this.#dispatch({ type: 'RETRY' });
       case 'start-over': return this.#dispatch({ type: 'START_OVER' });

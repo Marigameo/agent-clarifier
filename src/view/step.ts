@@ -2,8 +2,8 @@
 
 import { canContinue, draftOf, isSettled, needsReview, picks, questionState } from '../model/selectors';
 import type { NormalizedOption, NormalizedQuestion } from '../model/types';
-import { button, footLeft, header, setButton, sourceLine } from './chrome';
-import { attr, h, icon, rove, text } from './dom';
+import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine } from './chrome';
+import { attr, bdi, h, icon, rove, text } from './dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './types';
 
 function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: Ctx): HTMLElement {
@@ -26,8 +26,8 @@ function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: C
     h(
       'span',
       { class: 'body' },
-      h('span', { class: 'label', part: 'option-label' }, o.label, o.recommended ? h('span', { class: 'badge', part: 'badge' }, ctx.t('recommended')) : null),
-      o.description ? h('span', { class: 'desc', part: 'option-description' }, o.description) : null,
+      h('span', { class: 'label', part: 'option-label' }, bdi(o.label), o.recommended ? h('span', { class: 'badge', part: 'badge' }, ctx.t('recommended')) : null),
+      o.description ? h('span', { class: 'desc', part: 'option-description' }, bdi(o.description)) : null,
     ),
     o.compose !== null
       ? h('span', { class: 'out', 'aria-hidden': 'true' }, ctx.t('writeIt'))
@@ -55,7 +55,7 @@ function otherRow(q: NormalizedQuestion, ctx: Ctx): [HTMLElement, HTMLElement] {
       'data-opt': OTHER,
     },
     h('span', { class: 'key plain', 'aria-hidden': 'true' }, icon('pencil')),
-    h('span', { class: 'body' }, h('span', { class: 'label' }, label)),
+    h('span', { class: 'body' }, h('span', { class: 'label' }, bdi(label))),
   );
   const field = h(
     'div',
@@ -132,7 +132,9 @@ export function stepView(init: Ctx): View {
   const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, skip, primary));
 
   const top = h('div', { class: 'top' }, sourceLine(init), head.el);
-  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title', tabindex: '-1' }, h('div', { class: 'scroll' }, top, body), foot);
+  // A card with no review step sends from here, so it shows the failure here too (round 11).
+  const banner = failBanner();
+  const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title', tabindex: '-1' }, h('div', { class: 'scroll' }, top, banner, body), foot);
   const group = delegate && q.type !== 'text' ? [...rows, delegate] : rows;
 
   function update(ctx: Ctx): void {
@@ -175,6 +177,10 @@ export function stepView(init: Ctx): View {
             : h('i', { class: `dot ${cls}`, 'aria-hidden': 'true' });
         }),
       );
+      // Below a minimum, say what unlocks Continue (round 11). Kept at every width: it's the reason.
+      if (q.type === 'multi' && q.min > 1 && picks(q, d) < q.min) {
+        return [dots, h('span', { class: 'count need' }, ctx.t('pickAtLeast', { min: q.min }))];
+      }
       if (q.type === 'multi' && q.max < q.options.length + (q.other ? 1 : 0)) {
         return [dots, h('span', { class: 'count' }, ctx.t('pickedOf', { n: picks(q, d), total: q.max }))];
       }
@@ -183,20 +189,24 @@ export function stepView(init: Ctx): View {
     });
 
     // Skip is replaced by "Decide for me" on delegate questions, and never offered on required ones.
-    setButton(skip, q.required || q.delegate ? null : ctx.t('skip'), { disabled: busy });
+    const failed = s.status === 'error';
+    setFailBanner(banner, ctx);
+    setButton(skip, q.required || q.delegate ? null : ctx.t('skip'), { disabled: busy || failed });
 
     // Single moves on by itself, so its Continue only appears once there's something to confirm.
     const ready = canContinue(q, d);
-    const showPrimary = q.type !== 'single' || d.otherActive || ready || busy;
-    const label =
-      s.returnTo === 'review'
+    const showPrimary = q.type !== 'single' || d.otherActive || ready || busy || failed;
+    primary.dataset.act = failed ? 'retry' : 'next';
+    const label = failed
+      ? ctx.t('tryAgain')
+      : s.returnTo === 'review'
         ? ctx.t('review')
         : !last
           ? ctx.t('continue')
           : needsReview(s, ctx.review)
             ? ctx.t('review')
             : ctx.t('send');
-    setButton(primary, showPrimary ? (busy ? ctx.t('sending') : label) : null, { disabled: !ready || busy, arrow: !busy, busy });
+    setButton(primary, showPrimary ? (busy ? ctx.t('sending') : label) : null, { disabled: !failed && (!ready || busy), arrow: !busy && !failed, busy });
   }
 
   return { el, update };

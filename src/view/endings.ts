@@ -3,7 +3,7 @@
 
 import { buildAnswer, draftOf, progress } from '../model/selectors';
 import { header } from './chrome';
-import { h, icon, text } from './dom';
+import { bdi, h, icon, text } from './dom';
 import type { Ctx, View } from './types';
 
 export function pillView(ctx: Ctx): View {
@@ -53,8 +53,8 @@ export function recordView(ctx: Ctx): View {
         const a = buildAnswer(q, draftOf(s, q.id));
         const gap = a.status === 'skipped';
         const v = gap ? ctx.t('skipped') : a.status === 'delegated' ? ctx.t('delegated') : a.labels.join(', ');
-        // One line each; the full text stays available on hover and to screen readers.
-        return [h('dt', {}, q.label), h('dd', { class: gap ? 'gap' : null, title: v }, v)];
+        // Answers wrap: a hover-only tooltip was no way to read them on touch or keyboard (round 11).
+        return [h('dt', {}, bdi(q.label)), h('dd', { class: gap ? 'gap' : null }, bdi(v))];
       })
     : [];
 
@@ -100,7 +100,7 @@ export function loadingView(init: Ctx): View {
     const from = ctx.s.q?.source;
     source.hidden = !from;
     text(source, from ? ctx.t('askedBy', { source: from }) : '');
-    title.replaceChildren(q ? q.prompt : bar('l'));
+    title.replaceChildren(q ? bdi(q.prompt) : bar('l'));
     text(head.step!, ctx.t('stepOfMore', { n: 1 }));
     // Draw arrived options in full (badge, description), so nothing jumps when streaming ends.
     const rows = (q?.options ?? []).map((o, i) =>
@@ -111,8 +111,8 @@ export function loadingView(init: Ctx): View {
         h(
           'span',
           { class: 'body' },
-          h('span', { class: 'label' }, o.label, o.recommended ? h('span', { class: 'badge' }, ctx.t('recommended')) : null),
-          o.description ? h('span', { class: 'desc' }, o.description) : null,
+          h('span', { class: 'label' }, bdi(o.label), o.recommended ? h('span', { class: 'badge' }, ctx.t('recommended')) : null),
+          o.description ? h('span', { class: 'desc' }, bdi(o.description)) : null,
         ),
       ),
     );

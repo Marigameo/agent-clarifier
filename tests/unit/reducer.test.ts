@@ -279,7 +279,7 @@ describe('2 · Something else (OTHER_FOCUS / OTHER_INPUT)', () => {
 describe('2 · text questions (TEXT_FOCUS / TEXT_INPUT)', () => {
   const atNotes = () => run(open(), FILL.slice(0, 6));
 
-  it('focus pushes once; typing does not; undo restores the text before the session', () => {
+  it('the first keystroke saves one undo step for the session; undo restores the text before it', () => {
     const s = run(atNotes(), [
       { type: 'TEXT_FOCUS', questionId: 'notes' },
       { type: 'TEXT_INPUT', questionId: 'notes', text: 'Quiet' },
@@ -289,10 +289,22 @@ describe('2 · text questions (TEXT_FOCUS / TEXT_INPUT)', () => {
     expect(run(s, [UNDO]).drafts.notes!.text).toBe('');
   });
 
-  it('focusing twice without typing adds one undo step, not two', () => {
-    const base = atNotes();
-    const s = run(base, [{ type: 'TEXT_FOCUS', questionId: 'notes' }, { type: 'TEXT_FOCUS', questionId: 'notes' }]);
-    expect(s.history).toHaveLength(base.history.length + 1);
+  it('focusing alone changes nothing, so it adds no undo step and keeps a toast (round 11)', () => {
+    const skipped = run(open(), [...FILL.slice(0, 4), { type: 'SKIP', questionId: 'extras' }]);
+    expect(skipped.toast).not.toBeNull();
+    const focused = run(skipped, [{ type: 'TEXT_FOCUS', questionId: 'notes' }]);
+    expect(focused).toBe(skipped);
+    // So Undo undoes the skip, not an empty focus step.
+    expect(run(focused, [UNDO]).drafts.extras!.skipped).toBe(false);
+  });
+
+  it('a new focus starts a new session: the next keystroke saves its own undo step', () => {
+    const s = run(atNotes(), [
+      { type: 'TEXT_INPUT', questionId: 'notes', text: 'Quiet' },
+      { type: 'TEXT_FOCUS', questionId: 'notes' },
+      { type: 'TEXT_INPUT', questionId: 'notes', text: 'Quiet room' },
+    ]);
+    expect(run(s, [UNDO]).drafts.notes!.text).toBe('Quiet');
   });
 
   it('does nothing on a choice question', () => {
