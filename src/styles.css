@@ -266,21 +266,30 @@ button { font: inherit; color: inherit; }
 
 .quiet .label { color: var(--_muted); }
 .quiet[aria-checked="true"] .label, .quiet[aria-pressed="true"] .label { color: var(--_fg); }
-/* "Something else" becomes the field in place: the field is drawn over the row's label area, from
-   just after the key to the end (row padding + 26px key + 12px gap). Round 14. */
-.other-wrap { position: relative; --_field-start: 50px; }
+/* "Something else" becomes the field in place (round 14): row and field share one grid cell, the
+   field over the row's label area, from just after the key to the end (row padding + 26px key +
+   12px gap). The cell takes the taller of the two, so a wrapping label or answer grows the row
+   (round 16; it used to be cut). The row's label leaves the layout while the field is open; the
+   row keeps its name through aria-label. */
+.other-wrap { display: grid; grid-template-columns: minmax(0, 1fr); --_field-start: 50px; }
+.other-wrap > * { grid-area: 1 / 1; }
 .other-field {
-  position: absolute; inset-block: 0; inset-inline: var(--_field-start) 0;
-  display: flex; align-items: center; gap: 12px; padding-inline-end: 12px;
+  position: relative; /* paints over the row, which is positioned too */
+  display: flex; align-items: center; gap: 12px;
+  margin-inline-start: var(--_field-start); /* the key area stays the row's (multi: it unticks there) */
+  padding-block: 10px; padding-inline-end: 12px;
 }
-.other-wrap:has(> .other-field:not([hidden])) > .opt .label { opacity: 0; } /* still its accessible name */
+.other-wrap:has(> .other-field:not([hidden])) > .opt .body { display: none; }
 /* A text field always shows focus, even after a click. Only the field: the row itself follows the
    keyboard-only ring rule like every row. */
-.other-wrap:has(> .other-field input:focus) > .opt { box-shadow: inset 0 0 0 2px var(--_accent); }
-.other-field input {
-  flex: 1; min-inline-size: 0; padding: 0;
-  font: inherit; color: var(--_fg); background: transparent; border: 0; outline: 0;
+.other-wrap:has(> .other-field [data-input]:focus) > .opt { box-shadow: inset 0 0 0 2px var(--_accent); }
+.other-field textarea {
+  flex: 1; min-inline-size: 0; min-block-size: 1lh; max-block-size: 5lh;
+  padding: 0; border: 0; border-radius: 0; box-shadow: none; outline: 0;
+  font: inherit; line-height: inherit; color: var(--_fg); background: transparent;
+  field-sizing: content; resize: none;
 }
+.other-field textarea:focus { box-shadow: none; }
 .enter { font-size: var(--_t12); color: var(--_muted); }
 :host([density="compact"]) .other-wrap { --_field-start: 48px; }
 /* Single with typed text: the other options step back, still readable and clickable (round 14). */
@@ -553,7 +562,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .dots { gap: 10px; }
   button.dot::after { inset: -10px -5px; }
   /* Below 16px, iOS zooms the whole page when a field is focused (round 11). */
-  textarea, .other-field input, .chip-input { font-size: var(--_t16); }
+  textarea, .chip-input { font-size: var(--_t16); }
   .btn, .icon-btn { position: relative; }
   .chip::after, .btn::after, .icon-btn::after {
     content: ""; position: absolute; inset-inline: -2px; inset-block: calc((100% - 44px) / 2);
@@ -566,7 +575,10 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 @media (forced-colors: active) {
   textarea, .chip-input { border: 1px solid CanvasText; }
   textarea:focus, .chip-input:focus { outline: 2px solid Highlight; }
-  .other-wrap:has(> .other-field input:focus) > .opt { outline: 2px solid Highlight; outline-offset: -2px; }
+  /* An open "Something else" keeps an edge (round 11's rule for fields), Highlight while focused (round 16). */
+  .other-field textarea, .other-field textarea:focus { border: 0; outline: 0; }
+  .other-wrap:has(> .other-field:not([hidden])) > .opt { outline: 1px solid CanvasText; outline-offset: -1px; }
+  .other-wrap:has(> .other-field [data-input]:focus) > .opt { outline: 2px solid Highlight; outline-offset: -2px; }
   .key.box { border: 1.5px solid CanvasText; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"], .dot { forced-color-adjust: none; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"] { background: Highlight; color: HighlightText; border-color: Highlight; }

@@ -91,7 +91,7 @@ describe('sequential · keyboard only', () => {
     const m = mount(HOTEL);
     await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
     await userEvent.keyboard('{End}{Enter}');
-    await expect.poll(() => focused(m)?.tagName).toBe('INPUT');
+    await expect.poll(() => focused(m)?.tagName).toBe('TEXTAREA');
     await userEvent.keyboard('Zone 2');
     expect(m.el.snapshot.drafts.area).toMatchObject({ other: 'Zone 2', otherActive: true, values: [] });
     await userEvent.keyboard('{Escape}');

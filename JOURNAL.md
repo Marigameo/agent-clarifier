@@ -763,6 +763,43 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 
 ---
 
+## Round 16 · Re-checking the skill audits after rounds 14–15 (11 Oct 2026)
+
+**Brief (mine):** I'd evaluated the design with several skills (emil-design-eng, animate and others). Do they still hold after the latest commits?
+
+**How it ran (Claude):**
+- A read-only audit of the `159efe3..HEAD` diff (two files) against Emil Kowalski's skills, from his repo at `e8a175d`.
+- Jakub Krehel's better-interface and break aren't on this machine, so rounds 11 and 13 were re-checked against their frozen reports, plus the 34-case break page.
+- A probe: does the tick replay when a step is re-drawn? It doesn't, on Back, reopen or Edit.
+- A stress page for the new states, with a forced-colors pass: `process/16-skill-recheck/stress.html`.
+- The report was frozen before any fix: `process/16-skill-recheck/audit.md`.
+
+**Held:** animate and review-animations (round 15), emil-design-eng's checklist (round 10), find-animation-opportunities (round 9), the round 10 craft fixes, and every round 11 interface fix except one.
+
+**Found, both round-14 side effects:**
+- **F1 (MED, a regression of round 11 #1):** in Windows contrast themes, an open "Something else" had no edge unless focused, and on single nothing marked it as the pick.
+- **F2 (LOW-MED):** a long custom label was cut mid-word once it became the placeholder.
+
+**My call:** fix both, F2 with option (a), which keeps the label readable while the field is empty.
+
+**How (a) was built (Claude's call, with the reason):**
+- An `<input>` always centres its text vertically, so a caret can't sit on a wrapped label's first line.
+- BUILD §8.2 had specified a growing `<textarea>` for "Something else" all along; the build had drifted to an input. Going back to the spec does (a) exactly: the placeholder wraps in full, the caret sits on line one, and it hides on the first keystroke.
+- Bonus: a long typed answer now wraps and grows the row instead of scrolling out of sight.
+- Row and field now share one grid cell, so the taller of the two sets the height. The row's label leaves the layout while the field is open; the row keeps its name through `aria-label`. Enter never adds a line.
+- F1: a 1px `CanvasText` edge on the open row, the existing 2px `Highlight` while focused.
+
+**Caught on the way:** the first render showed the field invisible. The row is positioned, so it painted over the static field. A long URL also pushed the field past the card. Both were fixed before anything was committed. A test now checks that the textarea is the topmost element at its own centre, since a layout check alone passed while it was hidden.
+
+**Verified:**
+- 5 new tests, plus the paint check. 8 deliberate breaks, caught 8/8. Two needed sharper tests first: an unbreakable string, and the axe suite for the row's name.
+- Typical scenarios look the same as after round 14 (light, dark, 375px).
+- 565 green; 21.68 KB (+0.09 KB).
+
+**Artifacts:** `process/16-skill-recheck/` (audit.md frozen before the fixes, stress.html and stress-shot.mjs, `renders/before/` 2, `renders/after/` 2 plus `typical/` 8).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -779,4 +816,5 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 - Round 13 is the "fixes have side effects" beat: the worst break the stress page found (an answer squeezed to one character per line) was created by round 11's own fix (answers wrap instead of truncating). Audits judge rules; a stress page shows what the content does to them.
 - Round 14 is the "try it, then keep what you had" beat: a monochrome redesign was prototyped and rendered side by side, and I kept the blue. The experiment still paid off by naming the real problem: blue had four jobs, and only one of them was mine. "The user's decision is the loudest thing on the card" came out of saying no to the bigger change.
 - Round 15 is the "look closer" beat: the animation I wanted to copy didn't exist. Frame by frame, Claude's checkbox fills in a single frame; the feel came from the screen recorder's click circle. We animated anyway, but by the rules: what to animate came from a skill whose first job is saying no (keyboard toggles, the single key, the uncheck, a bounce), and what's left is a 0.8px press and a 120ms tick.
+- Round 16 is the "audits expire" beat: every skill had passed, and two rounds of my own requests later, one of round 11's accessibility fixes had quietly gone (round 14 deleted the box that carried it). Re-running the checks after changes is part of the work, not a formality. And the fix for the other finding was already written down: the spec said textarea; the build had drifted to an input.
 

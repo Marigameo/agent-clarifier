@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Round 16 stress cases</title>
+<!-- Round 16: the new "Something else" and checkbox states under worst-case content. Served by Vite
+     from the repo root: node process/16-skill-recheck/stress-shot.mjs <out.png> [forced] -->
+<style>body{font:13px system-ui;margin:16px;background:#f3f3f1;display:grid;grid-template-columns:repeat(3,auto);gap:18px;align-items:start;justify-content:start}
+figure{margin:0}figcaption{font-weight:600;margin-bottom:6px;max-width:400px}.dark{background:#111;padding:8px;border-radius:8px}</style></head>
+<body><script type="module">
+import '/src/index.ts';
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const opt = (label, extra = {}) => ({ id: label.toLowerCase().replace(/\W+/g, '-').slice(0, 30), label, ...extra });
+const LONG = 'https://maps.example.com/places/near-kings-cross-st-pancras-international-station-london-n1c-4qp';
+const LABEL = 'Something else: a neighbourhood, a landmark or a postcode you would like to be near';
+const one = (prompt, options, extra = {}) => ({ id: 'q', questions: [{ id: 'a', prompt, type: 'single', options, ...extra }] });
+const multi = (options, extra = {}) => ({ id: 'q', questions: [{ id: 'a', prompt: 'What matters most?', type: 'multi', options, ...extra }] });
+async function typeOther(el, text) {
+  el.shadowRoot.querySelector('[data-opt="__other"]').click(); await wait(60);
+  const i = el.shadowRoot.querySelector('.other-field [data-input]'); i.value = text;
+  i.dispatchEvent(new Event('input', { bubbles: true, composed: true })); i.focus(); i.setSelectionRange(0, 0);
+}
+const cases = [
+  ['1 · Single, long typed URL, 320px', { width: '320px' }, one('Which area?', [opt('Covent Garden'), opt('South Bank')]), (el) => typeOther(el, LONG)],
+  ['2 · RTL Arabic, typing in place', { width: '360px', dir: 'rtl', lang: 'ar' }, one('أي منطقة تفضل؟', [opt('كوفنت غاردن', { recommended: true }), opt('ساوث بانك')]), (el) => typeOther(el, 'قرب محطة كينغز كروس')],
+  ['3 · Compact density, typing in place', { width: '360px', density: 'compact' }, one('Which area?', [opt('Covent Garden'), opt('South Bank')]), (el) => typeOther(el, 'Near Kings Cross')],
+  ['4 · Long custom "Something else" label (idle)', { width: '360px' }, one('Which area?', [opt('Covent Garden'), opt('South Bank')], { other: { label: LABEL } }), null],
+  ['5 · Same long label, active and empty (placeholder)', { width: '360px' }, one('Which area?', [opt('Covent Garden'), opt('South Bank')], { other: { label: LABEL } }), async (el) => { el.shadowRoot.querySelector('[data-opt="__other"]').click(); }],
+  ['6 · Same long label, short answer typed', { width: '360px' }, one('Which area?', [opt('Covent Garden'), opt('South Bank')], { other: { label: LABEL } }), (el) => typeOther(el, 'Near Kings Cross')],
+  ['7 · Multi, long wrapping labels + 16px boxes, 320px', { width: '320px' }, multi([opt('Walkable to the main sights, theatres and the river without needing a taxi'), opt('Quiet'), opt('Gym or pool')]), (el) => el.shadowRoot.querySelector('[data-opt="quiet"]').click()],
+  ['8 · Multi dark, Something else typed + ticked', { width: '360px', theme: 'dark' }, multi([opt('Walkable'), opt('Quiet')]), async (el) => { el.shadowRoot.querySelector('[data-opt="walkable"]').click(); await typeOther(el, 'Rooftop bar'); }],
+  ['9 · Single + Decide for me, typed (fade, badge)', { width: '360px' }, one('Budget?', [opt('$250–400', { recommended: true }), opt('$400–600')], { delegate: true }), (el) => typeOther(el, 'Under $200')],
+];
+for (const [name, o, q, setup] of cases) {
+  const fig = document.createElement('figure'); fig.innerHTML = `<figcaption>${name}</figcaption>`;
+  const host = document.createElement('div'); host.style.width = o.width; if (o.theme === 'dark') host.className = 'dark';
+  const el = document.createElement('agent-clarifier');
+  for (const k of ['dir', 'lang', 'density', 'theme']) if (o[k]) el.setAttribute(k, o[k]);
+  host.append(el); fig.append(host); document.body.append(fig);
+  el.open(q); await wait(80); if (setup) await setup(el); await wait(80);
+}
+document.body.dataset.ready = '1';
+</script></body></html>

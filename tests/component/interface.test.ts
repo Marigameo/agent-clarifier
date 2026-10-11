@@ -156,7 +156,7 @@ describe('controls keep their promises', () => {
     expect(other.getAttribute('aria-checked')).toBe('false');
     await userEvent.click(other);
     expect(other.getAttribute('aria-checked')).toBe('true');
-    expect(m.root.querySelector<HTMLInputElement>('.other-field input')!.value).toBe('Burmese');
+    expect(m.root.querySelector<HTMLTextAreaElement>('.other-field textarea')!.value).toBe('Burmese');
   });
 
   it('the Recommended badge sits on an opaque fill, so a selected row cannot thin it out (#8)', async () => {

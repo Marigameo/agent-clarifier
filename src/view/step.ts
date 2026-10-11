@@ -41,8 +41,9 @@ function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: C
 
 /**
  * "Something else": a radio/checkbox row whose label area turns into a text field (round 14).
- * The field is a sibling drawn over the row, not inside it: a text box nested inside a radio
- * confuses screen readers (axe: nested-interactive, round 8). The wrapper holds the two together.
+ * The field is a sibling stacked over the row (one grid cell), not inside it: a text box nested
+ * inside a radio confuses screen readers (axe: nested-interactive, round 8). The field is a
+ * textarea that grows (BUILD §8.2), so a long label or answer wraps instead of being cut (round 16).
  */
 function otherRow(q: NormalizedQuestion, ctx: Ctx): [HTMLElement, HTMLElement, HTMLElement] {
   const multi = q.type === 'multi';
@@ -56,6 +57,8 @@ function otherRow(q: NormalizedQuestion, ctx: Ctx): [HTMLElement, HTMLElement, H
       'aria-checked': 'false',
       tabindex: '-1',
       'data-opt': OTHER,
+      // Its name even while the visible label is out of the layout behind the open field (round 16).
+      'aria-label': label,
     },
     // Multi: a checkbox like its neighbours, which is also where a click unticks it (the text area types).
     multi
@@ -67,7 +70,8 @@ function otherRow(q: NormalizedQuestion, ctx: Ctx): [HTMLElement, HTMLElement, H
     'div',
     { class: 'other-field', hidden: true },
     // The label doubles as the placeholder, so opening the field looks like the caret dropping into it.
-    h('input', { type: 'text', 'aria-label': label, placeholder: q.other?.placeholder ?? label, 'data-input': OTHER, enterkeyhint: 'next' }),
+    // It wraps like the label did, so a long one is never cut (round 16).
+    h('textarea', { rows: 1, 'aria-label': label, placeholder: q.other?.placeholder ?? label, 'data-input': OTHER, enterkeyhint: 'next' }),
     h('span', { class: 'enter', 'aria-hidden': 'true' }, '↵'),
   );
   return [h('div', { class: 'other-wrap' }, row, field), row, field];
@@ -101,7 +105,7 @@ export function stepView(init: Ctx): View {
   const rows: HTMLElement[] = [];
   let other: HTMLElement | null = null;
   let field: HTMLElement | null = null;
-  let input: HTMLInputElement | null = null;
+  let input: HTMLTextAreaElement | null = null;
   let area: HTMLTextAreaElement | null = null;
   let body: HTMLElement;
   if (q.type === 'text') {
@@ -119,7 +123,7 @@ export function stepView(init: Ctx): View {
     let wrap: HTMLElement | null = null;
     if (q.other) {
       [wrap, other, field] = otherRow(q, init);
-      input = field.querySelector('input');
+      input = field.querySelector('textarea');
     }
     body = h(
       'div',

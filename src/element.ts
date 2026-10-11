@@ -544,8 +544,8 @@ export class AgentClarifier extends Base {
     if (id === OTHER) {
       this.#dispatch({ type: 'OTHER_FOCUS', questionId: q.id });
       if (!draftOf(this.#s, q.id).otherActive) return; // unticked: nothing to type into
-      (row.nextElementSibling?.querySelector<HTMLInputElement>('input[data-input]') ??
-        row.closest('[data-q]')?.querySelector<HTMLInputElement>('input[data-input]'))?.focus();
+      (row.nextElementSibling?.querySelector<HTMLElement>('[data-input]') ??
+        row.closest('[data-q]')?.querySelector<HTMLElement>('input[data-input]'))?.focus();
     } else if (id === DELEGATE) {
       this.#dispatch({ type: 'DELEGATE', questionId: q.id });
       if (draftOf(this.#s, q.id).delegated) this.#moveOnSoon();
@@ -631,12 +631,14 @@ export class AgentClarifier extends Base {
 
     if (field) {
       const q = this.#questionOf(t);
+      // "Something else" is a one-line answer in a textarea (so it wraps): Enter never adds a line.
+      if (e.key === 'Enter' && t.dataset.input === OTHER) e.preventDefault();
       if (e.key === 'Enter' && !e.shiftKey && sequential && q && canContinue(q, draftOf(s, q.id))) {
         e.preventDefault();
         this.#dispatch({ type: 'NEXT' });
       }
       // ↑ at the very start of "Something else" goes back up to the options.
-      if (e.key === 'ArrowUp' && t.dataset.input === OTHER && (t as HTMLInputElement).selectionStart === 0) {
+      if (e.key === 'ArrowUp' && t.dataset.input === OTHER && (t as HTMLTextAreaElement).selectionStart === 0) {
         e.preventDefault();
         this.#focusOther(t, -1);
       }

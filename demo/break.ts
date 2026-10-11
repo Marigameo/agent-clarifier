@@ -41,7 +41,7 @@ const CASES: Case[] = [
   { axis: 'Content length', name: 'Long question label in the Skip toast', q: { ...HOTEL, questions: [{ ...HOTEL.questions[0]!, label: `${LONG_WORD} and transport preferences` }, ...HOTEL.questions.slice(1)] }, setup: (el) => tap(el, '[data-act="skip"]') },
   { axis: 'Content length', name: 'Long typed answer in "Something else", then the record', q: one('Which area?'), setup: async (el) => {
     tap(el, '[data-opt="__other"]'); await wait(50);
-    const input = el.shadowRoot!.querySelector<HTMLInputElement>('.other-field input')!;
+    const input = el.shadowRoot!.querySelector<HTMLTextAreaElement>('.other-field textarea')!;
     input.value = `${URL} ${LONG_WORD}`; input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     tap(el, '[data-act="next"]');
   } },

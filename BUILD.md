@@ -331,7 +331,7 @@ These are exact strings and can be overridden through `labels`:
 - **Card:** `role="group"`, labelled by the title.
 - **Single:** `role="radiogroup"` with roving `tabindex` and `role="radio"` / `aria-checked`. The number badge is `aria-hidden`.
 - **Multi:** `role="group"` with `role="checkbox"` / `aria-checked`.
-- **"Something else":** a radio or checkbox that becomes an `<input>` with `aria-label="Something else"`.
+- **"Something else":** a radio or checkbox whose label area becomes a `<textarea>` with `aria-label="Something else"` (a sibling stacked over the row, never nested in it; the row keeps its own `aria-label`). Rounds 14 and 16.
 - **"Decide for me":**
   - On single, it's one more `radio` in the group.
   - On multi, it's a `checkbox` that unchecks the others: the same pattern as "None of the above". Its accessible description says "Clears your other picks".
