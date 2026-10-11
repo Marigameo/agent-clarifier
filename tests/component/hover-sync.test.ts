@@ -41,3 +41,30 @@ describe('hover and the arrow stay in sync', () => {
     expect([ringed(m, 'ken'), arrow(m, 'ken')]).toEqual([true, true]);
   });
 });
+
+// Round 21 add-on: the number key was 2% away from the hover fill, so it vanished into a hovered row.
+// It now takes a step toward ink with the fill, and its number turns ink. Selected keys keep the accent.
+describe('the key answers the hover with its row', () => {
+  const key = (m: ReturnType<typeof mount>, id: string) => getComputedStyle(row(m, id).querySelector('.key')!);
+
+  it('a hovered row darkens its key and inks its number; the others stay at rest', async () => {
+    document.dispatchEvent(new PointerEvent('pointerdown'));
+    const m = mount(HOTEL);
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+    const rest = key(m, 'covent').backgroundColor;
+    await userEvent.hover(row(m, 'covent'));
+    expect(key(m, 'covent').backgroundColor).not.toBe(rest);
+    expect(key(m, 'covent').color).toBe(getComputedStyle(row(m, 'covent')).color);
+    expect(key(m, 'ken').backgroundColor).toBe(rest);
+    expect(row(m, 'covent').getAnimations({ subtree: true })).toHaveLength(0);
+  });
+
+  it('the "Something else" key answers too', async () => {
+    document.dispatchEvent(new PointerEvent('pointerdown'));
+    const m = mount(HOTEL);
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+    const rest = key(m, 'covent').backgroundColor;
+    await userEvent.hover(row(m, '__other'));
+    expect(key(m, '__other').backgroundColor).not.toBe(rest);
+  });
+});

@@ -559,6 +559,9 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .opt:hover::before, .opt:hover + .opt::before,
   .opt:hover + .other-wrap > .opt::before, .other-wrap:has(> .opt:hover) + .opt::before { border-color: transparent; }
   .opt:hover .trail { visibility: visible; }
+  /* The key answers with its row: a step toward ink, number in ink, so it stays a key on the lit
+     fill (key-bg and hover were 2% apart). Mixed from the tokens, so a theme's key follows (round 21). */
+  .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) > .key:not(.box) { background: color-mix(in srgb, var(--_key-bg) 92%, var(--_fg)); color: var(--_fg); }
 }
 @media (prefers-reduced-motion: reduce) { .spin, .sk::after { animation: none; } }
 /* Movement only for those who haven't asked for less. Fades stay either way (DESIGN §7). */

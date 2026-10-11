@@ -935,10 +935,15 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 - **Round 17's notice test failed on purpose:** the notice no longer starts on the 20px edge (Back does). It now starts where the dashes do. The test and DESIGN §13 were updated.
 - Two first test failures were artifacts (measured mid-slide; the test runner refusing to click an `aria-disabled` control), not bugs.
 
+**Added in the same round (my request, from a screenshot of Claude's card):** on hover, the number key should change subtly. Ours didn't: `key-bg` (#f0f0f0) was 2% from the hover fill (#f5f5f5), so the key faded into a hovered row.
+- Claude's call: one step toward ink (`color-mix(key-bg 92%, fg)` → #dfdfdf light, #3b3b3b dark) and the number in ink (12.8 · 9.6:1). The mix comes from the tokens, so a theme's key follows. Mouse only and instant, like the fill. It also applies to the "Something else" and Decide-for-me icons.
+- Left out on purpose: picked rows (they keep the accent key), checkboxes, disabled rows, and keyboard focus. The key goes with the fill, as the arrow does (round 20).
+- 2 tests in `hover-sync.test.ts`. 3 deliberate breaks (no rule, number left grey, applied to every row), caught 3/3. Renders: `process/21b-key-hover/renders/` (before and after: light, dark, "Something else", phone). It has its own folder because `21-footer-nav/` was already committed.
+
 **Verified:**
 - 8 tests. 7 deliberate breaks, caught 7/7.
 - Renders: step 1 and 2, after jumping back, skipped, review, dash hover, dark, 375, 320, RTL.
-- 585 green; **21.9 KB, close to the 22 KB guard** (the size round is still Mari's to schedule).
+- 587 green (with the key hover); **21.93 KB, close to the 22 KB guard** (the size round is still Mari's to schedule).
 
 **Artifacts:** `process/21-footer-nav/` (round-plan.md frozen before the change, PLAN.md, DESIGN.md, `renders/before/` 8, `renders/after/` 10).
 
