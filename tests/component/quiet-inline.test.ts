@@ -96,3 +96,42 @@ describe('details', () => {
     expect(getComputedStyle(row(m, 'southbank'), '::before').borderTopColor).not.toBe('rgba(0, 0, 0, 0)');
   });
 });
+
+// Round 14 follow-up: the wrapped "Something else" row escaped the divider and ring rules.
+describe('"Something else" follows the same divider and ring rules as every row', () => {
+  const MULTI_D: Questionnaire = {
+    id: 'md',
+    questions: [{ id: 'm', prompt: 'What matters?', type: 'multi', delegate: true, options: [{ id: 'a', label: 'Walkable' }, { id: 'b', label: 'Quiet' }] }],
+  };
+  const NONE = 'rgba(0, 0, 0, 0)';
+  const line = (el: Element) => getComputedStyle(el, '::before').borderTopColor;
+
+  it('unticked with the mouse, it shows no ring (rings are for the keyboard)', async () => {
+    const m = mount(MULTI_D);
+    const key = row(m, '__other').querySelector('.key')!;
+    await userEvent.click(key);
+    expect(focused(m)?.tagName).toBe('INPUT');
+    expect(getComputedStyle(row(m, '__other')).boxShadow).not.toBe('none'); // typing: the field shows focus
+    await userEvent.click(key);
+    expect(row(m, '__other').getAttribute('aria-checked')).toBe('false');
+    expect(getComputedStyle(row(m, '__other')).boxShadow).toBe('none');
+  });
+
+  it('hovering it, or the row above it, hides the dividers at its edges', async () => {
+    const m = mount(MULTI_D);
+    await userEvent.hover(row(m, '__other'));
+    expect(line(row(m, '__other'))).toBe(NONE);
+    expect(line(row(m, '__delegate'))).toBe(NONE);
+    await userEvent.hover(row(m, 'b'));
+    expect(line(row(m, '__other'))).toBe(NONE);
+  });
+
+  it('keyboard focus on it hides the dividers at its edges', async () => {
+    const m = mount(MULTI_D);
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('a');
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+    expect(focused(m)?.dataset.opt).toBe('__other');
+    expect(line(row(m, '__other'))).toBe(NONE);
+    expect(line(row(m, '__delegate'))).toBe(NONE);
+  });
+});

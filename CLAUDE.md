@@ -86,7 +86,7 @@ From round 8, **Mari delegates design and copy calls to Claude** and will audit 
 
 ## Status (end of the build on 10 Oct 2026)
 
-M1–M7 are built. 552 tests are green (`pnpm check`, after round 14). The Definition of done in BUILD §11 shows what's still open:
+M1–M7 are built. 555 tests are green (`pnpm check`, after round 14). The Definition of done in BUILD §11 shows what's still open:
 - the size decision (21.5 KB after round 14, against a 12 KB target; the guard is 22 KB until the size round, which Mari wants to do separately after polish)
 - the manual VoiceOver and real-phone passes
 - Svelte 5

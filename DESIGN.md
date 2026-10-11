@@ -274,5 +274,6 @@ From Mari's questions comparing our card with a shadcn questionnaire and Claude'
 | The placeholder defaults to the label | Opening the field looks like the caret dropping into the same words |
 | The row shows the focus ring while you type | A text field needs a visible focus indicator (WCAG 2.4.7); the old separate field had one too |
 | A keyboard-focused row hides the dividers on both edges | They poked out at the ring's corners; only filled rows hid them before |
+| The divider's show rule has zero weight (`:where()`), and the row shows the typing ring only while its input has focus (follow-up fix) | Wrapping "Something else" made its divider selector heavier than every hide rule, so stubs leaked on hover and focus; and `:focus-within` also matched the row itself after a mouse untick, which showed a keyboard-only ring to a mouse user |
 | No send arrow inside the row (Claude's card has one) | Claude's single questions have no footer; ours do, and two send buttons would compete. The ↵ hint stays |
 

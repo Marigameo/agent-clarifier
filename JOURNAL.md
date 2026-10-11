@@ -709,6 +709,17 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 
 **Artifacts:** `process/14-quiet-and-inline/` (round-plan.md frozen before the changes, PLAN.md, DESIGN.md, `reference/` 3, `renders/before/` 8, `renders/after/` 8). `design/explorations/01-focus-and-colour/`.
 
+**Follow-up: a bug I found in round 14's own change.** Unticking "Something else" with the mouse left a blue ring on it, with divider stubs at its corners.
+- **Claude's diagnosis, two causes:**
+  1. The ring was drawn with `:focus-within`, which also matches when the row itself has focus. That's what a click on its checkbox gives it, so a mouse user got a keyboard-only ring.
+  2. The new divider selector for the wrapped row outweighed every rule that hides dividers next to a lit row. Hover, on the row or the row above it, and the "Decide for me" row below it all leaked stubs, not just focus.
+- **Fix:**
+  - The divider's show rule moved inside `:where()`, which gives it zero specificity, so any hide rule wins.
+  - The hover rules now know about the wrapper.
+  - The ring shows only while the field's input has focus.
+- **Verified:** 3 tests reproduced it first (2 failed before the fix). 5 deliberate breaks, caught 5/5. Renders in `process/14-quiet-and-inline/renders/followup/`.
+- **The lesson** (it's round 13's beat again): wrapping one row changed how heavy its selectors were, and the screenshots I checked (typing, keyboard focus) were exactly the states where the old rules still happened to win. Mouse hover and untick weren't in the render set; they are now.
+
 ---
 
 ## Story notes (to use later)

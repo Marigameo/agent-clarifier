@@ -206,8 +206,9 @@ button { font: inherit; color: inherit; }
   border-radius: var(--_radius-sm);
   cursor: pointer; user-select: none;
 }
-/* "Something else" sits in a wrapper (with its field), so it's reached as `.opt + .other-wrap > .opt`. */
-.opt + .opt::before, .opt + .other-wrap > .opt::before, .other-wrap + .opt::before {
+/* "Something else" sits in a wrapper (with its field), so it's reached as `.opt + .other-wrap > .opt`.
+   :where() keeps this at zero weight, so every rule that hides a divider wins, wrapped row included. */
+:where(.opt + .opt, .opt + .other-wrap > .opt, .other-wrap + .opt)::before {
   content: ""; position: absolute; inset-block-start: 0; inset-inline: 12px;
   border-block-start: 1px solid var(--_border);
 }
@@ -215,7 +216,6 @@ button { font: inherit; color: inherit; }
 /* A filled or keyboard-focused row hides the hairlines on both its edges, so none poke out at its
    corners (focus added in round 14). */
 .opt:is([aria-checked="true"], [aria-pressed="true"])::before,
-.other-wrap > .opt:is([aria-checked="true"], [aria-pressed="true"])::before,
 .opt:is([aria-checked="true"], [aria-pressed="true"]) + .opt::before,
 .opt:is([aria-checked="true"], [aria-pressed="true"]) + .other-wrap > .opt::before,
 .other-wrap:has(> .opt:is([aria-checked="true"], [aria-pressed="true"])) + .opt::before,
@@ -274,7 +274,9 @@ button { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: 12px; padding-inline-end: 12px;
 }
 .other-wrap:has(> .other-field:not([hidden])) > .opt .label { opacity: 0; } /* still its accessible name */
-.other-wrap:focus-within > .opt { box-shadow: inset 0 0 0 2px var(--_accent); } /* a text field always shows focus */
+/* A text field always shows focus, even after a click. Only the field: the row itself follows the
+   keyboard-only ring rule like every row. */
+.other-wrap:has(> .other-field input:focus) > .opt { box-shadow: inset 0 0 0 2px var(--_accent); }
 .other-field input {
   flex: 1; min-inline-size: 0; padding: 0;
   font: inherit; color: var(--_fg); background: transparent; border: 0; outline: 0;
@@ -516,7 +518,8 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .btn.link:hover { text-decoration: underline; text-underline-offset: 2px; }
   .chip:not([aria-checked="true"]):not([aria-pressed="true"]):not([aria-disabled="true"]):hover { background: var(--_hover); }
   .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--_hover); }
-  .opt:hover::before, .opt:hover + .opt::before { border-color: transparent; }
+  .opt:hover::before, .opt:hover + .opt::before,
+  .opt:hover + .other-wrap > .opt::before, .other-wrap:has(> .opt:hover) + .opt::before { border-color: transparent; }
   .opt:hover .trail { visibility: visible; }
 }
 @media (prefers-reduced-motion: reduce) { .spin, .sk::after { animation: none; } }
@@ -550,7 +553,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 @media (forced-colors: active) {
   textarea, .chip-input { border: 1px solid CanvasText; }
   textarea:focus, .chip-input:focus { outline: 2px solid Highlight; }
-  .other-wrap:focus-within > .opt { outline: 2px solid Highlight; outline-offset: -2px; }
+  .other-wrap:has(> .other-field input:focus) > .opt { outline: 2px solid Highlight; outline-offset: -2px; }
   .key.box { border: 1.5px solid CanvasText; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"], .dot { forced-color-adjust: none; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"] { background: Highlight; color: HighlightText; border-color: Highlight; }
