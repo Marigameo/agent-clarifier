@@ -494,7 +494,7 @@ Turned down: fills on option rows (keyboard-paced), shrinking an option row, a p
 
 **Docs:** DESIGN §1 and §7 rewritten (every motion value with its reason, plus a "not animated, on purpose" table). BUILD, PLAN and README brought in line with the new reduced-motion rule.
 
-**Still for me to check by hand:** the feel. Space and Enter speed through the steps, a real phone's press, macOS "Reduce motion" on, and toast hover during the fade.
+**My hands-on check (11 Oct):** I went through Claude's six-point list: keyboard speed run, toast in, out and hover, press with mouse vs Space, fold and reopen in light and dark, macOS Reduce motion, and phone taps. Everything looks good, so I signed it off.
 
 **Artifacts:** `process/09-motion-audit/` (audit.md, PLAN.md, DESIGN.md, renders: five filmstrips plus toast light, dark and phone).
 
