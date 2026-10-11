@@ -148,7 +148,9 @@ button { font: inherit; color: inherit; }
    and scrolls away with the content when it's tall (over a third of the card), so a long
    question never crowds out the options (round 7, option C). */
 .scroll { flex: 1 1 auto; min-block-size: 0; overflow-y: auto; overscroll-behavior: contain; }
-.top { position: sticky; inset-block-start: 0; z-index: 1; background: var(--_bg); }
+/* flow-root: the source line's top margin stays inside the header. Without it the margin collapsed
+   through, so the stuck header lost its top padding and "Asked by" touched the card edge (round 18). */
+.top { display: flow-root; position: sticky; inset-block-start: 0; z-index: 1; background: var(--_bg); }
 .card[data-tall] .top { position: static; }
 /* An edge shadow means "there's more under here", so it only shows while content is hidden. */
 .top, .foot { transition: box-shadow var(--_duration) var(--_ease); }

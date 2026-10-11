@@ -828,6 +828,27 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 
 ---
 
+## Round 18 · The stuck header lost its top padding (11 Oct 2026)
+
+**Brief (mine):** on long content, scrolling moved the top so it looked like there was no padding at all. Congested.
+
+**Claude's diagnosis (measured, not guessed):**
+- Unscrolled, the sticky header's own box started 15px below the card's top. Scrolled, "Asked by" sat 1px from the edge.
+- The source line's 14px top margin was **collapsing through** the header (CSS margin collapse: a first child's top margin can escape its parent), so it lived outside the sticky box. When the box stuck, the margin was left behind.
+- It happens only when the header sticks: on a phone the long header counts as "tall" and scrolls away (round 7).
+- The same bug was visible in the all-at-once flow (my round-17 screenshot) and in review, since every view shares the header.
+
+**Fix (Claude's call):** `display: flow-root` on the header, so child margins stay inside it. One line, and the stuck header now matches the unscrolled one (15px either way).
+
+**Verified:**
+- A test scrolls a card whose header sticks and checks the gap doesn't change. It fails without the fix.
+- Before/after renders scrolled 200px: light, dark, all at once, 375px.
+- 569 green.
+
+**Artifacts:** `process/18-sticky-header/` (scrolled.mjs, `renders/before/` 4, `renders/after/` 4).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.

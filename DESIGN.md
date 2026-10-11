@@ -299,3 +299,11 @@ Mari asked whether "Up to 2 picks. Unpick one first" should be a warning colour.
 | Same timer, pauses, live region, wording; `part="toast notice"` | Only the drawing changed. Apps styling `::part(toast)` still reach it; `::part(notice)` tells it apart |
 | No shake on the refused row (not decided before round 17) | Round 9 rejected a shake for a missing required answer; the same reasons hold: it moves what the user acts on next, and number keys make it keyboard-triggered |
 
+---
+
+## 14. The stuck header keeps its padding (round 18)
+
+| What broke | Fix | Why this fix |
+|---|---|---|
+| Scrolling a card with a source line ("Asked by…") stuck the header with "Asked by" 1px from the card edge: congested, as if the header had no top padding (Mari spotted it on the long-content scenario) | `display: flow-root` on `.top` | The source line's 14px top margin collapsed through the header, so it sat *outside* the sticky box; when the box stuck, the margin stayed behind. `flow-root` keeps child margins inside the header, so the stuck header looks exactly like the unscrolled one. All four views share `.top` (step, all at once, review, record), so one line fixes each. It also makes round 11's focus scroll-padding (the header's height) include the margin |
+
