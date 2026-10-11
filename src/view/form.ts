@@ -71,7 +71,7 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
   const state = h('span', { class: 'q-state' });
   // The error says what would fix it: a minimum to reach, or simply an answer (round 11).
   const fix = q.type === 'multi' && q.min > 1 ? init.t('pickAtLeast', { min: q.min }) : init.t('answerToSend');
-  const error = h('div', { class: 'q-err', id: `${titleId}-err`, hidden: true }, icon('alert'), fix);
+  const error = h('div', { class: 'q-err', id: `${titleId}-err`, hidden: true }, icon('alert'), h('span', { class: 't' }, fix));
   const group =
     q.type === 'text'
       ? h('div', { class: 'q-field' }, area, delegate)
@@ -167,7 +167,7 @@ export function formView(init: Ctx): View {
     setFailBanner(banner, ctx);
 
     const p = progress(s);
-    footLeft(left, ctx, () => [ctx.t('answeredOf', { n: p.answered, total: p.total })]);
+    footLeft(left, ctx, () => [h('span', { class: 't' }, ctx.t('answeredOf', { n: p.answered, total: p.total }))]);
     // Skip all isn't offered when the agent needs an answer (a required question).
     setButton(skipAll, qs.some((q) => q.required) ? null : ctx.t('skipAll'), { disabled: busy || failed });
     send.dataset.act = failed ? 'retry' : 'send';

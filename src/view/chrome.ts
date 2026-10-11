@@ -6,7 +6,7 @@ import type { Ctx } from './types';
 
 export function sourceLine(ctx: Ctx): HTMLElement | null {
   const source = ctx.s.q?.source;
-  return source ? h('div', { class: 'source' }, ctx.t('askedBy', { source })) : null;
+  return source ? h('div', { class: 'source' }, h('span', { class: 't' }, ctx.t('askedBy', { source }))) : null;
 }
 
 /** Header: [Back] Title / subtitle [step] [Minimise]. Back and step are optional. */

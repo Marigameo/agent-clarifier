@@ -11,7 +11,7 @@ export function pillView(ctx: Ctx): View {
   const el = h(
     'div',
     { class: 'pill', part: 'pill' },
-    ctx.t('answeredOf', { n: p.answered, total: p.total }),
+    h('span', { class: 't' }, ctx.t('answeredOf', { n: p.answered, total: p.total })),
     h('button', { class: 'btn', type: 'button', 'data-act': 'reopen', 'aria-label': ctx.t('pillLabel', { n: p.answered, total: p.total }) }, ctx.t('reopen')),
   );
   return { el, update: () => {} };
@@ -85,7 +85,8 @@ export function loadingView(init: Ctx): View {
   const head = header(init, '', undefined, { step: true });
   const title = head.el.querySelector('.title')!;
   // The source can arrive mid-stream, so this line is updated, not built once.
-  const source = h('div', { class: 'source', hidden: true });
+  const sourceText = h('span', { class: 't' });
+  const source = h('div', { class: 'source', hidden: true }, sourceText);
   const list = h('div', { class: 'list', 'aria-hidden': 'true' });
   const foot = h('div', { class: 'foot', part: 'footer' }, h('span', { class: 'foot-l' }, h('span', { class: 'spin', 'aria-hidden': 'true' }), init.t('writing')));
   const el = h(
@@ -99,7 +100,7 @@ export function loadingView(init: Ctx): View {
     const q = ctx.s.q?.questions[0];
     const from = ctx.s.q?.source;
     source.hidden = !from;
-    text(source, from ? ctx.t('askedBy', { source: from }) : '');
+    text(sourceText, from ? ctx.t('askedBy', { source: from }) : '');
     title.replaceChildren(q ? bdi(q.prompt) : bar('l'));
     text(head.step!, ctx.t('stepOfMore', { n: 1 }));
     // Draw arrived options in full (badge, description), so nothing jumps when streaming ends.

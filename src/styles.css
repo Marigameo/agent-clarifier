@@ -44,6 +44,9 @@
   --_ease: var(--clarify-ease, cubic-bezier(.2, .7, .2, 1));
   --_focus: 0 0 0 2px var(--_bg), 0 0 0 4px var(--_accent);
   display: block;
+  /* The card is a size container, which gives it no minimum width, so a flex sibling could squeeze it
+     to nothing. It keeps at least a phone's width, or its container's if that's narrower (round 13). */
+  min-inline-size: min(100%, 280px);
   font: var(--_t14)/1.4 var(--_font);
   color: var(--_fg);
   -webkit-font-smoothing: antialiased;
@@ -51,6 +54,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 :host([hidden]) { display: none; }
+/* Disabled: nothing responds, so it shouldn't look like it would (round 13). */
+:host([disabled]) { cursor: not-allowed; }
+:host([disabled]) [inert] { opacity: .55; }
 :host([theme="dark"]) { 
   --_bg: var(--clarify-bg, #1f1f1f);
   --_fg: var(--clarify-fg, #ededed);
@@ -101,6 +107,10 @@
 button { font: inherit; color: inherit; }
 
 /* Read by screen readers, not shown. */
+/* Text from labels takes its direction from its own words, not the page: built-in English labels on
+   a right-to-left page read "1 of 4", not "of 1 4" (round 13, found by the break page). */
+.t, .step, .count, .q-state, .record-line, .toast .msg, .banner > span { unicode-bidi: plaintext; }
+
 .live { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ── card ───────────────────────────────────────────────────────────── */
@@ -117,11 +127,13 @@ button { font: inherit; color: inherit; }
   overflow: hidden;
 }
 .source {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: flex-start; gap: 6px;
   margin: 14px 20px 0;
   font-size: var(--_t12); color: var(--_muted);
 }
 .source::before {
+  /* Sits on the first line and keeps its size when a long source wraps (round 13). */
+  flex: none; margin-block-start: calc((1lh - 6px) / 2);
   content: ""; inline-size: 6px; block-size: 6px; border-radius: 50%;
   background: var(--_accent);
 }
@@ -443,13 +455,17 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 }
 .record:focus { outline: none; }
 .record.expired { border-style: dashed; }
-.record-head { display: flex; align-items: center; gap: 8px; color: var(--_muted); }
+.record-head { display: flex; align-items: flex-start; gap: 8px; color: var(--_muted); }
+/* On the first line of a long message, not floating in its middle (round 13). */
+.record-head > .i { margin-block-start: calc((1lh - 16px) / 2); }
 .record-head .i { color: var(--_muted); }
 .record.answered .record-head .i { color: var(--_success); }
 .record-line { flex: 1; min-inline-size: 0; overflow-wrap: anywhere; }
 .record-head .btn { flex: none; font-size: var(--_t12); }
-.record dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 10px 0 0; }
-.record dt { color: var(--_muted); }
+/* The label column is capped, so a long unbreakable label wraps instead of squeezing the answer to
+   one character per line (round 13). */
+.record dl { display: grid; grid-template-columns: fit-content(40%) minmax(0, 1fr); gap: 4px 12px; margin: 10px 0 0; }
+.record dt { color: var(--_muted); overflow-wrap: anywhere; }
 .record dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
 .record dd.gap { color: var(--_muted); }
 

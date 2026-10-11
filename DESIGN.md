@@ -241,3 +241,17 @@ Plan frozen before any fix: `process/12-polish/round-plan.md`, with before and a
 
 **Size:** 21.12 KB. The guard went from 21 to 22 KB, following Mari's call to polish first and do size in its own round.
 
+---
+
+## 11. Worst-case content (round 13, the `break` stress page)
+
+`demo/break.html` renders the real component under 34 worst-case scenarios; report in `process/13-break/report.md`.
+
+| What broke | Fix | Why this fix |
+|---|---|---|
+| A long unbreakable question label squeezed the record's answer to one character per line | Label column `fit-content(40%)`, answer `minmax(0, 1fr)`, labels wrap | The answer is what the record is for; the label is the reminder. Capping the label keeps the answer readable whatever the agent names its question |
+| The card collapsed to a sliver next to a flex sibling | `:host { min-inline-size: min(100%, 280px) }` | A size container has no minimum width of its own. 280px is a phone's card, and `min(100%, …)` never forces it wider than a narrower container |
+| Built-in English labels on a right-to-left page read "of 1 1" | `unicode-bidi: plaintext` on label text | Text takes its direction from its own words: an untranslated English label reads left to right, and an Arabic one right to left, on any page |
+| A disabled card looked enabled | Dimmed to .55, not-allowed cursor | The same signal as disabled options and buttons (§1) |
+| The source dot squashed, and the record icon floated mid-paragraph, on long text | Fixed size, on the first line | A marker belongs to the start of what it marks |
+

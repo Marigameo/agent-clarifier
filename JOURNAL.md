@@ -637,6 +637,46 @@ There were also 5 MEDIUMs in the table and 15 smaller findings beyond the cap.
 
 ---
 
+## Round 13 · Break: worst-case content with Jakub Krehel's `break` (11 Oct 2026)
+
+**Brief (mine):** stress the component to see whether the UI breaks, and fix whatever adds real value.
+
+**How it ran:**
+- Claude built a scratch page, `demo/break.html`, with the real component rendered 34 times. Each instance gets one worst-case scenario on the axes whose cue matched: content length, content shape, quantity, container and state.
+- The page adds only labels, widths and fixture data.
+- Claude loaded it once, looked once, and marked every break under its label, so the page is the report.
+- Full report: `process/13-break/report.md`.
+
+**What broke (6 of 34; 26 survived):**
+1. **A long unbreakable question label in the answered record** squeezed the answer to one character per line, out of the card. The section was 3,303px tall. Round 11's "let answers wrap" fix had exposed it: the old ellipsis used to hide it.
+2. **Squeezed by a flex sibling, the card collapsed to a sliver.** A size container (`container-type`, which powers the narrow-card layouts) has no minimum width of its own.
+3. **Built-in English labels on a right-to-left page** read "of 1 1" and "Trip planner Asked by".
+4. **A `disabled` card** looked exactly like an enabled one.
+5. **The source dot** squashed when a long source wrapped.
+6. **The expired record's icon** floated mid-paragraph.
+
+Two scenarios were observed and left alone, with reasons: an empty prompt is dropped with a warning, and stacked combining marks are abusive input.
+
+**Claude's fixes (with reasons, in DESIGN §11):**
+- A capped label column (40%) in the record.
+- `min-inline-size: min(100%, 280px)` on the host: it keeps a phone's width, or its container's if that's narrower.
+- `unicode-bidi: plaintext` on label text, so it takes its own direction.
+- A dimmed disabled card.
+- The dot and the icon sit on the first line.
+
+**Verified:**
+- 5 tests, with deliberate breaks caught 5/5. The first versions of two tests were weak, again: one checked an element that wasn't there, and one read opacity mid-fade. Both were fixed first.
+- The real Arabic scenario is unchanged.
+- 544 green; 21.28 KB.
+
+**For me to try:** dark mode, browser zoom and reduced motion on `/demo/break.html`. These are viewing modes, so the page doesn't simulate them. Then tab through the instances.
+
+**The harness stays up** (`demo/break.*`), as the skill asks. It gets deleted when I say I'm done with it.
+
+**Artifacts:** `process/13-break/` (report.md, `renders/before/` 9, `renders/after/` 11).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -650,3 +690,4 @@ There were also 5 MEDIUMs in the table and 15 smaller findings beyond the cap.
 - Round 10 is the "invisible care" beat: none of its six changes is something a user would point at (a hover that answers, a toast that waits for you in another tab, a shimmer that doesn't stutter while streaming). That's the point. Good pairing with round 9's restraint: one round says no to motion, the next says yes to feedback.
 - Round 11 is the "who did we leave out" beat: polish rounds made it feel good; this one found who it failed (Windows contrast themes, keyboard, 320px phones, Arabic, screen readers), with a before/after render for each. Two sub-beats: the audit's own suggested fix (#5) would have broken undo, so judgment over checklists; and 3 of 10 tests passed while testing nothing until a deliberate break exposed them.
 - Round 12's small beat: a status that lies is worse than no status. "Sending in 1s · Undo" stayed on screen after Undo had stopped working; the fix was to make every status match reality (the button too).
+- Round 13 is the "fixes have side effects" beat: the worst break the stress page found (an answer squeezed to one character per line) was created by round 11's own fix (answers wrap instead of truncating). Audits judge rules; a stress page shows what the content does to them.
