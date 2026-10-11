@@ -46,9 +46,13 @@ export function enter(el: HTMLElement, from: number, move: Move, rtl: boolean): 
   } else body.animate([{ opacity: 0 }, { opacity: 1 }], t);
 }
 
-/** Fade an element out the way it came in (the toast sinks 4px). Resolves when it's gone or the fade was cut short. */
+/**
+ * Fade an element out the way it came in (the toast sinks 4px), a quarter faster than it arrived:
+ * on its way out it shouldn't hold attention. Resolves when it's gone or the fade was cut short.
+ */
 export function leave(el: HTMLElement): Promise<unknown> {
   if (typeof el.animate !== 'function') return Promise.resolve();
   const frames = reduced() ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(4px)' }];
-  return el.animate(frames, { ...timing(el), fill: 'forwards' }).finished.catch(() => undefined);
+  const t = timing(el);
+  return el.animate(frames, { ...t, duration: t.duration * 0.75, fill: 'forwards' }).finished.catch(() => undefined);
 }

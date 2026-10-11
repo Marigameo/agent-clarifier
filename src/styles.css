@@ -337,16 +337,26 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 /* ── loading ────────────────────────────────────────────────────────── */
 .loading .opt { cursor: default; }
 .loading .key { opacity: .6; }
+/* The shimmer is a highlight band sliding across on transform, so it runs off the main thread and
+   stays smooth while the page is busy parsing a streamed reply (round 10). It sweeps in the reading
+   direction. */
 .sk {
+  position: relative; overflow: hidden;
   display: block; block-size: 12px; border-radius: 6px;
-  background: linear-gradient(90deg, var(--_hover), var(--_selected), var(--_hover)) 0 0 / 200% 100%;
+  background: var(--_hover);
+}
+.sk::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, var(--_selected), transparent);
+  transform: translateX(-100%);
   animation: shimmer 1.4s linear infinite;
 }
+:host(:dir(rtl)) .sk::after { animation-direction: reverse; }
 .title .sk { block-size: 16px; margin-block: 3px; }
 .sk-l { inline-size: 70%; }
 .sk-m { inline-size: 46%; }
 .sk-s { inline-size: 34%; }
-@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes shimmer { to { transform: translateX(100%); } }
 .foot-l .spin { inline-size: 12px; block-size: 12px; }
 
 /* ── review ─────────────────────────────────────────────────────────── */
@@ -383,7 +393,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .spin {
   inline-size: 14px; block-size: 14px; border-radius: 50%;
   border: 2px solid currentColor; border-inline-end-color: transparent;
-  animation: spin .8s linear infinite;
+  animation: spin .6s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -426,13 +436,18 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 :host([density="compact"]) .q-head, :host([density="compact"]) .chips { padding-inline: 16px; }
 :host([density="compact"]) .foot { padding-block: 10px; padding-inline: 16px 12px; }
 
-@media (hover: hover) {
-  .icon-btn:hover { background: var(--_hover); }
+/* Hover only for a real mouse or trackpad: some touch screens claim hover, and a tapped control
+   would keep its fill. Hover fills are instant: they happen tens of times a day (DESIGN §7). */
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover, .btn:not(.primary):not(.link):not(:disabled):hover { background: var(--_hover); }
+  .btn.primary:not(:disabled):hover { background: color-mix(in srgb, var(--_fg) 88%, var(--_bg)); border-color: transparent; }
+  .btn.link:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .chip:not([aria-checked="true"]):not([aria-pressed="true"]):not([aria-disabled="true"]):hover { background: var(--_hover); }
   .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--_hover); }
   .opt:hover::before, .opt:hover + .opt::before { border-color: transparent; }
   .opt:hover .trail { visibility: visible; }
 }
-@media (prefers-reduced-motion: reduce) { .spin, .sk { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .spin, .sk::after { animation: none; } }
 /* Movement only for those who haven't asked for less. Fades stay either way (DESIGN §7). */
 @media (prefers-reduced-motion: no-preference) {
   @starting-style { .toast { transform: translateY(4px); } }

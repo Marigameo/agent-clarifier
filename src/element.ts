@@ -462,10 +462,13 @@ export class AgentClarifier extends Base {
     if (say.length) this.#announce(say.join(' '));
   }
 
-  /** A toast waits while it's hovered or focused, so nobody loses Undo while reaching for it (F13). */
+  /**
+   * A toast waits while it's hovered or focused, so nobody loses Undo while reaching for it (F13),
+   * and while the tab is hidden, so Undo is still there when you come back (round 10).
+   */
   #toastDone = (): void => {
     const toast = this.#root.querySelector<HTMLElement>('.toast');
-    if (toast?.matches(':hover, :focus-within')) {
+    if (document.hidden || toast?.matches(':hover, :focus-within')) {
       this.#toastTimer = window.setTimeout(this.#toastDone, 1000);
       return;
     }

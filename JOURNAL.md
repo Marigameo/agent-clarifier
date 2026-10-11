@@ -500,6 +500,39 @@ Turned down: fills on option rows (keyboard-paced), shrinking an option row, a p
 
 ---
 
+## Round 10 · Craft audit with Emil Kowalski's `emil-design-eng` (11 Oct 2026)
+
+**Brief (mine):** the second skill in the audit series. This one is Emil's general design-engineering checklist (easing, speed, press and hover, performance, reduced motion, the Sonner principles), run the same way: Claude audits read-only, I pick, Claude builds, tests and documents. I also asked that every change stay tracked, because I'll be telling this as a UX story.
+
+**What Claude found** (frozen in `process/10-craft-audit/audit.md`). Round 9 had covered most of the motion, so this pass found **gaps in feedback and invisible edge cases**:
+1. Buttons, chips and the pill's Reopen didn't react to hover; only rows did.
+2. Hover was gated by `(hover: hover)` alone, so some touch screens kept a fill after a tap.
+3. The toast's timer kept running in a hidden tab, so you came back and Undo was gone.
+4. The shimmer repainted every frame on the main thread, so it stuttered exactly while streaming.
+5. The toast left as slowly as it arrived.
+6. The spinner was 0.8s.
+
+**My decision:** take all six, and raise the size guard to 21 KB for now. I want a polished component first and will come back to size on its own.
+
+**Claude's calls while building** (with reasons):
+- **Hover fills are instant.** They happen tens of times a day, and a fade would trail the mouse.
+- **The primary button's hover is derived:** `color-mix(fg 88%, bg)`, so a brand colour gets a matching hover for free. Its border goes transparent on hover, so no darker ring shows. Contrast: 11.9 (light) · 11.1 (dark).
+- **The tab-hidden pause reuses the existing check:** one condition added to the hover and focus check.
+- **The shimmer sweeps in the reading direction** (reversed in RTL), which came free with the transform rewrite.
+- **The toast exit is 0.75× the base duration,** a ratio like the fold's 1.25×, so there's still only one public speed token.
+
+**Kept, with reasons** (now in DESIGN §7 so I can answer for them):
+- **Our easing:** measured 73% at a quarter of the time, against Emil's 78%. Same family, the difference is invisible.
+- **No ease-in-out for the height change:** the height would lag behind the content.
+- **The step slide when using the keyboard,** against the skill's "never". Cards are occasional, the slide says which direction you moved, and my own speed run in round 9 felt fine.
+- **Animating height** despite "only `transform`/`opacity`": one element, 160ms, and a transform squashes text.
+
+**Verified:** 4 new component tests, and deliberately breaking each change made a test fail, 4/4. 514 green. Zoomed rest-vs-hover pairs in light and dark. A touch-phone capture showing a row tapped on then off keeps no fill. A shimmer filmstrip. `scripts/shots.mjs` gained `hover:`, `tap:` and `touch=1`. Size 20.07 KB (+120 B).
+
+**Artifacts:** `process/10-craft-audit/` (audit.md, PLAN.md, DESIGN.md, renders).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -510,3 +543,4 @@ Turned down: fills on option rows (keyboard-paced), shrinking an option row, a p
 - M1's "100% coverage, still weak tests" beat: deliberately breaking the code found two boundary blind spots that coverage couldn't see.
 - Skip vs Decide for me is a good small example of meaning over features: same outcome for the agent, different intent from the user, so a different reply.
 - Round 9 is the "restraint" beat: a motion audit whose output is mostly *no*. Five ideas turned down with reasons, four small changes taken. And the slowed-clock filmstrip caught a bug (the pill drawn as an oval) that no test was looking for.
+- Round 10 is the "invisible care" beat: none of its six changes is something a user would point at (a hover that answers, a toast that waits for you in another tab, a shimmer that doesn't stutter while streaming). That's the point. Good pairing with round 9's restraint: one round says no to motion, the next says yes to feedback.

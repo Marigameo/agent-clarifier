@@ -113,6 +113,19 @@ async function sheet(name, frames, caption = (f) => `${f.t}ms`) {
   await strip('5-normal-step-slide-light', page, () => nextStep(page), [0, 15, 30, 60, 160], clip);
 }
 
+// 6 · loading shimmer: a highlight band sliding on transform (real time, one 1.4s sweep)
+{
+  const page = await open('scenario=stream&theme=light&width=768');
+  const clip = await box(page);
+  const frames = [];
+  for (const t of [0, 350, 700, 1050]) {
+    frames.push({ t, png: (await page.screenshot({ clip })).toString('base64') });
+    await page.waitForTimeout(350);
+  }
+  await sheet('6-shimmer-light', frames, (f) => `+${f.t}ms`);
+  await page.close();
+}
+
 await browser.close();
 await server.close();
 process.exit(0);

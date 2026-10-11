@@ -46,6 +46,9 @@ describe('motion', () => {
 
     // After 5s it starts to leave, and is still there while it fades.
     await expect.poll(() => toast()?.getAnimations().some((a) => !(a instanceof CSSTransition)), { timeout: 6000 }).toBe(true);
+    // It leaves a quarter faster than it came (round 10).
+    const exit = toast()!.getAnimations().find((a) => !(a instanceof CSSTransition))!;
+    expect(exit.effect!.getTiming().duration).toBe(1125);
 
     // Undo and skip again while it fades: the new toast must outlive the old fade.
     // (Keyboard, because a pointer won't click things that are still moving.)
@@ -56,5 +59,47 @@ describe('motion', () => {
     await onStep(m, 'Budget per night?');
     await new Promise((r) => setTimeout(r, 1800));
     expect(toast()).not.toBeNull();
+  });
+
+  it('a toast waits while the tab is hidden, so Undo is still there when you come back', { timeout: 15000 }, async () => {
+    const m = mount(HOTEL);
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+    await userEvent.click(button(m, 'skip'));
+    await onStep(m, 'Budget per night?');
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    try {
+      await new Promise((r) => setTimeout(r, 6000));
+      expect(m.root.querySelector('.toast')).not.toBeNull();
+    } finally {
+      delete (document as { hidden?: boolean }).hidden;
+    }
+    await expect.poll(() => m.root.querySelector('.toast'), { timeout: 3000 }).toBeNull();
+  });
+
+  it('the loading shimmer slides on transform (off the main thread), not background-position', async () => {
+    const m = mount(HOTEL);
+    m.el.reset();
+    m.el.open({ ...HOTEL, questions: HOTEL.questions.slice(0, 1) }, { partial: true });
+    const sk = m.root.querySelector<HTMLElement>('.sk')!;
+    const shimmer = sk.getAnimations({ subtree: true }).find((a) => (a as CSSAnimation).animationName === 'shimmer')!;
+    const frames = (shimmer.effect as KeyframeEffect).getKeyframes();
+    expect(frames.some((f) => 'transform' in f)).toBe(true);
+    expect(frames.some((f) => 'backgroundPosition' in f)).toBe(false);
+    // It sweeps in the reading direction.
+    expect(getComputedStyle(sk, '::after').animationDirection).toBe('normal');
+    m.el.setAttribute('dir', 'rtl');
+    expect(getComputedStyle(sk, '::after').animationDirection).toBe('reverse');
+  });
+});
+
+describe('hover', () => {
+  it('buttons and chips answer a mouse hover with the hover fill', async () => {
+    const m = mount(HOTEL, { theme: 'light' });
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+    const skip = button(m, 'skip');
+    const before = getComputedStyle(skip).backgroundColor;
+    await userEvent.hover(skip);
+    await expect.poll(() => getComputedStyle(skip).backgroundColor).toBe('rgb(245, 245, 245)');
+    expect(before).not.toBe('rgb(245, 245, 245)');
   });
 });
