@@ -906,6 +906,44 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 
 ---
 
+## Round 21 · Navigation in the footer, dashes that say more (11 Oct 2026)
+
+**Brief (mine):** a suggestion I'd got: the progress dashes are barely usable (bigger targets); should "2 of 4" move to the footer; Back at the top or the bottom? Insights first, no change.
+
+**How it went:**
+1. **Claude's pros and cons:**
+   - Keep the count in the header: the footer's left is the status slot, and a toast would hide the count.
+   - Move Back to the bottom-left: it fixes a ~38px title jump between steps and groups the "go back" controls.
+   - Give the dashes 24px targets and a hover cue, not pills.
+2. **A second session (no codebase) pushed back.** Claude checked each point against the code and measurements:
+   - "Make skipped steps clickable": already true.
+   - "Encode state in the dashes": right, and it exposed a gap. Dashes were coloured by position, so the current step looked answered and answered later steps looked unvisited after going back.
+   - "Reserve Back's slot": yes, as a dimmed, focusable Back.
+   - "Footer stability": the concern was right, but the fix is Back's position, not a min-height.
+   - The tooltip: not now.
+3. **Its final proposal:** a Claude-style "‹ 2 of 4 ›" pager in the header, dropping the dashes. Claude turned it down with a measurement. The premise "the card is top-anchored" is wrong: it's bottom-anchored, so the header is the edge that moves. Back at the top went 586 → 581 → 743px across steps while the footer stayed at 903. Claude's own card moves the same way in my recording. Two parts also went beyond layout: the component isn't capped at 4 questions, and "review only if skipped" would reopen a round-4 decision.
+
+**My call:** go ahead with Claude's plan.
+
+**Built:**
+- Back at the footer's start (dimmed on step 1, focusable; outside the toast slot; review too). The header has no Back, so the title keeps one edge.
+- Pressing Back with the button keeps focus on Back, so repeated Enter goes back and never picks. The ← key still lands on the options.
+- Dashes by status (current, answered, skipped, not reached), 24×24 targets 24px apart on every pointer, and an instant hover cue.
+
+**Caught on the way:**
+- **At 320px**, once the buttons wrapped, the footer's `space-between` pushed the dashes away from Back. Now `flex-start`.
+- **Round 17's notice test failed on purpose:** the notice no longer starts on the 20px edge (Back does). It now starts where the dashes do. The test and DESIGN §13 were updated.
+- Two first test failures were artifacts (measured mid-slide; the test runner refusing to click an `aria-disabled` control), not bugs.
+
+**Verified:**
+- 8 tests. 7 deliberate breaks, caught 7/7.
+- Renders: step 1 and 2, after jumping back, skipped, review, dash hover, dark, 375, 320, RTL.
+- 585 green; **21.9 KB, close to the 22 KB guard** (the size round is still Mari's to schedule).
+
+**Artifacts:** `process/21-footer-nav/` (round-plan.md frozen before the change, PLAN.md, DESIGN.md, `renders/before/` 8, `renders/after/` 10).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -925,4 +963,5 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 - Round 16 is the "audits expire" beat: every skill had passed, and two rounds of my own requests later, one of round 11's accessibility fixes had quietly gone (round 14 deleted the box that carried it). Re-running the checks after changes is part of the work, not a formality. And the fix for the other finding was already written down: the spec said textarea; the build had drifted to an input.
 - Round 17 is the "colour is a word" beat: I asked for a warning colour, and the answer was that the message wasn't a warning and wasn't an action either. So it lost its colour instead of gaining one. A small honesty beat too: a claimed precedent ("round 9 rejected that") turned out not to exist, and saying so mattered more than the answer.
 - Round 19's beat: a screenshot can agree with you for the wrong reason. The "after" render showed the gap, but only because a focus ring drew it; the actual fill still bled through (a CSS shorthand quietly reset the clip). The test that measured the fill's box is what told the truth.
+- Round 21 is the "measure the premise" beat: two AI sessions argued Back's position with good-sounding reasons. The tie-breaker was one number per step: which edge of the card actually moves. The confident "top-anchored, so the header never moves" was simply wrong for this component, and a probe showed it in a minute.
 

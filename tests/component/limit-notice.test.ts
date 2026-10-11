@@ -21,7 +21,7 @@ async function overLimit(m: ReturnType<typeof mount>) {
 }
 
 describe('the pick limit is a notice, not a toast to act on', () => {
-  it('drawn as ink text with no fill, nothing to press, on the card’s inline edge', async () => {
+  it('drawn as ink text with no fill, nothing to press, where the dashes start', async () => {
     const m = mount(MAX2);
     const n = await overLimit(m);
     expect(n.classList.contains('notice')).toBe(true);
@@ -29,8 +29,11 @@ describe('the pick limit is a notice, not a toast to act on', () => {
     expect(getComputedStyle(n).backgroundColor).toBe(CLEAR);
     expect(getComputedStyle(n).color).toBe(INK);
     expect(n.querySelector('button')).toBeNull();
-    const edge = m.root.querySelector('.foot')!.getBoundingClientRect().left + 20;
-    expect(Math.round(n.querySelector('.msg')!.getBoundingClientRect().left)).toBe(Math.round(edge));
+    // Where the dashes it replaces start: right after Back, which opens the footer since round 21.
+    const back = m.root.querySelector('.foot [data-act="back"]')!.getBoundingClientRect();
+    const gap = n.querySelector('.msg')!.getBoundingClientRect().left - back.right;
+    expect(gap).toBeGreaterThanOrEqual(0);
+    expect(gap).toBeLessThan(16);
   });
 
   it('toasts that carry Undo keep the ink fill', async () => {

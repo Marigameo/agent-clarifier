@@ -24,7 +24,7 @@ Each signal has **one meaning**, so it never has to be learnt twice.
 | **Motion** | Answers "what just happened?": a pick confirmed, a step moved forward or back, the card folded into a record, a press landed | Delight for its own sake, or anything paced by the keyboard. With reduced motion nothing moves or resizes, but fades stay (round 9) |
 
 **Layout rules**
-- **One inline edge.** The title, the number keys, the footer text and the all-flow chips all start 20px from the card's edge (list inset 8 + row padding 12 = 20). The eye finds one straight line down the card.
+- **One inline edge.** The title, the number keys, Back's glyph in the footer and the all-flow chips all start 20px from the card's edge (list inset 8 + row padding 12 = 20). The eye finds one straight line down the card. Since round 21 the title starts there on every step (Back left the header).
 - **Concentric corners.** A rounded thing nested inside another should have a radius equal to the outer radius minus the gap between them, so the curves run parallel.
 - **Never cut off what the user decides on** (PLAN §8). Only summaries are shortened.
 - **Direction-free.** Logical properties only, so RTL is free (BUILD §8.1).
@@ -295,7 +295,7 @@ Mari asked whether "Up to 2 picks. Unpick one first" should be a warning colour.
 |---|---|
 | Not danger orange | It isn't an error or a warning: a reasonable tap was refused, with how to swap. Orange would scold, and dilute the colour that means "something failed, or fix this to send" |
 | Not a black toast any more | The ink fill means "this acts" (§1); Skip and Start over earn it with Undo, this has nothing to press. Beside Continue it was a second black slab, louder than the user's own picks (round 14's principle) |
-| **Ink text, weight 500, no fill, on the card's 20px edge** | Reads as news (not muted status), sits where the count it replaces sits, and leaves Continue the only filled thing in the footer. Contrast 17.0 / 14.1 |
+| **Ink text, weight 500, no fill, where the dashes start** (on the card's 20px edge until round 21; now right after Back) | Reads as news (not muted status), sits where the count it replaces sits, and leaves Continue the only filled thing in the footer. Contrast 17.0 / 14.1 |
 | Fade only, in and out | The 4px rise was earned by Undo (round 9, "easy to miss"); a notice doesn't need chasing |
 | Same timer, pauses, live region, wording; `part="toast notice"` | Only the drawing changed. Apps styling `::part(toast)` still reach it; `::part(notice)` tells it apart |
 | No shake on the refused row (not decided before round 17) | Round 9 rejected a shake for a missing required answer; the same reasons hold: it moves what the user acts on next, and number keys make it keyboard-triggered |
@@ -333,4 +333,22 @@ Mari asked to check the hover states against Emil Kowalski's "7 practical animat
 | Row fill and arrow on hover | ✅ No transition on either (round 9: "hover fills are instant"). Measured frame by frame while stepping the mouse across rows: the fill and the arrow switch in the same frame, with zero running animations |
 | **The focused row's arrow, with a mouse** | ❌ → fixed. The card focuses a row when it opens; with a mouse the focus ring is hidden (rings are for keyboard users), but that row's arrow wasn't, so a lone arrow stayed on a row the mouse had left. Now the arrow shows only with its partner: the fill under the mouse, the ring for the keyboard (`.card:not([data-pointer]) .opt:focus-visible .trail`) |
 | Two arrows after keyboard use | Kept, on purpose: the keyboard row shows ring + arrow ("Enter picks this"), the hovered row fill + arrow ("a click picks this"). Hiding the keyboard row's arrow while the mouse is over the list would take it from keyboard users whose mouse rests on the card |
+
+---
+
+## 17. Navigation in the footer, dashes that say more (round 21)
+
+From a suggestion Mari brought, argued over with a second session; **Mari's call: Claude's plan**. Plan: `process/21-footer-nav/round-plan.md`.
+
+| Decision | Why |
+|---|---|
+| **Back at the footer's start**, before the dashes | The card is bottom-anchored (composer slot, dock): measured, Back at the top moved 586 → 581 → 743px between steps while the footer stayed at 903. A control pressed repeatedly belongs on the edge that stays put. Left = back, right = forward (Skip, Continue). Outside the toast slot, so a toast never hides it |
+| Step 1: Back dimmed (`aria-disabled`, focusable), not hidden | Nothing shifts between steps. Focusable because Back from step 2 leaves focus on it as it becomes unavailable (round 11) |
+| Back by button keeps focus on Back | Landing on an option would make a second Enter pick it. The ← key still lands on the options |
+| The header loses Back | The title starts on the 20px edge on every step (it jumped ~38px) |
+| **Dashes by status**: current ink, answered muted, skipped dashed, not reached light | They were coloured by position: the current step looked answered, and after going back, answered later steps looked unvisited. One width for all: a wider "current" would shift neighbours and clash with the hover cue |
+| **24×24 targets on every pointer**, 10px gap | WCAG 2.5.8; on a mouse they were 18px wide, 18px apart (touch had 24px since round 12) |
+| **Hover cue**: a clickable dash thickens (`scaleY(1.5)`) and turns ink, instantly | It answers "can I click this?" when you point at it; nothing at rest |
+| Footer `justify-content: flex-start` | At 320px, when the buttons wrap, `space-between` pushed the dashes away from Back |
+| Turned down | A header pager ‹ 2 of 4 › without dashes (the header is the moving edge here; not capped at 4 questions); pill dashes; a dash tooltip; a min-height on the options; the keyboard hint line |
 

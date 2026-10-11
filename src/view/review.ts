@@ -1,18 +1,18 @@
 // Review: every answer in one list, each with Edit (PLAN §5, §6).
 
 import { buildAnswer, draftOf } from '../model/selectors';
-import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
+import { backButton, button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
 import { bdi, h, icon } from './dom';
 import type { Ctx, View } from './types';
 
 export function reviewView(init: Ctx): View {
   const qs = init.s.q?.questions ?? [];
-  const head = header(init, init.t('checkAnswers'), undefined, { back: true });
+  const head = header(init, init.t('checkAnswers'), undefined);
   const list = h('dl', { class: 'review' });
   const banner = failBanner();
   const left = h('span', { class: 'foot-l' });
   const send = button('send', 'primary');
-  const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, send));
+  const foot = h('div', { class: 'foot', part: 'footer' }, backButton(init), left, h('div', { class: 'foot-r' }, send));
   const top = h('div', { class: 'top' }, sourceLine(init), head.el);
   const el = h('div', { class: 'card', part: 'card', role: 'group', 'aria-labelledby': 'title', tabindex: '-1' }, h('div', { class: 'scroll' }, top, banner, list), foot);
 

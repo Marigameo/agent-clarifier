@@ -321,13 +321,19 @@ textarea::placeholder, input::placeholder { color: var(--_muted); }
 
 /* ── footer, buttons, toast ─────────────────────────────────────────── */
 .foot {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px 12px;
+  /* flex-start: Back and the dashes stay together when the buttons wrap to their own line; the
+     buttons keep to the end with their own auto margin (round 21). */
+  display: flex; align-items: center; justify-content: flex-start; gap: 8px 12px;
   /* At narrow widths or with long labels the buttons drop to their own line instead of
      overlapping the dashes or the toast (round 11). */
   flex-wrap: wrap;
   padding-block: 12px 14px; padding-inline: 20px 16px;
   border-block-start: 1px solid var(--_border);
 }
+/* Back opens the footer (round 21): its glyph on the card's 20px edge (the 28px box has 7px each
+   side), then the dashes. Dimmed on step 1 rather than hidden, so nothing shifts between steps. */
+.foot > .back { margin-inline: -7px -4px; }
+.icon-btn[aria-disabled="true"] { opacity: .35; cursor: not-allowed; }
 .foot-l { display: flex; align-items: center; gap: 8px; min-inline-size: 0; font-size: var(--_t13); color: var(--_muted); font-variant-numeric: tabular-nums; }
 .foot-r { display: flex; gap: 8px; margin-inline-start: auto; }
 .btn {
@@ -351,13 +357,17 @@ textarea::placeholder, input::placeholder { color: var(--_muted); }
 @media (hover: none) { .keys { display: none; } }
 kbd { font: inherit; font-size: var(--_t12); padding: 1px 5px; border: 1px solid var(--_border); border-radius: 5px; }
 
-.dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+/* By status (round 21): the current step ink, answered muted, skipped dashed, not reached light. */
 .dot { display: block; inline-size: 14px; block-size: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--_border); }
-.dot.on { background: var(--_fg); }
+.dot.now { background: var(--_fg); }
+.dot.done { background: var(--_muted); }
 .dot.skip { background: repeating-linear-gradient(90deg, var(--_faint) 0 2px, transparent 2px 4px); }
 /* A settled step is a button: a taller invisible hit area keeps it easy to click. */
 button.dot { position: relative; cursor: pointer; }
-button.dot::after { content: ""; position: absolute; inset: -10px -2px; }
+/* 24×24 and never overlapping (14 + 10px gap = 24px apart), on every pointer, not just touch (round 21;
+   WCAG 2.5.8). It was 18px wide on a mouse. */
+button.dot::after { content: ""; position: absolute; inset: -10px -5px; }
 button.dot:focus-visible { box-shadow: var(--_focus); }
 
 .toast {
@@ -539,7 +549,9 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
    would keep its fill. Hover fills are instant: they happen tens of times a day (DESIGN §7). */
 @media (hover: hover) and (pointer: fine) {
   /* A busy button is aria-disabled, not disabled (round 11), so both are excluded. */
-  .icon-btn:hover, .btn:not(.primary):not(.link):not(:disabled):not([aria-disabled="true"]):hover { background: var(--_hover); }
+  .icon-btn:not([aria-disabled="true"]):hover, .btn:not(.primary):not(.link):not(:disabled):not([aria-disabled="true"]):hover { background: var(--_hover); }
+  /* A dash you can jump to answers the pointer: it thickens and turns ink, instantly (round 21). */
+  button.dot:hover { background: var(--_fg); transform: scaleY(1.5); }
   .btn.primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in srgb, var(--_fg) 88%, var(--_bg)); border-color: transparent; }
   .btn.link:hover { text-decoration: underline; text-underline-offset: 2px; }
   .chip:not([aria-checked="true"]):not([aria-pressed="true"]):not([aria-disabled="true"]):hover { background: var(--_hover); }
@@ -557,7 +569,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .btn:not(.link), .chip, .icon-btn { transition: transform var(--_duration) var(--_ease); }
   [data-pointer] .btn:not(.link):active:not(:disabled):not([aria-disabled="true"]),
   [data-pointer] .chip:active:not([aria-disabled="true"]),
-  [data-pointer] .icon-btn:active { transform: scale(.97); }
+  [data-pointer] .icon-btn:not([aria-disabled="true"]):active { transform: scale(.97); }
   /* Checkbox (round 15, Emil Kowalski's animate skill): pointer only, since keyboard toggles never
      animate. The box gives under the press (.95: the low end of the subtle range, for a 16px box),
      and the tick is revealed left to right like a pen, from the stroke's own edge (~16% of the icon
@@ -575,9 +587,6 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 
 /* Touch: controls drawn smaller than 44px keep a 44px hit area; the drawing doesn't change (BUILD §5.3). */
 @media (pointer: coarse) {
-  /* The jump-back dashes get 24px targets that don't overlap (round 12). */
-  .dots { gap: 10px; }
-  button.dot::after { inset: -10px -5px; }
   /* Below 16px, iOS zooms the whole page when a field is focused (round 11). */
   textarea, .chip-input { font-size: var(--_t16); }
   .btn, .icon-btn { position: relative; }
@@ -606,5 +615,5 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"], .dot { forced-color-adjust: none; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"] { background: Highlight; color: HighlightText; border-color: Highlight; }
   .dot { background: GrayText; }
-  .dot.on { background: CanvasText; }
+  .dot.now, .dot.done { background: CanvasText; }
 }

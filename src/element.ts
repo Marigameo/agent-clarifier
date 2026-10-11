@@ -65,6 +65,8 @@ export class AgentClarifier extends Base {
   #shownStep = 0;
   /** Move focus into the card at the next view that can take it (replace mode open, reopen). */
   #wantFocus = false;
+  /** The step change came from the Back button: keep focus on Back, so repeated presses keep going back. */
+  #focusBack = false;
   /** Polite live region (BUILD §5.4). Lives outside the views, so it survives view swaps. */
   #live: HTMLElement;
 
@@ -315,6 +317,7 @@ export class AgentClarifier extends Base {
     }
     const touch = matchMedia('(pointer: coarse)').matches;
     const target =
+      (this.#focusBack ? v.querySelector<HTMLElement>('.foot [data-act="back"]') : null) ??
       (name === 'review' ? v.querySelector<HTMLElement>('.foot .btn.primary') : null) ??
       v.querySelector<HTMLElement>('[data-opt][tabindex="0"]') ??
       (touch ? null : v.querySelector<HTMLElement>('textarea')) ??
@@ -562,7 +565,13 @@ export class AgentClarifier extends Base {
   #onAct(act: string, questionId?: string, step?: string): void {
     const q = this.#current();
     switch (act) {
-      case 'back': return this.#dispatch({ type: 'BACK' });
+      case 'back':
+        // Focus stays on Back in the new step (round 21): landing on an option would make a second
+        // Enter pick it. The ← key still lands on the options.
+        this.#focusBack = true;
+        this.#dispatch({ type: 'BACK' });
+        this.#focusBack = false;
+        return;
       case 'minimise': return this.#dispatch({ type: 'MINIMISE' });
       case 'reopen': return this.#dispatch({ type: 'REOPEN' });
       case 'undo': return this.#dispatch({ type: 'UNDO' });

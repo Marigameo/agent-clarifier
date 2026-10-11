@@ -9,21 +9,17 @@ export function sourceLine(ctx: Ctx): HTMLElement | null {
   return source ? h('div', { class: 'source' }, h('span', { class: 't' }, ctx.t('askedBy', { source }))) : null;
 }
 
-/** Header: [Back] Title / subtitle [step] [Minimise]. Back and step are optional. */
+/** Header: Title / subtitle [step] [Minimise]. The step count is optional. */
 export function header(
   ctx: Ctx,
   title: string,
   sub: string | undefined,
-  opts: { back?: boolean; step?: boolean } = {},
-): { el: HTMLElement; back: HTMLButtonElement | null; step: HTMLElement | null } {
-  const back = opts.back
-    ? h('button', { class: 'icon-btn', type: 'button', 'data-act': 'back', 'aria-label': ctx.t('back') }, icon('back', 'flip'))
-    : null;
+  opts: { step?: boolean } = {},
+): { el: HTMLElement; step: HTMLElement | null } {
   const step = opts.step ? h('span', { class: 'step', part: 'step' }) : null;
   const el = h(
     'div',
     { class: 'head', part: 'header' },
-    back,
     h('h2', { class: 'title', id: 'title', part: 'title' }, bdi(title), sub ? h('span', { class: 'sub' }, bdi(sub)) : null),
     h(
       'div',
@@ -32,7 +28,16 @@ export function header(
       h('button', { class: 'icon-btn', type: 'button', 'data-act': 'minimise', 'aria-label': ctx.t('minimise') }, icon('minimise')),
     ),
   );
-  return { el, back, step };
+  return { el, step };
+}
+
+/**
+ * Back, at the footer's start (round 21). The card is anchored at its bottom, so the footer is the
+ * edge that stays put while steps change height: a control people press repeatedly belongs there.
+ * It sits outside the toast slot, so a toast never hides it.
+ */
+export function backButton(ctx: Ctx): HTMLButtonElement {
+  return h('button', { class: 'icon-btn back', type: 'button', 'data-act': 'back', 'aria-label': ctx.t('back') }, icon('back', 'flip'));
 }
 
 /** The send-failed banner, shared by every view that can send. Hidden until a send fails. */

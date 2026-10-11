@@ -2,7 +2,7 @@
 
 import { canContinue, draftOf, isSettled, needsReview, picks, questionState } from '../model/selectors';
 import type { NormalizedOption, NormalizedQuestion } from '../model/types';
-import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
+import { backButton, button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
 import { attr, bdi, h, icon, rove, text } from './dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './types';
 
@@ -99,7 +99,7 @@ export function stepView(init: Ctx): View {
   const s0 = init.s;
   const qs = s0.q?.questions ?? [];
   const q = qs[s0.step]!;
-  const head = header(init, q.prompt, q.description, { back: true, step: true });
+  const head = header(init, q.prompt, q.description, { step: true });
 
   // Body: option rows, or a text field
   const rows: HTMLElement[] = [];
@@ -141,7 +141,8 @@ export function stepView(init: Ctx): View {
   const left = h('span', { class: 'foot-l' });
   const skip = button('skip', 'ghost');
   const primary = button('next', 'primary');
-  const foot = h('div', { class: 'foot', part: 'footer' }, left, h('div', { class: 'foot-r' }, skip, primary));
+  const back = backButton(init);
+  const foot = h('div', { class: 'foot', part: 'footer' }, back, left, h('div', { class: 'foot-r' }, skip, primary));
 
   const top = h('div', { class: 'top' }, sourceLine(init), head.el);
   // A card with no review step sends from here, so it shows the failure here too (round 11).
@@ -155,7 +156,9 @@ export function stepView(init: Ctx): View {
     const last = s.step === qs.length - 1;
     const busy = s.status === 'submitting';
 
-    attr(head.back!, 'hidden', s.step === 0);
+    // On step 1 Back stays, dimmed, so nothing shifts between steps; focusable, because pressing Back
+    // from step 2 leaves focus on it as it becomes unavailable (round 11).
+    attr(back, 'aria-disabled', s.step === 0 ? 'true' : null);
     text(head.step!, ctx.t('stepOf', { n: s.step + 1, total: qs.length }));
 
     for (const row of rows) {
@@ -185,7 +188,10 @@ export function stepView(init: Ctx): View {
         { class: 'dots' },
         qs.map((x, i) => {
           const d2 = draftOf(s, x.id);
-          const cls = questionState(x, d2) === 'skipped' ? 'skip' : i <= s.step ? 'on' : '';
+          // By status, not position (round 21): the current step, answered (or decided for me),
+          // skipped, or not reached. Going back no longer makes answered later steps look unvisited.
+          const state = questionState(x, d2);
+          const cls = i === s.step ? 'now' : state === 'skipped' ? 'skip' : state === 'unanswered' ? '' : 'done';
           // Settled steps are buttons, so you can jump straight back to one (PLAN §6).
           return i !== s.step && isSettled(x, d2)
             ? h('button', { class: `dot ${cls}`, type: 'button', 'data-act': 'goto', 'data-step': i, 'aria-label': ctx.t('goTo', { n: i + 1, label: x.label }) })

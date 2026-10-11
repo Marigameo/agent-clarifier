@@ -301,7 +301,7 @@ interface State {
   - `replace`: focus the recommended option, else the first one.
   - `dock`: **don't steal focus.** The user may be typing in the composer. Focus moves in on the first keypress or click inside.
   - **On touch screens (`pointer: coarse`), never auto-focus a text field**, on open or on a step change. It would pop the keyboard up over the question. If the step is a text question, focus the card container instead, and the keyboard opens when the user taps the field.
-- **On step change:** focus the new step's recommended option, or the previously selected one.
+- **On step change:** focus the new step's recommended option, or the previously selected one. **Except after the Back button** (round 21): focus stays on Back in the new step, so repeated Enter keeps going back and never picks an option. On step 1 Back is dimmed but stays focusable (`aria-disabled`).
 - **On minimise:** focus the composer (in replace mode it's shown again). **On reopen:** restore the element that was focused.
 - **When the record appears:** don't move focus. Announce it instead (§5.4).
 - Focus is never lost to `<body>`. If the focused element is removed, focus moves to the card container (`tabindex=-1`).
