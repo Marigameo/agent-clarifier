@@ -86,8 +86,8 @@ From round 8, **Mari delegates design and copy calls to Claude** and will audit 
 
 ## Status (end of the build on 10 Oct 2026)
 
-M1–M7 are built. 569 tests are green (`pnpm check`, after round 18). The Definition of done in BUILD §11 shows what's still open:
-- the size decision (21.73 KB after round 17, against a 12 KB target; the guard is 22 KB until the size round, which Mari wants to do separately after polish)
+M1–M7 are built. 574 tests are green (`pnpm check`, after round 19). The Definition of done in BUILD §11 shows what's still open:
+- the size decision (21.82 KB after round 19, against a 12 KB target; the guard is 22 KB until the size round, which Mari wants to do separately after polish)
 - the manual VoiceOver and real-phone passes
 - Svelte 5
 - publishing, which needs Mari's go-ahead
@@ -106,6 +106,7 @@ Mari shares one skill at a time. Claude runs it as a read-only audit and present
 - **Round 16 · re-check of the skill audits** after rounds 14–15: all held except two round-14 side effects, both fixed. In contrast themes an open "Something else" lost round 11's edge. A long custom label was cut as a placeholder, fixed by making the field the growing `<textarea>` BUILD §8.2 always specified (row and field share a grid cell; long answers wrap). Report: `process/16-skill-recheck/audit.md`. **Re-run the skill checks after any change to the option rows.**
 - **Round 17 · the pick-limit notice.** "Up to N picks. Unpick one first" is ink text with no fill, not a black toast and not orange: the ink fill is only for toasts with Undo ("this acts"), and danger is only for failures. It fades only. DESIGN §13.
 - **Round 18 · stuck-header padding.** The source line's margin collapsed out of the sticky header, so "Asked by" touched the card edge once scrolled. Fixed with `display: flow-root` on `.top`. DESIGN §14.
+- **Round 19 · space between filled rows** (Mari chose *Gap* from `design/explorations/02-row-spacing/`). Fills are drawn 2px inside option and review rows (a transparent border, clip to the padding box, 2px less padding), so neighbours show a 4px gap and heights don't change. Row states use `background-color`, never the `background` shorthand, which resets the clip. Off in contrast themes. DESIGN §15.
 - **Checking motion:** `node scripts/motion-strips.mjs <dir>` slows Chrome's animation clock 10× and writes filmstrips. `scripts/shots.mjs` also takes `hover:`, `tap:` and `touch=1`.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

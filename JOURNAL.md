@@ -849,6 +849,38 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 
 ---
 
+## Round 19 · Space between filled rows (11 Oct 2026)
+
+**Brief (mine):** when several rows are filled at once they look like they overlap: two picks, a pick next to a hovered row, and skipped rows on review. Should there be space between them?
+
+**Exploration (Claude):** `design/explorations/02-row-spacing/`. CSS injected into the live component, compared side by side in light, dark and 375px:
+- **Gap:** each fill is drawn 2px inside its row.
+- **Merge:** filled neighbours join into one block.
+
+Claude recommended Gap: one rule for every case, each answer stays its own object, and no layout change. Merge only joins rows in the same state, and on review it made two skipped questions read as one item.
+
+**My call: Gap.**
+
+**Built:**
+- A 2px transparent block border on option and review rows, with the fill clipped to the padding box and 2px less padding. Rows keep their exact heights.
+- The radius `8px / 10px` keeps the clipped fill's corners round.
+- Dividers moved onto the row boundary.
+
+**Caught while building (Claude):**
+- **Contrast themes paint transparent borders** (round 11's focus-ring trick relies on it), so every row would have been lined. The inset is off there, with the padding back.
+- **The `background` shorthand on selected and hover rows reset `background-clip`,** so picks still painted into the gap. The first renders looked right only because a keyboard focus ring sat on the row. A test measuring the fill's box caught it. Row states now set `background-color`. Re-rendered with the mouse only, so no ring hides anything.
+- One break slipped past at first: giving the padding back can't be seen on 52px rows. A test with a described row now catches it.
+- **A process slip:** the first commit went in without these docs (a script error), with a stale DESIGN snapshot in `process/19-row-gap/`. It was amended before pushing, so the round's snapshot matches.
+
+**Verified:**
+- 5 tests. 7 deliberate breaks, caught 7/7.
+- Contrast themes and compact density checked on round 16's stress page.
+- 574 green; 21.82 KB.
+
+**Artifacts:** `process/19-row-gap/` (round-plan.md, PLAN.md, DESIGN.md, `renders/before/` 8, `renders/after/` 8), `design/explorations/02-row-spacing/`.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -867,4 +899,5 @@ Two scenarios were observed and left alone, with reasons: an empty prompt is dro
 - Round 15 is the "look closer" beat: the animation I wanted to copy didn't exist. Frame by frame, Claude's checkbox fills in a single frame; the feel came from the screen recorder's click circle. We animated anyway, but by the rules: what to animate came from a skill whose first job is saying no (keyboard toggles, the single key, the uncheck, a bounce), and what's left is a 0.8px press and a 120ms tick.
 - Round 16 is the "audits expire" beat: every skill had passed, and two rounds of my own requests later, one of round 11's accessibility fixes had quietly gone (round 14 deleted the box that carried it). Re-running the checks after changes is part of the work, not a formality. And the fix for the other finding was already written down: the spec said textarea; the build had drifted to an input.
 - Round 17 is the "colour is a word" beat: I asked for a warning colour, and the answer was that the message wasn't a warning and wasn't an action either. So it lost its colour instead of gaining one. A small honesty beat too: a claimed precedent ("round 9 rejected that") turned out not to exist, and saying so mattered more than the answer.
+- Round 19's beat: a screenshot can agree with you for the wrong reason. The "after" render showed the gap, but only because a focus ring drew it; the actual fill still bled through (a CSS shorthand quietly reset the clip). The test that measured the fill's box is what told the truth.
 

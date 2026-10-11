@@ -1,0 +1,8 @@
+/* Gap: every row's fill is drawn 2px inside its box (a transparent border, background clipped to the
+   padding box), so two filled neighbours show a 4px gap. Padding drops by the same 2px: no layout change.
+   Radius 8px / 10px so the clipped fill keeps round 8px corners. Dividers move onto the row boundary. */
+.opt, .review .row { border-block: 2px solid transparent; background-clip: padding-box; border-radius: 8px / 10px; }
+.opt { padding-block: 8px; }
+.review .row { padding-block: 9px; }
+:host([density="compact"]) .opt { padding-block: 6px; }
+:where(.opt + .opt, .opt + .other-wrap > .opt, .other-wrap + .opt)::before, .review .row + .row::before { inset-block-start: -2px; }

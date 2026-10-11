@@ -1,0 +1,6 @@
+/* Merge: filled neighbours join into one block; only the run's outer corners stay round. */
+.opt[aria-checked="true"] + .opt[aria-checked="true"],
+.opt[aria-checked="true"] + .other-wrap > .opt[aria-checked="true"],
+.review .flag + .flag { border-start-start-radius: 0; border-start-end-radius: 0; }
+.opt[aria-checked="true"]:has(+ .opt[aria-checked="true"], + .other-wrap > .opt[aria-checked="true"]),
+.review .flag:has(+ .flag) { border-end-start-radius: 0; border-end-end-radius: 0; }

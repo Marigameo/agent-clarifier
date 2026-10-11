@@ -201,20 +201,26 @@ button { font: inherit; color: inherit; }
 
 /* ── options ────────────────────────────────────────────────────────── */
 .list { margin: 0; padding: 0 8px 8px; }
+/* Fills are drawn 2px inside the row (a transparent border, the background clipped to the padding
+   box), so two filled neighbours (picks, a hover, review flags) show a 4px gap instead of pinching
+   into one shape. Padding gives back the 2px: heights don't change. The vertical radius is 2px
+   larger so the clipped fill keeps round corners (round 19). */
 .opt {
   position: relative;
   display: flex; align-items: center; gap: 12px;
-  min-block-size: 52px; padding: 10px 12px;
-  border-radius: var(--_radius-sm);
+  min-block-size: 52px; padding: 8px 12px;
+  border-block: 2px solid transparent; background-clip: padding-box;
+  border-radius: var(--_radius-sm) / calc(var(--_radius-sm) + 2px);
   cursor: pointer; user-select: none;
 }
 /* "Something else" sits in a wrapper (with its field), so it's reached as `.opt + .other-wrap > .opt`.
    :where() keeps this at zero weight, so every rule that hides a divider wins, wrapped row included. */
 :where(.opt + .opt, .opt + .other-wrap > .opt, .other-wrap + .opt)::before {
-  content: ""; position: absolute; inset-block-start: 0; inset-inline: 12px;
+  /* -2px: on the row boundary, the middle of the gap between fills (round 19). */
+  content: ""; position: absolute; inset-block-start: -2px; inset-inline: 12px;
   border-block-start: 1px solid var(--_border);
 }
-.opt[aria-checked="true"], .opt[aria-pressed="true"] { background: var(--_selected); }
+.opt[aria-checked="true"], .opt[aria-pressed="true"] { background-color: var(--_selected); } /* -color: the shorthand would reset the clip (round 19) */
 /* A filled or keyboard-focused row hides the hairlines on both its edges, so none poke out at its
    corners (focus added in round 14). */
 .opt:is([aria-checked="true"], [aria-pressed="true"])::before,
@@ -441,16 +447,18 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .review dd.act { justify-self: end; }
 .review .row {
   display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center;
-  padding: 11px 12px; border-radius: var(--_radius-sm);
+  padding: 9px 12px; /* + the 2px fill inset, as option rows (round 19) */
+  border-block: 2px solid transparent; background-clip: padding-box;
+  border-radius: var(--_radius-sm) / calc(var(--_radius-sm) + 2px);
 }
 .review .row { position: relative; }
 /* Dividers start where the text starts and never cut into a fill's corners, like option rows (round 12). */
-.review .row + .row::before { content: ""; position: absolute; inset-block-start: 0; inset-inline: 12px; border-block-start: 1px solid var(--_border); }
+.review .row + .row::before { content: ""; position: absolute; inset-block-start: -2px; inset-inline: 12px; border-block-start: 1px solid var(--_border); }
 .review .flag::before, .review .flag + .row::before { border-color: transparent; }
 .review dt { font-size: var(--_t12); color: var(--_muted); overflow-wrap: anywhere; }
 .review dd { margin: 0; overflow-wrap: anywhere; }
 .review .gap dd:not(.act) { color: var(--_muted); }
-.review .flag { background: var(--_danger-soft); }
+.review .flag { background-color: var(--_danger-soft); }
 .review .flag dt { color: var(--_danger); }
 /* Narrow cards (phones, sidebars): the footer keeps the dashes and buttons; the pick count
    (also in the description, and enforced with a message) and key hints step aside. */
@@ -513,7 +521,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 :host([density="compact"]) .head { padding-block: 12px 6px; padding-inline: 16px 12px; }
 :host([density="compact"]) .source { margin-inline: 16px; }
 :host([density="compact"]) .list, :host([density="compact"]) .review { padding-inline: 6px; }
-:host([density="compact"]) .opt { min-block-size: 44px; padding: 8px 10px; }
+:host([density="compact"]) .opt { min-block-size: 44px; padding: 6px 10px; }
 :host([density="compact"]) .opt::before { inset-inline: 10px; }
 :host([density="compact"]) .field { padding-inline: 6px; }
 :host([density="compact"]) .field textarea { padding-inline: 10px; }
@@ -532,7 +540,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .btn.primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in srgb, var(--_fg) 88%, var(--_bg)); border-color: transparent; }
   .btn.link:hover { text-decoration: underline; text-underline-offset: 2px; }
   .chip:not([aria-checked="true"]):not([aria-pressed="true"]):not([aria-disabled="true"]):hover { background: var(--_hover); }
-  .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--_hover); }
+  .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background-color: var(--_hover); }
   .opt:hover::before, .opt:hover + .opt::before,
   .opt:hover + .other-wrap > .opt::before, .other-wrap:has(> .opt:hover) + .opt::before { border-color: transparent; }
   .opt:hover .trail { visibility: visible; }
@@ -586,6 +594,12 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .other-wrap:has(> .other-field:not([hidden])) > .opt { outline: 1px solid CanvasText; outline-offset: -1px; }
   .other-wrap:has(> .other-field [data-input]:focus) > .opt { outline: 2px solid Highlight; outline-offset: -2px; }
   .key.box { border: 1.5px solid CanvasText; }
+  /* Transparent borders are painted CanvasText here, and fills aren't drawn, so the fill inset goes:
+     no border, the padding back (round 19). */
+  .opt, .review .row { border-block-width: 0; padding-block: 10px; }
+  :host([density="compact"]) .opt { padding-block: 8px; }
+  .review .row { padding-block: 11px; }
+  :where(.opt + .opt, .opt + .other-wrap > .opt, .other-wrap + .opt)::before, .review .row + .row::before { inset-block-start: 0; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"], .dot { forced-color-adjust: none; }
   .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"] { background: Highlight; color: HighlightText; border-color: Highlight; }
   .dot { background: GrayText; }

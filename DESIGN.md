@@ -76,6 +76,7 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 | **16px** inline end in the header | header | ✅ Optical: the 28px icon button has 6px of empty space around its 16px glyph, so the box sits closer to the edge and the *glyph* lines up |
 | **Compact**: 16px header, 8 + 10 = **18px** rows | compact density | ⚠️ (F6) Two different edges, 2px apart, which breaks the one-edge rule |
 | **8px** list inset | around the option rows | ✅ It lets a row's hover fill have rounded corners that don't touch the card's edge |
+| **2px** fill inset (top and bottom) | option rows, review rows | ✅ (round 19) Fills are drawn inside the row, so filled neighbours (picks, a hover, review flags) show a 4px gap instead of pinching into one shape. The padding gives the 2px back, so heights don't change; dividers sit on the row boundary, the middle of the gap. Not in contrast themes, where transparent borders are painted and fills aren't drawn |
 | **12px** divider inset | between rows | ✅ Dividers start where the content starts (the row padding), so they never cut into a fill's rounded corners. They're hidden next to a filled row, where the fill already separates |
 | **52px** row (comfortable) | option rows | ❓ 44px (the touch minimum) + 8px. It feels calm, but the reason is weak. Keep it, or derive it (F12) |
 | **44px** row (compact) | option rows | ✅ The minimum comfortable touch target (Apple HIG, WCAG 2.5.5) |
@@ -306,4 +307,18 @@ Mari asked whether "Up to 2 picks. Unpick one first" should be a warning colour.
 | What broke | Fix | Why this fix |
 |---|---|---|
 | Scrolling a card with a source line ("Asked by…") stuck the header with "Asked by" 1px from the card edge: congested, as if the header had no top padding (Mari spotted it on the long-content scenario) | `display: flow-root` on `.top` | The source line's 14px top margin collapsed through the header, so it sat *outside* the sticky box; when the box stuck, the margin stayed behind. `flow-root` keeps child margins inside the header, so the stuck header looks exactly like the unscrolled one. All four views share `.top` (step, all at once, review, record), so one line fixes each. It also makes round 11's focus scroll-padding (the header's height) include the margin |
+
+---
+
+## 15. Space between filled rows (round 19)
+
+Mari: filled neighbours "look like they overlap, in multiple places". Exploration: `design/explorations/02-row-spacing/` (today, Gap, Merge). **Mari's call: Gap.**
+
+| Decision | Why |
+|---|---|
+| **Gap**, not Merge | One rule covers every meeting of fills: pick + pick, pick + hover, hover + focus, review flags. Each answer stays its own object. Merge only joins same-state rows (a hover beside a pick still pinched) and made two skipped questions read as one item |
+| A 2px transparent block border, the fill clipped to the padding box, padding 2px less | No layout change at all: rows keep 52px (and described rows their height). The focus ring is an inset shadow, so it sits inside the same box as the fill |
+| Radius `radius-sm / (radius-sm + 2px)` | The clipped fill keeps round 8px corners |
+| `background-color`, never the `background` shorthand, on row states | The shorthand resets `background-clip`: selected rows painted into the gap again. Caught by a test, not by the renders (a focus ring hid it) |
+| Contrast themes: no border, padding back | Transparent borders are painted in the system text colour there (round 11's focus trick relies on it), which would have lined every row |
 
