@@ -69,18 +69,23 @@ describe('the key answers the hover with its row', () => {
   });
 });
 
-// Round 21 add-on 2: the pencil and Decide-for-me keys kept key-bg (#f0f0f0) on a picked row (#ececec),
-// a lighter square on the fill, and their icon stayed grey while the label turned ink. Picked, they take
-// the row's fill and the label's ink. A pressed Decide for me (text questions) also keeps its fill on hover.
-describe('picked, the plain keys take the row fill and the label ink', () => {
+// Round 21 add-on 2: the pencil and Decide-for-me keys stayed a grey key on a picked row (a lighter square
+// on the fill, the icon grey while the label turned ink). Ink on the fill was tried next and was too quiet,
+// so picked, they're filled like every other picked key. A pressed Decide for me also keeps it on hover.
+describe('picked, the plain keys are filled like every picked key', () => {
   const bg = (el: Element) => getComputedStyle(el).backgroundColor;
   const matches = (r: HTMLElement) => {
-    const key = r.querySelector('.key')!;
-    expect(bg(key)).toBe(bg(r));
-    expect(getComputedStyle(key).color).toBe(getComputedStyle(r.querySelector('.label')!).color);
+    const key = getComputedStyle(r.querySelector('.key')!);
+    // The reference: what the theme's accent fill and its text resolve to.
+    const ref = r.ownerDocument.createElement('span');
+    ref.style.cssText = 'background: var(--_accent); color: var(--_accent-fg)';
+    r.after(ref);
+    expect([key.backgroundColor, key.color]).toEqual([bg(ref), getComputedStyle(ref).color]);
+    expect(key.backgroundColor).not.toBe(bg(r));
+    ref.remove();
   };
 
-  it('"Something else": the pencil key matches its picked row', async () => {
+  it('"Something else": the pencil key is filled once picked, and stays so while typing', async () => {
     const m = mount(HOTEL);
     await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
     await userEvent.click(row(m, '__other'));
@@ -90,7 +95,7 @@ describe('picked, the plain keys take the row fill and the label ink', () => {
     matches(row(m, '__other'));
   });
 
-  it('Decide for me: the key matches its picked row (seen again after Back)', async () => {
+  it('Decide for me: the key is filled once picked (seen again after Back)', async () => {
     const m = mount(HOTEL);
     await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
     await userEvent.keyboard(' ');
@@ -103,7 +108,7 @@ describe('picked, the plain keys take the row fill and the label ink', () => {
     matches(row(m, '__delegate'));
   });
 
-  it('a pressed Decide for me (text question) keeps its picked fill and key under the mouse', async () => {
+  it('a pressed Decide for me (text question) keeps its picked fill and filled key under the mouse', async () => {
     document.dispatchEvent(new PointerEvent('pointerdown'));
     const m = mount({ id: 't', questions: [{ id: 'n', prompt: 'Anything else?', type: 'text', delegate: true }, { id: 'm', prompt: 'And?', type: 'text' }] });
     await onStep(m, 'Anything else');

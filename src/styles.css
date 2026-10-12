@@ -246,10 +246,9 @@ button { font: inherit; color: inherit; }
   font-size: var(--_t12); font-variant-numeric: tabular-nums;
 }
 .key .i { inline-size: 14px; block-size: 14px; }
-.opt[aria-checked="true"] > .key:not(.plain) { background: var(--_accent); color: var(--_accent-fg); }
-/* The pencil and "Decide for me" keys take the row's fill once picked, so no lighter square sits on it,
-   and their icon turns ink with the label (.quiet), so the row reads as picked in one colour. */
-.opt:is([aria-checked="true"], [aria-pressed="true"]) > .key.plain { background: var(--_selected); color: var(--_fg); }
+/* Every picked key is filled, the pencil and "Decide for me" included: an open "Something else" is a pick
+   too. Ink on the fill was tried first and was too quiet to notice (round 21 add-on, explorations/03). */
+.opt:is([aria-checked="true"], [aria-pressed="true"]) > .key { background: var(--_accent); color: var(--_accent-fg); }
 /* 16px, the common checkbox size, centred in the 26px key slot so labels keep their edge. The whole
    row is the target, so the box needn't be big (round 14; it was the full 26px). */
 .key.box {
@@ -619,8 +618,8 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   :host([density="compact"]) .opt { padding-block: 8px; }
   .review .row { padding-block: 11px; }
   :where(.opt + .opt, .opt + .other-wrap > .opt, .other-wrap + .opt)::before, .review .row + .row::before { inset-block-start: 0; }
-  .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"], .dot { forced-color-adjust: none; }
-  .opt[aria-checked="true"] > .key:not(.plain), .chip[aria-checked="true"], .chip[aria-pressed="true"] { background: Highlight; color: HighlightText; border-color: Highlight; }
+  .opt:is([aria-checked="true"], [aria-pressed="true"]) > .key, .chip[aria-checked="true"], .chip[aria-pressed="true"], .dot { forced-color-adjust: none; }
+  .opt:is([aria-checked="true"], [aria-pressed="true"]) > .key, .chip[aria-checked="true"], .chip[aria-pressed="true"] { background: Highlight; color: HighlightText; border-color: Highlight; }
   .dot { background: GrayText; }
   .dot.now, .dot.done { background: CanvasText; }
 }

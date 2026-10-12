@@ -949,10 +949,15 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 - **A pressed Decide for me lost its fill under the mouse** (Claude flagged it from the CSS, I asked to check it; confirmed in the browser). On text questions Decide for me is a toggle button (`aria-pressed`), and the hover fill and hover key skipped only `aria-checked` rows. Hovering a pressed one showed the lighter hover fill (#f5f5f5 under #ececec · #292929 under #303030) with a dark key square, so it looked unpicked. Both hover rules now skip `aria-pressed` too.
 - Measured before and after in light and dark across 7 states (rest, open, typing, blurred, after Back, pressed and hovered, mouse away): all now match the fill, with the icon ink with the label. 1 new test and 2 extended in `hover-sync.test.ts`. 3 deliberate breaks (icon left grey, hover fill on pressed rows, hover key on pressed rows), caught 3/3. Renders: `process/21d-quiet-row-ink/renders/` (before and after: "Something else" while typing in light, dark and phone; pressed Decide for me under the mouse in light and dark).
 
+**The pencil, second pass (I chose B):** after the ink change I still couldn't see a difference. In my screenshot the pencil had gone from #666 to #1c1c1c, but a 14px stroke darkening beside a grey placeholder doesn't read as "active", so Claude's first call was too quiet.
+- Claude rendered three options in light and dark (`design/explorations/03-active-pencil/compare.png`): **A** ink icon (what shipped), **B** the accent-filled key every other picked option gets, **C** an accent icon with no fill (reads like a link). Claude recommended B: typing in "Something else" *is* picking it, so it should look like its neighbours do when picked. The earlier worry, two blues with the focus ring, didn't hold up once they were seen together. **I chose B.**
+- Applied by dropping the `:not(.plain)` exception: one rule now fills every picked key, checked or pressed, so Decide for me fills too. The forced-colors rule got the same change, so a picked plain key shows `Highlight` there, where before it had no high-contrast signal at all.
+- Tests: the 3 picked-key tests now expect the accent fill, measured against the theme's own accent. Putting `:not(.plain)` back fails all 3. Renders: `process/21e-pencil-filled/renders/after/` ("Something else" open and typing in light, dark, phone and RTL; pressed Decide for me under the mouse in light and dark; forced colors). The "before" is `21d-quiet-row-ink/renders/after/`.
+
 **Verified:**
 - 8 tests. 7 deliberate breaks, caught 7/7.
 - Renders: step 1 and 2, after jumping back, skipped, review, dash hover, dark, 375, 320, RTL.
-- 590 green (with the key hover, picked keys and quiet-row ink); **21.95 KB, close to the 22 KB guard** (the size round is still Mari's to schedule).
+- 590 green (with the key hover, picked keys, quiet-row ink and the filled pencil); **21.93 KB, close to the 22 KB guard** (the size round is still Mari's to schedule).
 
 **Artifacts:** `process/21-footer-nav/` (round-plan.md frozen before the change, PLAN.md, DESIGN.md, `renders/before/` 8, `renders/after/` 10).
 
