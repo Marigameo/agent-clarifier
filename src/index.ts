@@ -1,10 +1,10 @@
 // Public entry. Importing it defines <agent-clarifier> (once, and only in a browser).
-import { AgentClarifier } from './element';
-import type { ClarifyResult, Status } from './model/types';
+import { AgentClarifier } from './element.js';
+import type { ClarifyResult, Status } from './model/types.js';
 
 export { AgentClarifier };
-export { ask, type AskOptions } from './ask';
-export const VERSION = '0.0.0';
+export { ask, type AskOptions } from './ask.js';
+export const VERSION = '0.1.0';
 
 if (typeof customElements !== 'undefined' && !customElements.get('agent-clarifier')) {
   customElements.define('agent-clarifier', AgentClarifier);
@@ -41,5 +41,5 @@ export type {
   Answer,
   AnswerStatus,
   Status,
-} from './model/types';
-export type { Label, LabelKey, Labels, PluralForms } from './labels';
+} from './model/types.js';
+export type { Label, LabelKey, Labels, PluralForms } from './labels.js';

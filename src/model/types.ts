@@ -4,7 +4,7 @@
 //   so the reducer never has to ask "was this set?". Display-only text (title, description) may
 //   still be absent, because absence is a real value there.
 
-import type * as Act from './act';
+import type * as Act from './act.js';
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
@@ -82,7 +82,7 @@ export interface ClarifyResult {
 
 export interface Answer {
   status: AnswerStatus;
-  /** Option ids. [] when skipped or delegated. */
+  /** Option ids (a text question: its text). [] when skipped or delegated. */
   values: string[];
   /** Human-readable, ready to put in a prompt. */
   labels: string[];

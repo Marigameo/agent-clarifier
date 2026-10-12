@@ -19,7 +19,7 @@
   --_key-bg: var(--clarify-key-bg, #f0f0f0);
   --_accent: var(--clarify-accent, #3b5bdb);
   --_accent-fg: var(--clarify-accent-fg, #fff);
-  /* Opaque, so the badge keeps its contrast on a hovered or selected row (round 11). */
+  /* The halo on the minimised pill's dot. Opaque, so it follows an app's own accent (round 11). */
   --_accent-soft: var(--clarify-accent-soft, color-mix(in srgb, var(--_accent) 10%, var(--_bg)));
   --_danger: var(--clarify-danger, #c2410c);
   --_danger-soft: var(--clarify-danger-soft, color-mix(in srgb, var(--_danger) 8%, var(--_bg)));

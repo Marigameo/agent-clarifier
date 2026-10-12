@@ -111,3 +111,11 @@ describe('mergeLabels', () => {
     expect(DEFAULT_LABELS.skip).toBe('Skip');
   });
 });
+
+describe('round 23: label overrides', () => {
+  it('ignores plural forms that are not all strings, instead of throwing later', () => {
+    const labels = mergeLabels({ pickedOf: { other: 'x', one: 5 } as unknown as PluralForms });
+    expect(labels.pickedOf).toBe(DEFAULT_LABELS.pickedOf);
+    expect(() => format(labels.pickedOf, { n: 1, total: 2 })).not.toThrow();
+  });
+});

@@ -34,6 +34,7 @@ export default defineConfig({
         },
       },
     },
-    sourcemap: true,
+    // Maps stay local (they're not in the package), so the shipped files carry no sourceMappingURL to a missing file.
+    sourcemap: 'hidden',
   },
 });

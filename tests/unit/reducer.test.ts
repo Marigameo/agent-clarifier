@@ -799,3 +799,38 @@ describe('4 · the result', () => {
     expect(r.answers.extras!.status).toBe('skipped');
   });
 });
+
+describe('5 · round 23 review', () => {
+  const MAX2 = {
+    id: 'm',
+    questions: [{ id: 'x', prompt: 'X?', type: 'multi', max: 2, options: opts('a', 'b', 'c') }],
+  };
+  const other = (text: string): Action[] => [
+    { type: Act.OTHER_FOCUS, questionId: 'x' },
+    { type: Act.OTHER_INPUT, questionId: 'x', text },
+  ];
+
+  it('an open "Something else" holds a pick slot, so typing into it never goes past max', () => {
+    // Open the field first (still empty), then tick two: the second tick is refused.
+    const s = run(open(MAX2), [{ type: Act.OTHER_FOCUS, questionId: 'x' }, tog('x', 'a'), tog('x', 'b')]);
+    expect(s.drafts.x!.values).toEqual(['a']);
+    expect(s.toast).toEqual({ kind: 'limit', max: 2 });
+    const typed = run(s, other('zzz').slice(1));
+    expect(typed.drafts.x!.values.length + +typed.drafts.x!.otherActive).toBe(2);
+  });
+
+  it('GOTO never jumps past a step the user has not settled, even to one settled by its default', () => {
+    const q = {
+      id: 'g',
+      questions: [
+        { id: 'one', prompt: '1?', type: 'single', options: opts('a', 'b') },
+        { id: 'two', prompt: '2?', type: 'single', options: opts('a', 'b'), default: 'a' },
+      ],
+    };
+    const s = open(q);
+    expect(run(s, [{ type: Act.GOTO, step: 1 }])).toBe(s);
+    // Once step 1 is settled the default-settled step 2 is reachable.
+    const back = run(s, [sel('one', 'a'), { type: Act.BACK }]);
+    expect(run(back, [{ type: Act.GOTO, step: 1 }]).step).toBe(1);
+  });
+});

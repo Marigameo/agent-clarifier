@@ -9,8 +9,8 @@
 //   const q = fromElicitation(params, { source: serverName });
 //   if (q) return toElicitation(await ask(q, { container, transcript }), params);
 
-import { hash } from '../model/ids';
-import type { ClarifyResult, Option, Question, Questionnaire } from '../model/types';
+import { hash } from '../model/ids.js';
+import type { ClarifyResult, Option, Question, Questionnaire } from '../model/types.js';
 
 type Const = { const: string; title?: string };
 export interface PrimitiveSchema {
@@ -59,11 +59,13 @@ function choices(s: PrimitiveSchema): Option[] | null {
 export function fromElicitation(params: ElicitParams, opts: FromElicitationOptions = {}): Questionnaire | null {
   if (params.mode === 'url' || !params.requestedSchema) return null;
   const required = new Set(params.requestedSchema.required ?? []);
-  const questions: Question[] = Object.entries(params.requestedSchema.properties).map(([key, s]) => {
+  const props = params.requestedSchema.properties ?? {};
+  const questions: Question[] = Object.entries(props).map(([key, s]) => {
     const base = {
       id: key,
-      prompt: s.description ?? s.title ?? key,
-      label: s.title ?? key,
+      // `||`, not `??`: a blank description or title falls back too, instead of dropping the question (round 23).
+      prompt: s.description || s.title || key,
+      label: s.title || key,
       required: required.has(key),
       // The schema is closed: there's no free-text "Something else" in MCP.
       other: false,
@@ -91,7 +93,7 @@ export function fromElicitation(params: ElicitParams, opts: FromElicitationOptio
     return { ...base, type: 'text', ...(s.default !== undefined && !Array.isArray(s.default) ? { default: String(s.default) } : {}) };
   });
   return {
-    id: 'm' + hash(params.message + Object.keys(params.requestedSchema.properties).join()),
+    id: 'm' + hash(params.message + Object.keys(props).join()),
     title: params.message,
     flow: opts.flow ?? 'all',
     ...(opts.source ? { source: opts.source } : {}),
@@ -114,15 +116,19 @@ export function toElicitation(result: ClarifyResult, params: ElicitParams): Elic
   for (const [key, s] of Object.entries(props)) {
     const a = result.answers[key];
     if (!a || a.status !== 'answered') continue;
-    if (s.type === 'array') content[key] = a.values;
+    // Fewer than `minItems` (picks kept when replying in own words) would break the schema: left out (round 23).
+    if (s.type === 'array') {
+      if (a.values.length >= (s.minItems ?? 0)) content[key] = a.values;
+    }
     else if (s.type === 'boolean') content[key] = a.values[0] === 'true';
     else if (s.type === 'number' || s.type === 'integer') {
       const n = Number(a.values[0]);
-      if (Number.isFinite(n)) content[key] = s.type === 'integer' ? Math.trunc(n) : n;
+      // Not a number, or "3.7" for an integer: left out rather than changed (round 23).
+      if (Number.isFinite(n) && (s.type === 'number' || Number.isInteger(n))) content[key] = n;
     } else content[key] = a.values[0] ?? '';
   }
   // Never send an accept that breaks the server's own schema (a required field missing, say a
   // "number" that wasn't one): decline instead, and the server can ask again.
-  const missing = (params.requestedSchema?.required ?? []).some((k) => !(k in content));
+  const missing = (params.requestedSchema?.required ?? []).some((k) => !Object.hasOwn(content, k));
   return missing ? { action: 'decline' } : { action: 'accept', content };
 }

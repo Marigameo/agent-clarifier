@@ -1,11 +1,11 @@
 // All-at-once flow: every question in one card, answered in any order (PLAN §4).
 // Options become chips to save height. Errors show only after a send attempt.
 
-import { canContinue, draftOf, isInvalid, picks, progress } from '../model/selectors';
-import type { NormalizedQuestion } from '../model/types';
-import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
-import { attr, bdi, h, icon, rove, text } from './dom';
-import { DELEGATE, OTHER, type Ctx, type View } from './types';
+import { canContinue, draftOf, isInvalid, progress, ticked } from '../model/selectors.js';
+import type { NormalizedQuestion } from '../model/types.js';
+import { button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome.js';
+import { attr, bdi, h, icon, rove, text } from './dom.js';
+import { DELEGATE, OTHER, type Ctx, type View } from './types.js';
 
 interface Block {
   q: NormalizedQuestion;
@@ -156,7 +156,7 @@ export function formView(init: Ctx): View {
           : b.q.required
             ? ctx.t('required')
             : b.q.type === 'multi' && b.q.max < b.q.options.length + (b.q.other ? 1 : 0)
-              ? ctx.t('pickedOf', { n: picks(b.q, d), total: b.q.max })
+              ? ctx.t('pickedOf', { n: ticked(d), total: b.q.max })
               : '',
       );
       b.state.classList.toggle('ok', done);

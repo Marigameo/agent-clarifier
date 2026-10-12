@@ -163,9 +163,10 @@ export const DEFAULT_LABELS: Labels = {
   liveFailed: 'Couldn’t send your answers. They’re kept. Try again when you’re ready.',
 };
 
+// Every plural form must be a string, or format() would throw on a stray one (round 23).
 const isLabel = (v: unknown): v is Label =>
   typeof v === 'string' ||
-  (typeof v === 'object' && v !== null && typeof (v as { other?: unknown }).other === 'string');
+  (typeof v === 'object' && v !== null && typeof (v as { other?: unknown }).other === 'string' && Object.values(v).every((x) => typeof x === 'string'));
 
 /** Defaults with the app's overrides on top. Overrides that aren't a valid label are ignored. */
 export function mergeLabels(overrides?: Partial<Record<LabelKey, unknown>>): Labels {

@@ -16,8 +16,9 @@ import {
   isInvalid,
   isSettled,
   needsReview,
-  picks,
-} from './selectors';
+  reach,
+  ticked,
+} from './selectors.js';
 import type {
   Action,
   ClarifyRecord,
@@ -27,8 +28,8 @@ import type {
   Snapshot,
   State,
   Status,
-} from './types';
-import * as Act from './act';
+} from './types.js';
+import * as Act from './act.js';
 
 export const HISTORY_LIMIT = 50;
 
@@ -209,7 +210,7 @@ function reduce(s: State, a: Action, env: Env): State {
       if (!answering || !q || q.type !== 'multi' || !o || o.disabled) return s;
       const d = draftOf(s, q.id);
       const on = d.values.includes(o.id);
-      if (!on && picks(q, d) >= q.max) return { ...s, toast: { kind: 'limit', max: q.max } };
+      if (!on && ticked(d) >= q.max) return { ...s, toast: { kind: 'limit', max: q.max } };
       const chosen = on ? d.values.filter((v) => v !== o.id) : [...d.values, o.id];
       // Keep picks in the options' order, so the result reads the same however they were clicked.
       const values = q.options.map((x) => x.id).filter((id) => chosen.includes(id));
@@ -220,7 +221,7 @@ function reduce(s: State, a: Action, env: Env): State {
       const q = find(a.questionId);
       if (!answering || !q?.other) return s;
       const d = draftOf(s, q.id);
-      if (q.type === 'multi' && !d.otherActive && picks(q, d) >= q.max) {
+      if (q.type === 'multi' && !d.otherActive && ticked(d) >= q.max) {
         return { ...s, toast: { kind: 'limit', max: q.max } };
       }
       // A checkbox toggles: pressing a ticked "Something else" unticks it. Its text stays in the
@@ -287,7 +288,9 @@ function reduce(s: State, a: Action, env: Env): State {
     case Act.GOTO: {
       const q = qs[a.step];
       if (!answering || !sequential || !q || a.step === s.step) return s;
-      if (!isSettled(q, draftOf(s, q.id))) return s;
+      // Only as far as the user has been: every step up to the target must be settled, so a later
+      // question settled by its default can't be jumped to past one never seen (round 23).
+      if (a.step > reach(s) || !isSettled(q, draftOf(s, q.id))) return s;
       return { ...s, step: a.step };
     }
 

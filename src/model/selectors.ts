@@ -8,7 +8,7 @@ import type {
   ResultStatus,
   ReviewMode,
   State,
-} from './types';
+} from './types.js';
 
 /** Where one question stands. 'unanswered' also covers picks below `min`. */
 export type QuestionState = 'answered' | 'delegated' | 'skipped' | 'unanswered';
@@ -26,6 +26,10 @@ export function picks(q: NormalizedQuestion, d: Draft): number {
   if (q.type === 'text') return d.text.trim() ? 1 : 0;
   return d.values.length + (d.otherActive && d.other.trim() ? 1 : 0);
 }
+
+/** Ticked boxes, for the pick limit: an open "Something else" holds its slot even before it has text,
+ *  or typing into it could go past `max` (round 23). */
+export const ticked = (d: Draft): number => d.values.length + +d.otherActive;
 
 export function questionState(q: NormalizedQuestion, d: Draft): QuestionState {
   if (d.delegated) return 'delegated';
@@ -105,4 +109,11 @@ export function buildResult(
   };
   if (reply !== undefined) result.message = reply;
   return result;
+}
+
+/** The furthest step the user can jump to: the first one not settled yet (round 23). */
+export function reach(state: State): number {
+  const qs = state.q?.questions ?? [];
+  const i = qs.findIndex((q) => !isSettled(q, draftOf(state, q.id)));
+  return i < 0 ? qs.length : i;
 }

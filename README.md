@@ -7,7 +7,7 @@
 <form><textarea id="message"></textarea><button>Send</button></form>
 
 <script type="module">
-  import { ask } from 'https://cdn.jsdelivr.net/npm/@marigameo/agent-clarifier/dist/index.js';
+  import { ask } from 'https://cdn.jsdelivr.net/npm/@marigameo/agent-clarifier@0.1.0/dist/index.js';
 
   const result = await ask({
     id: 'trip',
@@ -61,7 +61,7 @@ async function clarify(questions) {
 
 To have it ready before the first question arrives, start the same `import()` when the chat opens. An `<agent-clarifier>` already in your markup waits, empty, until the code arrives.
 
-**From a CDN,** pin a version (`…/npm/@marigameo/agent-clarifier@1.2.3/dist/index.js`), so a new release never changes your page without you knowing.
+**From a CDN,** pin a version (`…/npm/@marigameo/agent-clarifier@0.1.0/dist/index.js`), so a new release never changes your page without you knowing.
 
 ---
 
@@ -301,7 +301,7 @@ Accent, danger and success each need a light and a dark value that pass 4.5:1 on
 | `--clarify-border` | `#e6e6e6` / `#343434` | Card edge, dividers |
 | `--clarify-hover`, `--clarify-selected` | `#f5f5f5`, `#ececec` / `#292929`, `#303030` | Row fills |
 | `--clarify-key-bg` | `#f0f0f0` / `#2c2c2c` | Number-key badges |
-| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `#3b5bdb` / `#8ea6ff` | The user's picks, focus, links. `-accent-soft` (the answered tick's halo) must be opaque: by default it's the accent mixed into the background |
+| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `#3b5bdb` / `#8ea6ff` | The user's picks, focus, links. `-accent-soft` (the halo on the minimised pill's dot) must be opaque: by default it's the accent mixed into the background |
 | `--clarify-danger`, `-danger-soft` | `#c2410c` / `#f0895a` | Errors |
 | `--clarify-success` | `#2f7d4f` / `#7cc79a` | The answered tick |
 | `--clarify-radius`, `--clarify-radius-sm` | `16px`, `8px` | Card, rows (concentric: 16 − 8 inset) |
@@ -311,7 +311,7 @@ Accent, danger and success each need a light and a dark value that pass 4.5:1 on
 | `--clarify-duration`, `--clarify-ease` | `160ms`, `cubic-bezier(.2,.7,.2,1)` | Motion. The fold into the pill or record runs at 1.25×. With reduced motion, nothing moves; views crossfade |
 | `--clarify-max-height` | 60% of the visible screen | Card height before it scrolls |
 
-Dark mode follows `prefers-color-scheme`, or force it with `theme="dark"` or `theme="light"`. The reason behind each default is in [DESIGN.md](DESIGN.md).
+Dark mode follows `prefers-color-scheme`, or force it with `theme="dark"` or `theme="light"`. The reason behind each default is in [DESIGN.md](https://github.com/Marigameo/agent-clarifier/blob/main/DESIGN.md).
 
 **Parts**, for structural tweaks with `::part()`: `card`, `header`, `title`, `step`, `option`, `option-key`, `option-label`, `option-description`, `badge`, `other`, `delegate`, `footer`, `button`, `button-primary`, `toast`, `notice` (a toast with nothing to press: the pick limit), `banner`, `pill`, `record`.
 
@@ -390,7 +390,7 @@ pnpm check   # types, lint, unit + browser tests with coverage, build, size
 
 The playground covers every case, and each setting is in the URL (for example `/demo/?scenario=arabic&width=375&theme=dark`). `node scripts/shots.mjs <dir> "name=query|click:…"` takes screenshots of any state.
 
-How it was designed, round by round, is in [JOURNAL.md](JOURNAL.md), with snapshots in `process/`.
+How it was designed, round by round, is in [JOURNAL.md](https://github.com/Marigameo/agent-clarifier/blob/main/JOURNAL.md), with snapshots in [`process/`](https://github.com/Marigameo/agent-clarifier/tree/main/process).
 
 ## License
 

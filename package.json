@@ -1,9 +1,17 @@
 {
   "name": "@marigameo/agent-clarifier",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A web component that lets a chat agent ask clarifying questions before it acts.",
   "license": "MIT",
   "author": "Mariappan <mari@strivelabs.ai>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marigameo/agent-clarifier.git"
+  },
+  "homepage": "https://github.com/Marigameo/agent-clarifier#readme",
+  "bugs": {
+    "url": "https://github.com/Marigameo/agent-clarifier/issues"
+  },
   "type": "module",
   "files": [
     "dist",
@@ -26,8 +34,10 @@
       "default": "./dist/adapters/mcp.js"
     },
     "./jsx": {
-      "types": "./types/jsx.d.ts"
-    }
+      "types": "./types/jsx.d.ts",
+      "default": "./types/jsx.js"
+    },
+    "./package.json": "./package.json"
   },
   "sideEffects": [
     "./dist/index.js"
@@ -52,7 +62,9 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "size": "size-limit",
-    "check": "pnpm typecheck && pnpm lint && pnpm coverage && pnpm build && pnpm size"
+    "lint:pkg": "publint && attw --pack . --profile esm-only",
+    "check": "pnpm typecheck && pnpm lint && pnpm coverage && pnpm build && pnpm size && pnpm lint:pkg",
+    "prepublishOnly": "pnpm check"
   },
   "size-limit": [
     {
@@ -93,6 +105,7 @@
     }
   ],
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@size-limit/file": "^14.2.0",
     "@types/react": "19",
     "@types/react-dom": "19",
@@ -102,6 +115,7 @@
     "oxlint": "^1.87.0",
     "playwright": "^1.64.0",
     "playwright-core": "^1.64.0",
+    "publint": "^0.3.25",
     "react": "19",
     "react-dom": "19",
     "size-limit": "^14.2.0",

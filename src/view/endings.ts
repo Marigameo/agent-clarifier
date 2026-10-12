@@ -1,10 +1,10 @@
 // The minimised pill and the record left in the transcript.
 // Placeholders: M3 gives them their real design (record kinds, picks tag, replace/dock behaviour).
 
-import { buildAnswer, draftOf, progress } from '../model/selectors';
-import { header } from './chrome';
-import { bdi, h, icon, text } from './dom';
-import type { Ctx, View } from './types';
+import { buildAnswer, draftOf, progress } from '../model/selectors.js';
+import { header } from './chrome.js';
+import { bdi, h, icon, text } from './dom.js';
+import type { Ctx, View } from './types.js';
 
 export function pillView(ctx: Ctx): View {
   const p = progress(ctx.s);

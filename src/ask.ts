@@ -5,8 +5,8 @@
 // It resolves when the user finishes: sent, skipped, replied in their own words, or expired
 // (abort or a newer ask). It never rejects for something the user did.
 
-import type { AgentClarifier } from './element';
-import type { ClarifyResult, Flow, Questionnaire, ReviewMode } from './model/types';
+import type { AgentClarifier } from './element.js';
+import type { ClarifyResult, Flow, Questionnaire, ReviewMode } from './model/types.js';
 
 export interface AskOptions {
   /** Use this element. Default: a new one in `container`, else the first one on the page. */

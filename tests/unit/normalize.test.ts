@@ -236,3 +236,20 @@ describe('helpers', () => {
     );
   });
 });
+
+describe('round 23: reserved ids', () => {
+  it('renames a question id of __proto__, so its answer stays in the result', () => {
+    const r = normalize({ questions: [{ id: '__proto__', prompt: 'P?', type: 'text' }] });
+    expect(r.ok && r.q.questions[0]!.id).toBe('q1');
+    expect(r.warnings.map((w) => w.code)).toContain('question-id');
+  });
+
+  it('renames option ids that would pose as the "Something else" or "Decide for me" rows', () => {
+    const r = normalize({
+      questions: [{ prompt: 'P?', type: 'single', options: [{ id: '__other', label: 'A' }, { id: '__delegate', label: 'B' }] }],
+    });
+    const ids = r.ok ? r.q.questions[0]!.options.map((o) => o.id) : [];
+    expect(ids).not.toContain('__other');
+    expect(ids).not.toContain('__delegate');
+  });
+});

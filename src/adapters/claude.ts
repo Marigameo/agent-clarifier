@@ -9,8 +9,8 @@
 //   const result = await ask(fromClaude(input), { container, transcript });
 //   return toClaude(result, input);
 
-import { claim, hash, slug } from '../model/ids';
-import type { ClarifyResult, Questionnaire } from '../model/types';
+import { claim, hash, slug } from '../model/ids.js';
+import type { ClarifyResult, Questionnaire } from '../model/types.js';
 
 export interface ClaudeOption {
   label: string;
@@ -35,12 +35,17 @@ export type ClaudePermissionResult =
 // A widely used convention (not in the official docs): the suggested option's label ends with this.
 const RECOMMENDED = /\s*\(recommended\)\s*$/i;
 
+/** Tolerant of a malformed tool call: missing lists become empty and missing labels blank, so the card
+ *  refuses it (clarify:error) instead of the converter throwing inside canUseTool (round 23). */
+const list = (input: AskUserQuestionInput): ClaudeQuestion[] =>
+  (input?.questions ?? []).map((q) => ({ ...q, options: (q.options ?? []).map((o) => ({ ...o, label: o.label ?? '' })) }));
+
 /** Stable ids, so toClaude can map answers back to the original labels. */
-function ids(input: AskUserQuestionInput): { qid: string[]; oid: string[][] } {
+function ids(qs: ClaudeQuestion[]): { qid: string[]; oid: string[][] } {
   const usedQ = new Set<string>();
   return {
-    qid: input.questions.map((q, i) => claim(q.header ? slug(q.header) : `q${i + 1}`, usedQ)),
-    oid: input.questions.map((q) => {
+    qid: qs.map((q, i) => claim(q.header ? slug(q.header) : `q${i + 1}`, usedQ)),
+    oid: qs.map((q) => {
       const used = new Set<string>();
       return q.options.map((o) => claim(slug(o.label.replace(RECOMMENDED, '')), used));
     }),
@@ -48,12 +53,13 @@ function ids(input: AskUserQuestionInput): { qid: string[]; oid: string[][] } {
 }
 
 export function fromClaude(input: AskUserQuestionInput, opts: { delegate?: boolean; source?: string } = {}): Questionnaire {
-  const { qid, oid } = ids(input);
+  const qs = list(input);
+  const { qid, oid } = ids(qs);
   return {
-    id: 'c' + hash(input.questions.map((q) => q.question).join('\n')),
+    id: 'c' + hash(qs.map((q) => q.question).join('\n')),
     ...(opts.source ? { source: opts.source } : {}),
     ...(opts.delegate ? { delegate: true } : {}),
-    questions: input.questions.map((q, i) => ({
+    questions: qs.map((q, i) => ({
       id: qid[i]!,
       prompt: q.question,
       label: q.header || q.question,
@@ -83,10 +89,11 @@ export function toClaude(result: ClarifyResult, input: AskUserQuestionInput, opt
   if (result.status === 'dismissed') {
     return { behavior: 'deny', message: opts.dismissMessage ?? 'The user closed the questions without answering.' };
   }
-  const { qid, oid } = ids(input);
+  const qs = list(input);
+  const { qid, oid } = ids(qs);
   const answers: Record<string, string> = {};
   const picks: string[] = [];
-  input.questions.forEach((q, i) => {
+  qs.forEach((q, i) => {
     const a = result.answers[qid[i]!];
     if (!a || a.status === 'skipped') return;
     let value: string;

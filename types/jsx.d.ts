@@ -1,4 +1,4 @@
-// Opt-in typings for JSX (React 19, Preact): `import '@marigameo/agent-clarifier/jsx'` once.
+// Opt-in typings for JSX (React 19): `import '@marigameo/agent-clarifier/jsx'` once.
 // Kept out of the main entry so the package never depends on React's types.
 import type { AgentClarifier, ClarifyResult, Labels, Questionnaire, ReviewMode, Flow } from '@marigameo/agent-clarifier';
 

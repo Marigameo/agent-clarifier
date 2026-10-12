@@ -1,10 +1,10 @@
 // Sequential flow: one question per card (PLAN §4).
 
-import { canContinue, draftOf, isSettled, needsReview, picks, questionState } from '../model/selectors';
-import type { NormalizedOption, NormalizedQuestion } from '../model/types';
-import { backButton, button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
-import { attr, bdi, h, icon, rove, text } from './dom';
-import { DELEGATE, OTHER, type Ctx, type View } from './types';
+import { canContinue, draftOf, isSettled, needsReview, picks, questionState, reach, ticked } from '../model/selectors.js';
+import type { NormalizedOption, NormalizedQuestion } from '../model/types.js';
+import { backButton, button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome.js';
+import { attr, bdi, h, icon, rove, text } from './dom.js';
+import { DELEGATE, OTHER, type Ctx, type View } from './types.js';
 
 function optionRow(q: NormalizedQuestion, o: NormalizedOption, i: number, ctx: Ctx): HTMLElement {
   const multi = q.type === 'multi';
@@ -183,6 +183,7 @@ export function stepView(init: Ctx): View {
     // Footer left: progress dashes (always, so you can jump back from any step), plus the pick
     // count on limited multi-selects or the new-line hint on text. A toast replaces them for a while.
     footLeft(left, ctx, () => {
+      const far = reach(s);
       const dots = h(
         'span',
         { class: 'dots' },
@@ -192,8 +193,9 @@ export function stepView(init: Ctx): View {
           // skipped, or not reached. Going back no longer makes answered later steps look unvisited.
           const state = questionState(x, d2);
           const cls = i === s.step ? 'now' : state === 'skipped' ? 'skip' : state === 'unanswered' ? '' : 'done';
-          // Settled steps are buttons, so you can jump straight back to one (PLAN §6).
-          return i !== s.step && isSettled(x, d2)
+          // Settled steps are buttons, so you can jump straight back to one (PLAN §6), but never past
+          // a step not settled yet (round 23).
+          return i !== s.step && i <= far && isSettled(x, d2)
             ? h('button', { class: `dot ${cls}`, type: 'button', 'data-act': 'goto', 'data-step': i, 'aria-label': ctx.t('goTo', { n: i + 1, label: x.label }) })
             : h('i', { class: `dot ${cls}`, 'aria-hidden': 'true' });
         }),
@@ -203,7 +205,7 @@ export function stepView(init: Ctx): View {
         return [dots, h('span', { class: 'count need' }, ctx.t('pickAtLeast', { min: q.min }))];
       }
       if (q.type === 'multi' && q.max < q.options.length + (q.other ? 1 : 0)) {
-        return [dots, h('span', { class: 'count' }, ctx.t('pickedOf', { n: picks(q, d), total: q.max }))];
+        return [dots, h('span', { class: 'count' }, ctx.t('pickedOf', { n: ticked(d), total: q.max }))];
       }
       if (q.type === 'text') return [dots, h('span', { class: 'keys' }, h('kbd', {}, '⇧↵'), ctx.t('newLine'))];
       return [dots];

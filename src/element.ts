@@ -4,23 +4,23 @@
 // render (swap the view if it changed, else update it in place) → fire clarify:* events
 // from the transition.
 
-import { Composer, findComposer } from './composer';
-import { format, formatList, formatNumber, mergeLabels, type LabelKey, type Labels } from './labels';
-import { formatWarning, normalize } from './model/normalize';
-import { initialState, reducer } from './model/reducer';
-import { buildResult, canContinue, draftOf } from './model/selectors';
-import type { Action, Env, Flow, Questionnaire, ReviewMode, State, Status } from './model/types';
-import { sheet } from './styles';
-import { pillView, recordView, loadingView } from './view/endings';
-import { formView } from './view/form';
-import { reviewView } from './view/review';
-import { stepView } from './view/step';
-import { usingPointer } from './view/modality';
-import { enter, leave, type Move } from './view/motion';
-import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport';
-import { h, rove } from './view/dom';
-import { DELEGATE, OTHER, type Ctx, type View } from './view/types';
-import * as Act from './model/act';
+import { Composer, findComposer } from './composer.js';
+import { format, formatList, formatNumber, mergeLabels, type LabelKey, type Labels } from './labels.js';
+import { formatWarning, normalize } from './model/normalize.js';
+import { initialState, reducer } from './model/reducer.js';
+import { buildResult, canContinue, draftOf } from './model/selectors.js';
+import type { Action, Env, Flow, Questionnaire, ReviewMode, State, Status } from './model/types.js';
+import { sheet } from './styles.js';
+import { pillView, recordView, loadingView } from './view/endings.js';
+import { formView } from './view/form.js';
+import { reviewView } from './view/review.js';
+import { stepView } from './view/step.js';
+import { usingPointer } from './view/modality.js';
+import { enter, leave, type Move } from './view/motion.js';
+import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport.js';
+import { h, rove } from './view/dom.js';
+import { DELEGATE, OTHER, type Ctx, type View } from './view/types.js';
+import * as Act from './model/act.js';
 
 /** Lets the module load on a server (Astro, Next): there's no HTMLElement there. */
 const Base: typeof HTMLElement =

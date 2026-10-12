@@ -11,8 +11,8 @@ import type {
   NormalizedQuestion,
   NormalizedQuestionnaire,
   QuestionType,
-} from './types';
-import { claim, hash, slug } from './ids';
+} from './types.js';
+import { claim, hash, slug } from './ids.js';
 
 export { hash, slug };
 
@@ -76,7 +76,8 @@ export function normalize(input: unknown): NormalizeResult {
 
   const src = isObj(input) ? input : {};
   const raws = Array.isArray(src.questions) ? src.questions : [];
-  const usedIds = new Set<string>();
+  // `__proto__` as a key would re-prototype the answers object and vanish from the result (round 23).
+  const usedIds = new Set<string>(['__proto__']);
   const questions: NormalizedQuestion[] = [];
 
   raws.forEach((raw, i) => {
@@ -138,7 +139,8 @@ function normalizeQuestion(
   if (type === 'text') {
     if (rawOptions.length > 0) warn('options-ignored', at);
   } else {
-    const usedOptionIds = new Set<string>();
+    // The ids of the "Something else" and "Decide for me" rows (view/types.ts), so no option can pose as one (round 23).
+    const usedOptionIds = new Set<string>(['__other', '__delegate']);
     rawOptions.forEach((o, j) => {
       const oat = `${at}.options[${j}]`;
       const label = isObj(o) ? str(o.label) : undefined;

@@ -1,5 +1,5 @@
-import type { LabelKey } from '../labels';
-import type { ReviewMode, State } from '../model/types';
+import type { LabelKey } from '../labels.js';
+import type { ReviewMode, State } from '../model/types.js';
 
 /** What every view gets on build and on each update. */
 export interface Ctx {

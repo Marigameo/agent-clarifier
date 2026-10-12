@@ -223,3 +223,53 @@ describe('toElicitation', () => {
     expect(toElicitation(result, optional)).toEqual({ action: 'accept', content: { seating: 'in', time: '19', highchair: false } });
   });
 });
+
+describe('round 23: converters', () => {
+  const result = (answers: ClarifyResult['answers']): ClarifyResult => ({
+    questionnaireId: 'm',
+    status: 'submitted',
+    delivery: 'card',
+    answers,
+  });
+  const said = (v: string[]) => ({ status: 'answered' as const, values: v, labels: v });
+
+  it('fromElicitation keeps a field whose description or title is blank', () => {
+    const q = fromElicitation({
+      message: 'Hi',
+      requestedSchema: { type: 'object', properties: { name: { type: 'string', title: 'Name', description: '' }, age: { type: 'string', title: '' } } },
+    });
+    const r = normalize(q);
+    expect(r.ok && r.q.questions.map((x) => x.prompt)).toEqual(['Name', 'age']);
+  });
+
+  it('toElicitation never sends a value the schema rejects', () => {
+    const params: ElicitParams = {
+      message: 'Hi',
+      requestedSchema: {
+        type: 'object',
+        properties: { n: { type: 'integer' }, tags: { type: 'array', items: { enum: ['a', 'b', 'c'] }, minItems: 2 } },
+      },
+    };
+    // "3.7" for an integer, and one pick against minItems 2 (picks kept by a reply in own words)
+    expect(toElicitation(result({ n: said(['3.7']), tags: said(['a']) }), params)).toEqual({ action: 'accept', content: {} });
+    const req: ElicitParams = { message: 'Hi', requestedSchema: { type: 'object', properties: { n: { type: 'integer' } }, required: ['n'] } };
+    expect(toElicitation(result({ n: said(['3.7']) }), req)).toEqual({ action: 'decline' });
+  });
+
+  it('toElicitation does not count inherited keys as answered required fields', () => {
+    const params = {
+      message: 'Hi',
+      requestedSchema: { type: 'object', properties: { toString: { type: 'string' } }, required: ['toString'] },
+    } as ElicitParams;
+    expect(toElicitation(result({}), params)).toEqual({ action: 'decline' });
+  });
+
+  it('malformed input is refused by the card, not thrown by the converter', () => {
+    const bad = [{}, { questions: [{ question: 'Q?' }] }, { questions: [{ question: 'Q?', options: [{}] }] }] as unknown as AskUserQuestionInput[];
+    for (const input of bad) {
+      expect(() => fromClaude(input)).not.toThrow();
+      expect(() => toClaude(result({}), input)).not.toThrow();
+    }
+    expect(() => fromElicitation({ message: 'Hi', requestedSchema: {} } as unknown as ElicitParams)).not.toThrow();
+  });
+});

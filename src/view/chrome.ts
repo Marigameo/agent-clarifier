@@ -1,8 +1,8 @@
 // The parts every card shares: the "asked by" line, the header and the footer.
 
-import { attr, bdi, h, icon, text } from './dom';
-import type { State } from '../model/types';
-import type { Ctx } from './types';
+import { attr, bdi, h, icon, text } from './dom.js';
+import type { State } from '../model/types.js';
+import type { Ctx } from './types.js';
 
 export function sourceLine(ctx: Ctx): HTMLElement | null {
   const source = ctx.s.q?.source;

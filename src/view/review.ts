@@ -1,9 +1,9 @@
 // Review: every answer in one list, each with Edit (PLAN §5, §6).
 
-import { buildAnswer, draftOf } from '../model/selectors';
-import { backButton, button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome';
-import { bdi, h, icon } from './dom';
-import type { Ctx, View } from './types';
+import { buildAnswer, draftOf } from '../model/selectors.js';
+import { backButton, button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome.js';
+import { bdi, h, icon } from './dom.js';
+import type { Ctx, View } from './types.js';
 
 export function reviewView(init: Ctx): View {
   const qs = init.s.q?.questions ?? [];
