@@ -72,7 +72,7 @@ BUILD.md is **agreed** (round 5, frozen in `process/06-build-agreed/`). Mari wan
 `src/model/` (types, normalize, reducer, selectors) and `src/labels.ts`: 435 tests, 100% lines.
 - **Tooling:** TS 7, oxlint, Vite 8 (Rolldown, minified), Vitest 5, size-limit. `pnpm check` runs everything.
 - **Practice:** after each module, inject user-visible bugs and confirm a test fails. Test at boundaries.
-- **Size:** see round 22 below: about 21 KB gzipped, guarded at 21.5 KB gzip and 19.2 KB brotli. The model alone is ~4 KB gzipped.
+- **Size:** about 21 KB gzipped (21.78 after round 23), guarded at 21.9 KB gzip and 19.6 KB brotli (raised in round 23, Mari's call). The model alone is ~4 KB gzipped.
 
 ## Done: M2 · Element + flows (plus M3's placements, pulled forward in round 7)
 
@@ -86,7 +86,7 @@ From round 8, **Mari delegates design and copy calls to Claude** and will audit 
 
 ## Status (end of the build on 10 Oct 2026)
 
-M1–M7 are built. 597 tests are green (`pnpm check`, after round 22). The Definition of done in BUILD §11 shows what's still open:
+M1–M7 are built. 626 tests are green (`pnpm check`, after round 23). The Definition of done in BUILD §11 shows what's still open:
 - the manual VoiceOver and real-phone passes
 - Svelte 5
 - publishing, which needs Mari's go-ahead
@@ -109,6 +109,7 @@ Mari shares one skill at a time. Claude runs it as a read-only audit and present
 - **Round 20 · hover sync** (Emil's "7 practical animation tips" #6). Hover is instant (verified frame by frame). Fixed a lone arrow: with a mouse, the focused row's arrow now hides with its ring. The arrow always travels with the fill (mouse) or the ring (keyboard). DESIGN §16.
 - **Round 21 · navigation in the footer.** Back is at the footer's start (the card is bottom-anchored, so the footer is the edge that stays put), dimmed on step 1, and keeps focus after a press. The title has one edge. The dashes are coloured by status, with 24×24 targets and a hover cue. The count stays in the header. A header pager was turned down (the header moves). DESIGN §17.
 - **Round 22 · size.** Measured, not guessed: three parallel audits (JS, CSS, 25 peer packages; `process/22-size/benchmarks.md`). 21.9 KB sat with mid-weight widgets, and every safe saving totalled ~0.6 KB, so **Mari set the target to about 21 KB** (12 KB retired). Now **21.37 KB gzip, 19.09 KB brotli**; size-limit guards 21.5 / 19.2 KB, and raising a guard needs a reason in the journal. The npm package ships no source maps (133 KB unpacked); the README shows loading on first use. Action types are numeric constants in `src/model/act.ts` (always use the names). Private `--_*` CSS tokens are shortened at build time (`scripts/short-tokens.ts`); a token the TypeScript reads must be in its `KEEP` list (a test enforces it). Also fixed: the "Something else" field was 14px on touch (iOS zoom), and the unit tests had been getting an empty stylesheet since M2 (the RTL guard checked nothing). **CSS changes meant to be invisible are checked with `scripts/style-dump.mjs`**: a computed-style dump of the break page, before vs after (DESIGN §18). Plan: `process/22-size/round-plan.md`.
+- **Round 23 · pre-release review and simplify.** Four parallel reviewers over everything that ships (frozen: `process/23-release/review.md`, 44 findings, 9 P1). Fixed: types were `any` under `nodenext` (relative imports now end in `.js`: **keep it that way**), the `/jsx` export, three README recipes (load on first use, `ask()` + transcript focus, `ask()` on unusable input now rejects), React controlled composers (writes go through `setRangeText`), Safari IME Enter, max via "Something else", and more. `pnpm check` now runs `publint` + `attw` on the packed package; `prepublishOnly` runs `pnpm check`. Version **0.1.0**; `VERSION` in `src/index.ts` must match `package.json` (a test checks). Simplify caught a regression in one fix. Size guard raised to 21.9 / 19.6 KB (Mari's call).
 - **Checking motion:** `node scripts/motion-strips.mjs <dir>` slows Chrome's animation clock 10× and writes filmstrips. `scripts/shots.mjs` also takes `hover:`, `tap:` and `touch=1`.
 
 **Tooling on this machine:** Node 22, pnpm, and `gh` (logged in as Marigameo). npm isn't logged in yet; that's needed only for publishing at M7.

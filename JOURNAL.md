@@ -1022,6 +1022,47 @@ The converters are unchanged (1.18 and 1.15 KB).
 
 ---
 
+## Round 23 · Pre-release review and simplify (12 Oct 2026)
+
+**Brief (mine):** I'm done with the changes. What are the next steps to publish? Push the commits, make the repo public, publish to npm. Do everything up to the final publishing step, after a code review and a simplify pass. Plan first.
+
+**The plan (Claude's), which I took as recommended:** review → simplify → release prep → this round → push → (stop) repo public → (stop) npm publish → check it's live. Version **0.1.0**, not 1.0.0: the VoiceOver and real-phone passes and Svelte are still open, and 0.x lets the API move in minors while real users report. Ship with those three listed as known gaps. Keep the commit email as it is (rewriting history would change every hash the journal cites). Hosting the playground on GitHub Pages is a separate follow-up.
+
+**How Claude worked:** four read-only reviewers in parallel, one per area (model and converters; element, composer and `ask()`; views; styles and packaging), on everything that ships rather than a diff, since this is the first public release. Each finding was reproduced (Vitest or Playwright probes, and a scratch project that installed the packed tarball) and then spot-checked against the code. The review was frozen before any fix: `process/23-release/review.md`. No P0, and no HTML injection anywhere: all model text goes in as text.
+
+**What it found (44, of which 9 were P1)**, the ones users would have hit first:
+- **Types turned into `any`** for every app on TypeScript's `node16`/`nodenext` setting: the shipped `.d.ts` files imported without `.js` extensions. With `skipLibCheck` this failed silently.
+- **The README's own React line broke the build:** `import '…/jsx'` pointed at a types-only export.
+- **Three README recipes were broken:** load on first use lost properties set before the code arrived; `ask()` + transcript dropped focus to `<body>` after Send; and `ask()` waited forever if the model sent no usable questions.
+- **React controlled composers:** a sent reply came back on the next render (the card wrote past React's value tracker).
+- **Safari with a Japanese or Chinese keyboard:** the Enter that confirms a word also moved to the next question.
+- **A multi-select could go over `max`** through "Something else", and focus fell to `<body>` after Undo on the "Sending in…" bar.
+
+**What I decided:** fix all P1 and P2 except long MCP lists (documented instead: a real fix means a new way to choose from long lists, outside the scope lock), the cheap P3s, docs for jsdom and BUILD §6.1, and leave Vue/Preact typings for v1.1.
+
+**What changed** (three commits):
+- **Packaging:** `.js` extensions in every relative import; `/jsx` has an empty runtime file; source maps stay local, with no `sourceMappingURL` comment pointing at a missing file; `VERSION` is 0.1.0 and a test ties it to `package.json`; `prepublishOnly` runs `pnpm check`; **`publint` and `attw` (Are the Types Wrong) run in `pnpm check` against the packed package**, so the types bug can't come back; repository, homepage and bugs links; README links absolute (relative ones are dead on npmjs.com), the CDN example pinned, `--clarify-accent-soft` documented as what it really is (the pill dot's halo).
+- **Model:** an open "Something else" holds a pick slot even before it has text (the "n of max" count agrees); dashes never jump past a step the user hasn't settled; `__proto__`, `__other` and `__delegate` are reserved ids; the MCP converter keeps fields with a blank title, leaves out values the schema would reject and checks required fields as own keys; both converters tolerate malformed input; a label override with a non-string plural form is ignored instead of crashing later.
+- **Element, composer, `ask()`, views:** properties set before the upgrade are kept; a card opened before it's on the page takes focus once it is; an update in place that removes the focused control puts focus back in the card; IME and held keys are ignored; a stream that ends with nothing usable goes hidden; one countdown timer that stops with the window; the live region is never re-inserted; the composer is looked up again if it mounts later, and a bad selector doesn't throw; composer writes go through `setRangeText` (BUILD §7 said so all along); compose into a `contenteditable` inserts a text node and keeps rich text; no empty placeholder is left behind; an old record never undocks the live card; the pill updates while questions stream in; a pick-limit notice hit again while fading comes back; the all-at-once "Something else" is the growing textarea BUILD §8.2 specified (round 16 had fixed only the step view).
+- **Docs:** `ask()` rejects only when nothing can be shown; `clarify:revise` after `ask()`; MCP limits; jsdom.
+
+**Simplify** (four parallel cleanup reviews: reuse, simplification, efficiency, altitude). It caught **a regression in one of the fixes**: the "bring the notice back" code ran on every render, so it could cut a normal fade short, and in its first new home it also cancelled a new toast's fade-in, which an old motion test caught. It now runs once, when a new toast arrives, and cancels only the fade-out. The rest made the fixes smaller: `reach()` already implies "settled", `ask()` needed no guard of its own, dead timer clears, shared helpers, the reserved ids in one place. Turned down: two items that would change behaviour.
+
+**Size (my call):** the fixes cost **0.41 KB** (21.37 → 21.78 KB gzip, 19.09 → 19.46 brotli). Simplify saved bytes before compression and almost nothing after, and round 22 had already taken every safe saving. I raised the guards to **21.9 / 19.6 KB**, keeping round 22's tight margin, rather than drop fixes for real bugs. The README's "about 21 KB" still holds.
+
+**Verified:**
+- `pnpm check`: **626 green**, 100% lines; publint "All good"; attw green for `node16` and `bundler` on every entry.
+- **Every new test failed before its fix:** 9 unit and 21 component tests, including a real React 19 controlled textarea.
+- Deliberate breaks: an extensionless import in the built types (attw: "Internal resolution error"), and `VERSION` out of step with `package.json`.
+- A scratch app installed the packed tarball: types match under `nodenext` and `bundler` (only the four lines written to fail do), a Vite app importing `/jsx` builds, and the server import works in Node 22.
+- **Firefox and WebKit** (Playwright) grow "Something else" from one line to two in both views, like Chrome: `field-sizing` is supported everywhere now, so finding #44 needed no change.
+- `style-dump`: 0 differences across 137 snapshots outside the one field that changed on purpose.
+- Renders: `process/23-release/shots/` (step 1 in light, dark and phone; the all-at-once "Something else" wrapping on a phone; a multi with "Something else" ticked).
+
+**Artifacts:** `process/23-release/` (review.md frozen before the fixes, PLAN.md, DESIGN.md, shots/).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -1043,3 +1084,4 @@ The converters are unchanged (1.18 and 1.15 KB).
 - Round 19's beat: a screenshot can agree with you for the wrong reason. The "after" render showed the gap, but only because a focus ring drew it; the actual fill still bled through (a CSS shorthand quietly reset the clip). The test that measured the fill's box is what told the truth.
 - Round 21 is the "measure the premise" beat: two AI sessions argued Back's position with good-sounding reasons. The tie-breaker was one number per step: which edge of the card actually moves. The confident "top-anchored, so the header never moves" was simply wrong for this component, and a probe showed it in a minute.
 - Round 22 is the "weigh it before you diet" beat: I asked to make it smaller, and the measurements said it was already lean. Twenty-five real packages, built the same way, put 21 KB among single-purpose widgets that do less. The honest result was a better target, not a smaller number: ~0.6 KB of real savings, a package a third of its old size, 0 KB at page load, and two quiet bugs (a 14px field, and an RTL guard that had been checking an empty string since M2).
+- Round 23 is the "read it as a stranger" beat: 22 rounds of tests were green, and the first reviewers who read the package the way a user would (install the tarball, follow the README) found that three of its own recipes didn't work and that TypeScript users on one common setting would get no types at all. The tests only ever imported the source. A second beat: the simplify pass found a regression in one of the fixes, then an old motion test caught the next attempt. Checks on the checks, again.

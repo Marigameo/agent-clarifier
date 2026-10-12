@@ -68,12 +68,12 @@
   },
   "size-limit": [
     {
-      "name": "core (gzipped; budget set in round 22, see BUILD §0)",
+      "name": "core (gzipped; budget set in round 22, guard raised in round 23, see BUILD §0)",
       "path": [
         "dist/index.js",
         "dist/ids-*.js"
       ],
-      "limit": "21.5 KB",
+      "limit": "21.9 KB",
       "gzip": true
     },
     {
@@ -82,7 +82,7 @@
         "dist/index.js",
         "dist/ids-*.js"
       ],
-      "limit": "19.2 KB",
+      "limit": "19.6 KB",
       "brotli": true
     },
     {

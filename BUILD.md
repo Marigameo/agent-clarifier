@@ -46,7 +46,7 @@
 | Package manager | pnpm | Already on this machine |
 | Tests | Vitest (unit), Vitest browser mode with Playwright (component), Playwright (e2e, axe, screenshots) | Real browsers for focus, keyboard and Shadow DOM |
 | Browsers | Last 2 versions of Chrome, Edge, Firefox and Safari (Safari ≥ 16.4) | Needed for `color-mix()`, `:focus-visible` and Web Animations |
-| Size | **About 21 KB gzipped** for the core (19 KB brotli), about 1 KB per converter. Guarded by `size-limit` at **21.5 KB gzip and 19.2 KB brotli**: tight on purpose, so growth is a decision, never drift. Raising a guard needs a reason in the journal. The first target was ≤ 12 KB (M1); round 22 measured that only cutting behaviour could reach it, and set this one (Mari's call). The npm package ships no source maps (133 KB unpacked), and the README shows loading it on first use: 0 KB at page load | Plug and play should mean light |
+| Size | **About 21 KB gzipped** for the core (19 KB brotli), about 1 KB per converter. Guarded by `size-limit` at **21.9 KB gzip and 19.6 KB brotli**: tight on purpose, so growth is a decision, never drift. Raising a guard needs a reason in the journal. The first target was ≤ 12 KB (M1); round 22 measured that only cutting behaviour could reach it, and set this one (Mari's call). Round 23 raised the guards from 21.5 / 19.2 KB: the pre-release review's fixes cost 0.41 KB (Mari's call). The npm package ships no source maps (133 KB unpacked), and the README shows loading it on first use: 0 KB at page load | Plug and play should mean light |
 | Runtime deps | **None** | |
 | Licence | MIT | |
 | Node | 22 | Installed |
@@ -530,7 +530,7 @@ Each milestone ends with tests green, a commit, and a JOURNAL.md entry. Playgrou
 
 ## 11. Definition of done (v1)
 
-Status as of round 8 (10 Oct 2026):
+Status as of round 8 (10 Oct 2026), updated in round 23 (12 Oct 2026):
 
 - [x] Every playground scenario works in light and dark, at 1280 and 375 widths (screenshots in `process/08-claude-calls/`)
 - [~] Every PLAN §6 recovery row is covered: **all 11 by reducer scenario tests**. Component tests cover back, skip + undo, minimise and reopen, compose and take-back, reply in own words, and jumping back via the dashes. Start over, the undo window, revise and retry are covered in the reducer only
@@ -541,10 +541,11 @@ Status as of round 8 (10 Oct 2026):
 - [ ] **Phone keyboard on a real phone: manual, pending**
 - [x] Every default token has a reason in DESIGN.md; findings F1–F15 resolved (round 8)
 - [x] Zero runtime dependencies
-- [x] Size: **21.37 KB gzipped, 19.09 KB brotli** (round 22), against a budget of about 21 KB guarded at 21.5 KB. The 12 KB target was retired: only cutting behaviour could reach it
+- [x] Size: **21.78 KB gzipped, 19.46 KB brotli** (round 23), against a budget of about 21 KB guarded at 21.9 KB. The 12 KB target was retired: only cutting behaviour could reach it
 - [~] Frameworks: plain HTML (built file), React 19, Vue 3 and server-side import (Astro/Next) are tested. **Svelte 5 is not tested yet**
 - [x] README complete; JOURNAL.md up to date; `process/` snapshots taken
-- [ ] **Published as `@marigameo/agent-clarifier`: needs Mari's go-ahead** (npm login, and the repo going public for the demo)
+- [x] Pre-release review (round 23): 44 findings, every P1 and P2 fixed or documented; `publint` and `attw` check the packed package in `pnpm check`
+- [ ] **Published as `@marigameo/agent-clarifier` 0.1.0: needs Mari's go-ahead** (npm login, and the repo going public). Ships with the VoiceOver pass, the real-phone pass and Svelte 5 listed as known gaps
 
 ## 12. Risks
 
