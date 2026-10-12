@@ -247,6 +247,8 @@ button { font: inherit; color: inherit; }
 }
 .key .i { inline-size: 14px; block-size: 14px; }
 .opt[aria-checked="true"] > .key:not(.plain) { background: var(--_accent); color: var(--_accent-fg); }
+/* The pencil and "Decide for me" keys take the row's fill once picked, so no lighter square sits on it. */
+.opt:is([aria-checked="true"], [aria-pressed="true"]) > .key.plain { background: var(--_selected); }
 /* 16px, the common checkbox size, centred in the 26px key slot so labels keep their edge. The whole
    row is the target, so the box needn't be big (round 14; it was the full 26px). */
 .key.box {

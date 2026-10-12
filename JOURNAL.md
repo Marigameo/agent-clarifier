@@ -940,10 +940,14 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 - Left out on purpose: picked rows (they keep the accent key), checkboxes, disabled rows, and keyboard focus. The key goes with the fill, as the arrow does (round 20).
 - 2 tests in `hover-sync.test.ts`. 3 deliberate breaks (no rule, number left grey, applied to every row), caught 3/3. Renders: `process/21b-key-hover/renders/` (before and after: light, dark, "Something else", phone). It has its own folder because `21-footer-nav/` was already committed.
 
+**Also added (my request):** once "Something else" was picked, its pencil key (#f0f0f0) was a touch lighter than the picked row (#ececec).
+- Claude's call: a picked row's plain keys (the pencil, and Decide for me, which had the same issue) take the row's fill, `--clarify-selected`, so no square sits on the pick. Dark had it the other way round (#2c2c2c on #303030), and this fixes that too. Numbered keys keep the accent.
+- Computed colours match in all four cases (light/dark × "Something else"/Decide for me). 2 tests in `hover-sync.test.ts`; removing the rule fails both. Renders: `process/21c-picked-key/renders/` (before and after: light, dark, phone).
+
 **Verified:**
 - 8 tests. 7 deliberate breaks, caught 7/7.
 - Renders: step 1 and 2, after jumping back, skipped, review, dash hover, dark, 375, 320, RTL.
-- 587 green (with the key hover); **21.93 KB, close to the 22 KB guard** (the size round is still Mari's to schedule).
+- 589 green (with the key hover and picked keys); **21.94 KB, close to the 22 KB guard** (the size round is still Mari's to schedule).
 
 **Artifacts:** `process/21-footer-nav/` (round-plan.md frozen before the change, PLAN.md, DESIGN.md, `renders/before/` 8, `renders/after/` 10).
 

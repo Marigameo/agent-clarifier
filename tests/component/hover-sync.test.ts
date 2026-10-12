@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
-import { HOTEL, focused, mount, row } from './helpers';
+import { HOTEL, button, focused, mount, onStep, row } from './helpers';
 
 // Round 20 (process/20-hover-sync): hover feedback is instant (Emil Kowalski, "7 practical animation
 // tips" #6: hover seen tens of times a day shouldn't animate), and a row's arrow never shows without
@@ -66,5 +66,32 @@ describe('the key answers the hover with its row', () => {
     const rest = key(m, 'covent').backgroundColor;
     await userEvent.hover(row(m, '__other'));
     expect(key(m, '__other').backgroundColor).not.toBe(rest);
+  });
+});
+
+// Round 21 add-on 2: the pencil and Decide-for-me keys kept key-bg (#f0f0f0) on a picked row (#ececec),
+// a lighter square on the fill. Picked, they take the row's fill.
+describe('picked, the plain keys take the row fill', () => {
+  const bg = (el: Element) => getComputedStyle(el).backgroundColor;
+
+  it('"Something else": the pencil key matches its picked row', async () => {
+    const m = mount(HOTEL);
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+    await userEvent.click(row(m, '__other'));
+    expect(row(m, '__other').getAttribute('aria-checked')).toBe('true');
+    expect(bg(row(m, '__other').querySelector('.key')!)).toBe(bg(row(m, '__other')));
+  });
+
+  it('Decide for me: the key matches its picked row (seen again after Back)', async () => {
+    const m = mount(HOTEL);
+    await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+    await userEvent.keyboard(' ');
+    await onStep(m, 'Budget');
+    await userEvent.click(row(m, '__delegate'));
+    await onStep(m, 'What matters');
+    await userEvent.click(button(m, 'back'));
+    await onStep(m, 'Budget');
+    expect(row(m, '__delegate').getAttribute('aria-checked')).toBe('true');
+    expect(bg(row(m, '__delegate').querySelector('.key')!)).toBe(bg(row(m, '__delegate')));
   });
 });
