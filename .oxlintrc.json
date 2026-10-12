@@ -2,7 +2,7 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc"],
   "categories": { "correctness": "error", "suspicious": "warn" },
-  "ignorePatterns": ["dist", "coverage", "process", "design"],
+  "ignorePatterns": ["dist", "site", "coverage", "process", "design"],
   "overrides": [
     {
       "files": ["tests/**"],

@@ -1,7 +1,10 @@
 import { playwright } from '@vitest/browser-playwright';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // Compiles the Svelte 5 fixtures in tests/component/frameworks (round 24).
+  plugins: [svelte()],
   test: {
     projects: [
       {

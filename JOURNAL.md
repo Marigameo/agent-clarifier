@@ -1068,6 +1068,26 @@ The converters are unchanged (1.18 and 1.15 KB).
 
 ---
 
+## Round 24 · Svelte 5, and the playground on GitHub Pages (12 Oct 2026)
+
+**Brief (mine):** after publishing 0.1.0, do two of the open items: test Svelte 5, and put the playground online.
+
+**Svelte 5.** Svelte compiles components ahead of time, so the tests now use its Vite plugin, with three small `.svelte` fixtures. The open question was our event names: Svelte reads `name:thing` as a directive, and `clarify:submit` has a colon. Claude tried all three ways of writing the listener in Chrome:
+- `onclarify:submit={…}` (the normal Svelte 5 way) **works**, though the compiler warns `attribute_illegal_colon`.
+- a spread, `{...{ 'onclarify:submit': handler }}`, works with no warning.
+- the old `on:clarify:submit` directive works but is deprecated.
+The questionnaire arrives as a property in all three. To prove the test isn't blind, a wrong event name made it fail. The README's Svelte row now says exactly this; Angular keeps its own row, untested.
+
+**The playground online:** https://marigameo.github.io/agent-clarifier/ (the playground and the stress page). A separate `vite.demo.config.ts` builds `demo/` into `site/` (`pnpm build:demo`), and a GitHub Actions workflow deploys it on every push to `main`, so it always shows the code on main.
+- **Found while building it:** the first build had no component in it. `package.json`'s `sideEffects` names only `dist/index.js` (correct for apps, which import that), so the demo's `import '../src/index'` was tree-shaken away, `define()` and all. Vite's resolver applies that field per module, so the global tree-shaking option didn't help; a three-line plugin in the demo config marks `src/` as having side effects. Apps aren't affected.
+- **Checked** from a local `/agent-clarifier/` subpath in Chrome: a pick moves to step 2, dark mode and 375px work from the URL, the stress page renders all 34 cards, and there were no errors or failed requests.
+
+**README:** a "Try it in the playground" link under the intro, and in Development.
+
+**Verified:** `pnpm check`, 629 green (3 new), size unchanged (the published package didn't change, so there's no new release).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.

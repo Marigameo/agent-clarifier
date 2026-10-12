@@ -542,7 +542,7 @@ Status as of round 8 (10 Oct 2026), updated in round 23 (12 Oct 2026):
 - [x] Every default token has a reason in DESIGN.md; findings F1–F15 resolved (round 8)
 - [x] Zero runtime dependencies
 - [x] Size: **21.78 KB gzipped, 19.46 KB brotli** (round 23), against a budget of about 21 KB guarded at 21.9 KB. The 12 KB target was retired: only cutting behaviour could reach it
-- [~] Frameworks: plain HTML (built file), React 19, Vue 3 and server-side import (Astro/Next) are tested. **Svelte 5 is not tested yet**
+- [x] Frameworks: plain HTML (built file), React 19, Vue 3, Svelte 5 (round 24) and server-side import (Astro/Next) are tested
 - [x] README complete; JOURNAL.md up to date; `process/` snapshots taken
 - [x] Pre-release review (round 23): 44 findings, every P1 and P2 fixed or documented; `publint` and `attw` check the packed package in `pnpm check`
 - [x] **Published as `@marigameo/agent-clarifier` 0.1.0** (12 Oct 2026, Mari's go-ahead), repo public, GitHub release `v0.1.0`. Ships with the VoiceOver pass, the real-phone pass and Svelte 5 listed as known gaps

@@ -2,6 +2,8 @@
 
 `<agent-clarifier>` is a web component that lets a chat agent **ask clarifying questions before it acts**. It works in any framework or none, has zero runtime dependencies, looks neutral by default, and is themed with CSS variables.
 
+**[Try it in the playground →](https://marigameo.github.io/agent-clarifier/)** Every scenario, in light and dark, at desktop and phone widths.
+
 ```html
 <agent-clarifier composer="#message"></agent-clarifier>
 <form><textarea id="message"></textarea><button>Send</button></form>
@@ -340,7 +342,8 @@ el.labels = { somethingElse: 'Autre chose', skip: 'Passer', stepOf: '{n} sur {to
 |---|---|
 | **React 19** | `<agent-clarifier questionnaire={q} onclarify:submit={(e) => …} />`. Objects are set as properties. For typing, `import '@marigameo/agent-clarifier/jsx'` once |
 | **Vue 3** | Mark it as a custom element (`isCustomElement: (t) => t === 'agent-clarifier'`), then `:questionnaire="q"` and `@clarify:submit="…"` |
-| **Svelte, Angular** | Use it like any custom element; bind `questionnaire` as a property |
+| **Svelte 5** | `<agent-clarifier questionnaire={q} onclarify:submit={(e) => …} />`. Objects are set as properties. The colon in the event name makes Svelte warn (`attribute_illegal_colon`), but the listener works: add `<!-- svelte-ignore attribute_illegal_colon -->` above it, or pass it through a spread, `{...{ 'onclarify:submit': handler }}` |
+| **Angular** | Use it like any custom element; bind `questionnaire` as a property |
 | **Astro, Next, Nuxt** | Safe to import on the server; it comes alive in the browser |
 
 ---
@@ -393,7 +396,7 @@ pnpm dev     # the playground: the real component in a fake chat, with every sce
 pnpm check   # types, lint, unit + browser tests with coverage, build, size
 ```
 
-The playground covers every case, and each setting is in the URL (for example `/demo/?scenario=arabic&width=375&theme=dark`). `node scripts/shots.mjs <dir> "name=query|click:…"` takes screenshots of any state.
+The playground (also live at [marigameo.github.io/agent-clarifier](https://marigameo.github.io/agent-clarifier/)) covers every case, and each setting is in the URL (for example `/demo/?scenario=arabic&width=375&theme=dark`). `node scripts/shots.mjs <dir> "name=query|click:…"` takes screenshots of any state.
 
 How it was designed, round by round, is in [JOURNAL.md](https://github.com/Marigameo/agent-clarifier/blob/main/JOURNAL.md), with snapshots in [`process/`](https://github.com/Marigameo/agent-clarifier/tree/main/process).
 
