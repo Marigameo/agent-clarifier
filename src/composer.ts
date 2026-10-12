@@ -13,8 +13,10 @@ export class Composer {
   /** The app's own `hidden` value before we hid it (it can also be 'until-found'). */
   #hidden: HTMLElement['hidden'] | null = null;
   #display: [string, string] = ['', ''];
-  #placeholder: string | null = null;
-  #inserted: { text: string; rest: string } | null = null;
+  /** The app's placeholder while ours shows: undefined when not swapped, null when it had none. */
+  #placeholder: string | null | undefined;
+  #docked = false;
+  #inserted: { text: string; rest: string; node?: Text } | null = null;
 
   constructor(field: Field, container: HTMLElement | null, onSend: (text: string) => boolean) {
     this.field = field;
@@ -36,9 +38,12 @@ export class Composer {
   }
 
   set value(v: string) {
-    if (isTextField(this.field)) this.field.value = v;
-    else this.field.textContent = v;
-    this.field.dispatchEvent(new Event('input', { bubbles: true }));
+    const f = this.field;
+    // setRangeText, not `value =`: it goes past React's value tracker, so a controlled box hears the
+    // change and its state follows; with `value =` a sent reply came back on the next render (round 23).
+    if (isTextField(f)) f.setRangeText(v, 0, f.value.length, 'end');
+    else f.textContent = v;
+    f.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   /**
@@ -80,19 +85,29 @@ export class Composer {
   /** Swap the placeholder; null puts the app's back. */
   placeholder(text: string | null): void {
     const attr = isTextField(this.field) ? 'placeholder' : 'aria-placeholder';
+    const f = this.field;
     if (text !== null) {
-      if (this.#placeholder === null) this.#placeholder = this.field.getAttribute(attr) ?? '';
-      if (this.field.getAttribute(attr) !== text) this.field.setAttribute(attr, text);
-      if (!isTextField(this.field)) this.field.dataset.placeholder = text;
-    } else if (this.#placeholder !== null) {
-      this.field.setAttribute(attr, this.#placeholder);
-      if (!isTextField(this.field)) this.field.dataset.placeholder = this.#placeholder;
-      this.#placeholder = null;
+      if (this.#placeholder === undefined) this.#placeholder = f.getAttribute(attr);
+      if (f.getAttribute(attr) !== text) f.setAttribute(attr, text);
+      if (!isTextField(f)) f.dataset.placeholder = text;
+    } else if (this.#placeholder !== undefined) {
+      // A box that had no placeholder gets none back, not an empty one (round 23).
+      const p = this.#placeholder;
+      if (p === null) f.removeAttribute(attr);
+      else f.setAttribute(attr, p);
+      if (!isTextField(f)) {
+        if (p === null) delete f.dataset.placeholder;
+        else f.dataset.placeholder = p;
+      }
+      this.#placeholder = undefined;
     }
   }
 
   /** dock mode: lets the app square off the box's top corners under the card (README recipe). */
   dock(on: boolean): void {
+    // Only ever undo our own: an old record sharing this composer mustn't undock the live card (round 23).
+    if (on === this.#docked) return;
+    this.#docked = on;
     this.container.toggleAttribute('data-clarifier-docked', on);
   }
 
@@ -101,11 +116,18 @@ export class Composer {
    * after it, and briefly show where it landed.
    */
   insert(text: string): void {
-    const rest = this.value;
-    this.#inserted = { text, rest };
-    this.value = text + rest;
-    this.field.focus();
-    if (isTextField(this.field)) this.field.setSelectionRange(text.length, text.length);
+    const f = this.field;
+    this.#inserted = { text, rest: this.value };
+    f.focus();
+    if (isTextField(f)) f.setRangeText(text, 0, 0, 'end');
+    else {
+      // A text node in front (BUILD §7): rich content after it stays as it was (round 23).
+      const node = new Text(text);
+      f.prepend(node);
+      getSelection()?.collapse(node, text.length);
+      this.#inserted.node = node;
+    }
+    f.dispatchEvent(new Event('input', { bubbles: true }));
     // A glow fading out moves nothing, so it plays under reduced motion too (DESIGN §7).
     this.container.animate(
       [{ boxShadow: '0 0 0 3px color-mix(in srgb, currentColor 18%, transparent)' }, { boxShadow: '0 0 0 3px transparent' }],
@@ -117,7 +139,11 @@ export class Composer {
   takeBack(): void {
     const ins = this.#inserted;
     this.#inserted = null;
-    if (ins && this.value === ins.text + ins.rest) this.value = ins.rest;
+    if (!ins || this.value !== ins.text + ins.rest) return;
+    if (ins.node) {
+      ins.node.remove();
+      this.field.dispatchEvent(new Event('input', { bubbles: true }));
+    } else this.value = ins.rest;
   }
 
   focus(): void {
@@ -130,5 +156,10 @@ export function findComposer(host: Element, ref: string | Element | null): Field
   if (!ref) return null;
   if (typeof ref !== 'string') return ref as Field;
   const root = host.getRootNode() as Document | ShadowRoot;
-  return (root.querySelector?.(ref) ?? document.querySelector(ref)) as Field | null;
+  // A malformed selector finds nothing instead of throwing from connectedCallback (round 23).
+  try {
+    return (root.querySelector?.(ref) ?? document.querySelector(ref)) as Field | null;
+  } catch {
+    return null;
+  }
 }

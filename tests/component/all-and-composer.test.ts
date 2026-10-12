@@ -55,7 +55,7 @@ describe('all at once', () => {
   it('mouse only: chips, "Something else" field, Skip all', async () => {
     const m = mount(ALL);
     await userEvent.click(row(m, '__other'));
-    await expect.poll(() => focused(m)?.tagName).toBe('INPUT');
+    await expect.poll(() => focused(m)?.tagName).toBe('TEXTAREA');
     await userEvent.keyboard('Zone 2');
     expect(m.el.snapshot.drafts.area).toMatchObject({ other: 'Zone 2', otherActive: true });
     await userEvent.click(button(m, 'skip-all'));

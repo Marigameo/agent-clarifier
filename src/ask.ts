@@ -3,7 +3,8 @@
 //   const result = await ask(questionnaire, { container: composerSlot, transcript: messages });
 //
 // It resolves when the user finishes: sent, skipped, replied in their own words, or expired
-// (abort or a newer ask). It never rejects for something the user did.
+// (abort or a newer ask). It never rejects for something the user did; it rejects only when the
+// questionnaire has nothing that can be shown (clarify:error), so the agent hears about it (round 23).
 
 import type { AgentClarifier } from './element.js';
 import type { ClarifyResult, Flow, Questionnaire, ReviewMode } from './model/types.js';
@@ -29,7 +30,6 @@ export interface AskOptions {
 }
 
 const DONE = ['clarify:submit', 'clarify:skip', 'clarify:reply', 'clarify:expire'] as const;
-const open = new WeakMap<AgentClarifier, () => void>();
 
 export function ask(q: Questionnaire, opts: AskOptions = {}): Promise<ClarifyResult> {
   const fresh = !opts.element && (opts.transcript || !document.querySelector('agent-clarifier'));
@@ -39,8 +39,9 @@ export function ask(q: Questionnaire, opts: AskOptions = {}): Promise<ClarifyRes
     opts.container.append(el);
   }
 
-  // A newer question takes over: the earlier one, if still waiting, becomes "the agent moved on".
-  open.get(el)?.();
+  // A newer question takes over: a card still open becomes "the agent moved on". That covers an
+  // earlier ask still waiting, and a card the user reopened with "Edit answers" (round 23).
+  if (!['hidden', 'answered', 'expired'].includes(el.state)) el.expire();
 
   if (opts.placement) el.placement = opts.placement;
   if (opts.flow) el.flow = opts.flow;
@@ -48,7 +49,7 @@ export function ask(q: Questionnaire, opts: AskOptions = {}): Promise<ClarifyRes
   if (opts.undoWindow !== undefined) el.undoWindow = opts.undoWindow;
   if (opts.composer) el.composer = opts.composer;
 
-  return new Promise<ClarifyResult>((resolve) => {
+  return new Promise<ClarifyResult>((resolve, reject) => {
     const finish = (e: Event): void => {
       // With ask(), the awaiting code does the sending, so the card counts as answered as soon as
       // the result is handed over, even if another listener prevented the submit.
@@ -57,18 +58,31 @@ export function ask(q: Questionnaire, opts: AskOptions = {}): Promise<ClarifyRes
         if (e.type === 'clarify:submit' && e.defaultPrevented && el.state === 'submitting') el.markAnswered();
       });
       cleanup();
-      if (opts.transcript) opts.transcript.append(el);
+      // Moved once the card has finished: by then the record has handed focus to the composer, so
+      // the move doesn't take focus down with it. Moving a focused element drops focus to <body>;
+      // if it was still inside, it goes to the record's button (round 23).
+      if (opts.transcript) {
+        queueMicrotask(() => {
+          const had = el.matches(':focus-within');
+          opts.transcript!.append(el);
+          if (had) el.shadowRoot?.querySelector<HTMLElement>('button')?.focus();
+        });
+      }
       resolve((e as CustomEvent<ClarifyResult>).detail);
+    };
+    const fail = (): void => {
+      cleanup();
+      reject(new Error('[agent-clarifier] nothing to ask: the questionnaire has no usable questions'));
     };
     const abort = (): void => el.expire();
     const cleanup = (): void => {
       for (const name of DONE) el.removeEventListener(name, finish);
+      el.removeEventListener('clarify:error', fail);
       opts.signal?.removeEventListener('abort', abort);
-      open.delete(el);
     };
     for (const name of DONE) el.addEventListener(name, finish);
+    el.addEventListener('clarify:error', fail);
     opts.signal?.addEventListener('abort', abort, { once: true });
-    open.set(el, abort);
 
     // Reopened from the record: back to the composer while it's being edited, then back again.
     if (opts.transcript && opts.container) {

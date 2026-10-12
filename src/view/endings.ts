@@ -6,15 +6,18 @@ import { header } from './chrome.js';
 import { bdi, h, icon, text } from './dom.js';
 import type { Ctx, View } from './types.js';
 
-export function pillView(ctx: Ctx): View {
-  const p = progress(ctx.s);
-  const el = h(
-    'div',
-    { class: 'pill', part: 'pill' },
-    h('span', { class: 't' }, ctx.t('answeredOf', { n: p.answered, total: p.total })),
-    h('button', { class: 'btn', type: 'button', 'data-act': 'reopen', 'aria-label': ctx.t('pillLabel', { n: p.answered, total: p.total }) }, ctx.t('reopen')),
-  );
-  return { el, update: () => {} };
+export function pillView(init: Ctx): View {
+  const t = h('span', { class: 't' });
+  const btn = h('button', { class: 'btn', type: 'button', 'data-act': 'reopen' }, init.t('reopen'));
+  const el = h('div', { class: 'pill', part: 'pill' }, t, btn);
+  // Updated, not built once: questions can keep streaming in while the card is minimised (round 23).
+  function update(ctx: Ctx): void {
+    const p = progress(ctx.s);
+    const vars = { n: p.answered, total: p.total };
+    text(t, ctx.t('answeredOf', vars));
+    btn.setAttribute('aria-label', ctx.t('pillLabel', vars));
+  }
+  return { el, update };
 }
 
 /**

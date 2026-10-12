@@ -58,6 +58,7 @@ export class AgentClarifier extends Base {
   #advance = 0;
   #toastTimer = 0;
   #submitTimer = 0;
+  #tick = 0;
   #resize: ResizeObserver;
   #composer: Composer | null = null;
   #composerRef: string | Element | null = null;
@@ -91,6 +92,15 @@ export class AgentClarifier extends Base {
   }
 
   connectedCallback(): void {
+    // Set before the code loaded (load on first use, frameworks): own properties hide our setters.
+    // Take them off and set them again, so they arrive (round 23). Composer before questionnaire.
+    for (const k of ['placement', 'flow', 'review', 'undoWindow', 'disabled', 'labels', 'composer', 'composerContainer', 'questionnaire'] as const) {
+      if (Object.hasOwn(this, k)) {
+        const v = (this as Record<string, unknown>)[k];
+        delete (this as Record<string, unknown>)[k];
+        (this as Record<string, unknown>)[k] = v;
+      }
+    }
     usingPointer(); // start tracking how the user interacts, before the first card opens
     watchViewport();
     this.#connectComposer();
@@ -205,7 +215,11 @@ export class AgentClarifier extends Base {
         if (type === Act.OPEN && this.placement === 'replace') this.#wantFocus = true;
         this.#dispatch({ type, q: null, partial });
       }
-      else this.#emit('error', { reason: r.reason });
+      else {
+        // A stream that ends with nothing usable: back to hidden, not "Writing questions…" for ever (round 23).
+        if (streaming) this.#dispatch({ type: Act.RESET });
+        this.#emit('error', { reason: r.reason });
+      }
       return;
     }
     // The questionnaire's own flow wins; the attribute is the default.
@@ -262,6 +276,8 @@ export class AgentClarifier extends Base {
     const swap = force || key !== this.#viewKey;
     // Was focus inside the card? Then it must follow into the new view, never fall to <body>.
     const hadFocus = !!this.#root.activeElement && this.#root.activeElement !== this.#live;
+    // Was the composer missing (it mounts later), or replaced by the app? Look again (round 23).
+    if (this.isConnected && !this.#composer?.field.isConnected) this.#connectComposer();
     const fromName = this.#viewName;
     const fromStep = this.#shownStep;
     const fromHeight = swap ? (this.#view?.el.getBoundingClientRect().height ?? 0) : 0;
@@ -269,8 +285,11 @@ export class AgentClarifier extends Base {
       this.#viewKey = key;
       this.#viewName = name;
       this.#shownStep = s.step;
+      // Only the view is swapped: the live region stays in place, or screen readers can miss what
+      // it says next (round 23).
+      this.#view?.el.remove();
       this.#view = this.#build(name, ctx);
-      this.#root.replaceChildren(...(this.#view ? [this.#view.el] : []), this.#live);
+      if (this.#view) this.#root.prepend(this.#view.el);
       this.#resize.disconnect();
       const scroll = this.#root.querySelector('.scroll');
       if (scroll) {
@@ -286,7 +305,10 @@ export class AgentClarifier extends Base {
     this.#edges();
     this.#syncComposer(ctx);
     if (swap && this.#view && !force) enter(this.#view.el, fromHeight, this.#move(fromName, fromStep, name), getComputedStyle(this).direction === 'rtl');
-    if (swap && (hadFocus || this.#wantFocus)) this.#focusView(hadFocus);
+    // An update in place can also remove the focused control (Undo in the countdown, a dash under
+    // Ctrl+Z); then focus goes to the view's usual place instead of falling to <body> (round 23).
+    const lost = hadFocus && !this.#root.activeElement;
+    if ((swap && (hadFocus || this.#wantFocus)) || lost) this.#focusView(hadFocus);
   }
 
   /** Which way the content moves: forward through the steps, back, or just a swap. */
@@ -308,7 +330,8 @@ export class AgentClarifier extends Base {
   #focusView(force: boolean): void {
     const v = this.#view?.el;
     const name = this.#viewName;
-    if (!v || name === 'loading') return; // keep wanting focus until the questions are ready
+    // Keep wanting focus until the questions are ready and the card is on the page (round 23).
+    if (!v || name === 'loading' || !this.isConnected) return;
     this.#wantFocus = false;
     if (name === 'pill' || name === 'record') {
       if (!force) return;
@@ -420,7 +443,10 @@ export class AgentClarifier extends Base {
     }
 
     if (next.status === 'submitting' && prev.status !== 'submitting') this.#scheduleSubmit(next);
-    if (next.status !== 'submitting') clearTimeout(this.#submitTimer);
+    if (next.status !== 'submitting') {
+      clearTimeout(this.#submitTimer);
+      clearInterval(this.#tick);
+    }
 
     if (next.record && next.record !== prev.record) {
       const kind = next.record.kind;
@@ -498,6 +524,7 @@ export class AgentClarifier extends Base {
   #scheduleSubmit(s: State): void {
     const revising = s.revising;
     const fire = (): void => {
+      clearInterval(this.#tick);
       if (this.#s.status !== 'submitting') return; // undone in the window
       // The window just closed: the countdown and its Undo go, and the button says Sending… (round 12).
       this.#render();
@@ -505,10 +532,12 @@ export class AgentClarifier extends Base {
       if (ok) this.#dispatch({ type: Act.SUBMIT_OK });
     };
     clearTimeout(this.#submitTimer);
+    clearInterval(this.#tick);
     if (s.undoUntil) {
       this.#submitTimer = window.setTimeout(fire, Math.max(0, s.undoUntil - Date.now()));
-      // Redraw the "Sending in 3s" countdown each second until the send goes out or is undone.
-      const tick = window.setInterval(() => (this.#s.status === 'submitting' ? this.#render() : clearInterval(tick)), 1000);
+      // Redraw the "Sending in 3s" countdown each second until the window closes or Undo is pressed.
+      // One at a time, and never past the window: a send the app never confirms used to redraw for ever (round 23).
+      this.#tick = window.setInterval(() => this.#render(), 1000);
     } else queueMicrotask(fire);
   }
 
@@ -549,7 +578,7 @@ export class AgentClarifier extends Base {
       this.#dispatch({ type: Act.OTHER_FOCUS, questionId: q.id });
       if (!draftOf(this.#s, q.id).otherActive) return; // unticked: nothing to type into
       (row.nextElementSibling?.querySelector<HTMLElement>('[data-input]') ??
-        row.closest('[data-q]')?.querySelector<HTMLElement>('input[data-input]'))?.focus();
+        row.closest('[data-q]')?.querySelector<HTMLElement>(`[data-input="${OTHER}"]`))?.focus();
     } else if (id === DELEGATE) {
       this.#dispatch({ type: Act.DELEGATE, questionId: q.id });
       if (draftOf(this.#s, q.id).delegated) this.#moveOnSoon();
@@ -615,10 +644,13 @@ export class AgentClarifier extends Base {
    * shadow root). Keys are ignored while an IME is composing, so Japanese or Chinese input is safe.
    */
   #onKeyDown(e: KeyboardEvent): void {
-    if (e.isComposing || e.defaultPrevented) return;
+    // Safari sends the Enter that confirms a conversion after compositionend, as keyCode 229 (round 23).
+    if (e.isComposing || e.keyCode === 229 || e.defaultPrevented) return;
     const t = e.target as HTMLElement;
     const s = this.#s;
     const field = t.matches('input, textarea');
+    // A held key acts once: auto-repeat would pick on the next step too, and race on (round 23).
+    if (e.repeat && ((e.key === 'Enter' && !e.shiftKey) || (!field && (e.key === ' ' || /^[1-9]$/.test(e.key))))) return e.preventDefault();
     const mod = e.metaKey || e.ctrlKey;
 
     // ⌘Z / Ctrl+Z is our undo, except inside a text field, where it's the browser's own.

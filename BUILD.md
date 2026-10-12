@@ -350,12 +350,12 @@ These are exact strings and can be overridden through `labels`:
 |---|---|---|---|
 | `placement` | `placement` | `replace` · `dock` | `replace` |
 | `flow` | `flow` | `sequential` · `all` (the questionnaire's `flow` wins) | `sequential` |
-| `density` | `density` | `comfortable` · `compact` | `comfortable` |
+| `density` | – (attribute only, round 23) | `comfortable` · `compact` | `comfortable` |
 | `review` | `review` | `auto` · `always` · `never` | `auto` |
 | `undo-window` | `undoWindow` | ms, `0` = off | `0` |
 | `composer` | `composer` | CSS selector, or an element (property) | none |
 | `composer-container` | `composerContainer` | What to hide in replace mode | the composer's `form`, else the composer itself |
-| `theme` | `theme` | `auto` · `light` · `dark` | `auto` |
+| `theme` | – (attribute only, round 23) | `auto` · `light` · `dark` | `auto` |
 | `disabled` | `disabled` | boolean | `false` |
 | – | `labels` | `Partial<Labels>` | English |
 | – | `questionnaire` | Setting it calls `open()` | – |

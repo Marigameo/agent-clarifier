@@ -15,7 +15,7 @@ interface Block {
   ctrl: HTMLElement;
   state: HTMLElement;
   error: HTMLElement;
-  other: HTMLInputElement | null;
+  other: HTMLTextAreaElement | null;
   area: HTMLTextAreaElement | null;
   delegate: HTMLElement | null;
 }
@@ -47,11 +47,13 @@ function block(q: NormalizedQuestion, i: number, init: Ctx): Block {
   const chips: HTMLElement[] = q.options.map((o) =>
     chip(o.id, role, o.label, { disabled: o.disabled, rec: o.recommended, ...(o.compose !== null ? { out: '↗', hint: init.t('composeHint') } : {}) }),
   );
-  let other: HTMLInputElement | null = null;
+  let other: HTMLTextAreaElement | null = null;
   if (q.other) {
     chips.push(chip(OTHER, role, q.other.label ?? init.t('somethingElse'), { quiet: true, icon: 'pencil' }));
-    other = h('input', {
-      type: 'text',
+    // A textarea that grows, like the step view's (BUILD §8.2): a long answer wraps instead of
+    // scrolling out of sight (round 23). Enter never adds a line (element.ts).
+    other = h('textarea', {
+      rows: 1,
       class: 'chip-input',
       'aria-label': q.other.label ?? init.t('somethingElse'),
       placeholder: q.other.placeholder ?? '',

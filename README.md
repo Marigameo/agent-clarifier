@@ -119,7 +119,9 @@ The results map to MCP actions:
 - **Skip all** → `decline`
 - **Closed or expired** → `cancel`
 
-It never sends an `accept` that's missing a required field.
+It never sends an `accept` the schema would reject: a required field missing, a number that isn't one (or isn't whole, for `integer`), or fewer picks than `minItems`. Those fields are left out, and a missing required one turns the answer into `decline`.
+
+A question shows at most 9 choices, one per number key. An `enum` with more keeps the first 9 and warns `too-many-options`, so for a long list (countries, say) change that field to a text question before calling `ask()`.
 
 ---
 
@@ -242,7 +244,9 @@ form[data-clarifier-docked] { border-start-start-radius: 0; border-start-end-rad
 
 ### `ask(questionnaire, options)`
 
-It returns a promise of the `ClarifyResult`. It resolves when the user sends, skips, replies or the card expires, and it never rejects for something the user did. The options are `element`, `container`, `transcript`, `placement`, `flow`, `review`, `undoWindow`, `composer` and `signal` (aborting expires the card). Calling `ask()` again on the same element expires the earlier question.
+It returns a promise of the `ClarifyResult`. It resolves when the user sends, skips, replies or the card expires, and it never rejects for something the user did. It rejects only when the questionnaire has nothing that can be shown (no usable questions), so your agent hears about it instead of waiting. The options are `element`, `container`, `transcript`, `placement`, `flow`, `review`, `undoWindow`, `composer` and `signal` (aborting expires the card). Calling `ask()` again on the same element expires whatever that card still had open.
+
+The promise settles once. If the user later reopens the record ("Edit answers") and sends again, that arrives as `clarify:revise` on the element: listen for it if your agent should hear about changes.
 
 ### Events
 
@@ -379,6 +383,7 @@ Runtime fixes print `[agent-clarifier] <where>: <code>` to the console:
 - **Browsers:** the last two versions of Chrome, Edge, Firefox and Safari (Safari 16.4+).
 - **Size:** about 21 KB gzipped for the core (19 KB brotli, which is what CDNs send), and nothing at page load if you load it when it's needed (see Install). Each converter is about 1 KB, imported only if you use it.
 - **Dependencies:** none at runtime.
+- **Unit tests:** jsdom has no `ResizeObserver` or constructable stylesheets, so the element can't be created there. Test it in a real browser (Vitest browser mode, Playwright), or mock the module in jsdom tests.
 
 ## Development
 
