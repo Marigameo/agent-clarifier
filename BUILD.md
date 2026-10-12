@@ -46,7 +46,7 @@
 | Package manager | pnpm | Already on this machine |
 | Tests | Vitest (unit), Vitest browser mode with Playwright (component), Playwright (e2e, axe, screenshots) | Real browsers for focus, keyboard and Shadow DOM |
 | Browsers | Last 2 versions of Chrome, Edge, Firefox and Safari (Safari ≥ 16.4) | Needed for `color-mix()`, `:focus-visible` and Web Animations |
-| Size | **Target ≤ 12 KB gzipped** for the core (the size check guards at **20 KB** until the size round, so it stays meaningful while we polish), about 1 KB per converter. Checked with `size-limit`. **Mari's call (M1): polish first, then measure and cut.** The target guides us; it doesn't block a quality feature. If we go over, cuts are proposed to Mari, never made silently | Plug and play should mean light |
+| Size | **About 21 KB gzipped** for the core (19 KB brotli), about 1 KB per converter. Guarded by `size-limit` at **21.5 KB gzip and 19.2 KB brotli**: tight on purpose, so growth is a decision, never drift. Raising a guard needs a reason in the journal. The first target was ≤ 12 KB (M1); round 22 measured that only cutting behaviour could reach it, and set this one (Mari's call). The npm package ships no source maps (133 KB unpacked), and the README shows loading it on first use: 0 KB at page load | Plug and play should mean light |
 | Runtime deps | **None** | |
 | Licence | MIT | |
 | Node | 22 | Installed |
@@ -523,7 +523,7 @@ Each milestone ends with tests green, a commit, and a JOURNAL.md entry. Playgrou
 | **M3 · Placements + endings** | `pill`, `record` (all 4 kinds), `composer.ts` (hide/show, placeholder, send detection), replace and dock, minimise/reopen, reply | The playground's fake chat shows replace and dock, the pill, and all four record kinds. Composer tests for textarea, input and contenteditable |
 | **M4 · Recovery + own words** | Undo and history wiring, toasts, start over, edit-from-review, undo window, error/retry/`markAnswered`, revise, compose options (insert, highlight, untouched removal) | Every PLAN §6 row is demoable **and** covered by a component test. Compose and the undo window work in the playground |
 | **M5 · Polish audit** | Motion (§4.3), focus (§5.2), live region (§5.4), reduced motion, touch hit areas (§5.3), IME, `viewport.ts` and the long-content rules (§8.2–8.3), and a full RTL pass | axe clean on every demo scenario (light and dark). Manual keyboard-only and VoiceOver (Safari) pass, logged in the journal. Playwright screenshots of every scenario at 1280 and 500 widths, light and dark. **Three new demo scenarios pass visually:** `dir="rtl"` (Arabic), long content (a 300-character prompt, 9 two-line options, a URL label, 8 questions in the all flow), and the phone keyboard (checked on a real phone, logged) |
-| **M6 · Theming + converters + ask()** | Tokens, parts, the `theme` attribute, `ask()`, `adapters/claude`, `adapters/mcp`, `jsx.d.ts` | Three themes (light, dark, warm) in the playground using tokens only. Converter round-trip tests (including "(Recommended)" and skip). `ask()` tests. Size ≤ 12 KB gzipped |
+| **M6 · Theming + converters + ask()** | Tokens, parts, the `theme` attribute, `ask()`, `adapters/claude`, `adapters/mcp`, `jsx.d.ts` | Three themes (light, dark, warm) in the playground using tokens only. Converter round-trip tests (including "(Recommended)" and skip). `ask()` tests. Size ≤ 12 KB gzipped (revised to about 21 KB in round 22) |
 | **M7 · Ship** | README (quick start, the Claude Agent SDK recipe, an MCP recipe, model-side guidance from PLAN §9, the docked CSS recipe, the API reference), demo deploy, `npm publish` | Installed fresh in a scratch Vite app **and** used in the portfolio via the CDN. Mari approves the repo going public and the npm publish |
 
 ---
@@ -541,7 +541,7 @@ Status as of round 8 (10 Oct 2026):
 - [ ] **Phone keyboard on a real phone: manual, pending**
 - [x] Every default token has a reason in DESIGN.md; findings F1–F15 resolved (round 8)
 - [x] Zero runtime dependencies
-- [ ] **≤ 12 KB gzipped core: currently ~19.7 KB** (guarded at 20 KB). Getting to 12 means cutting behaviour: Mari's call
+- [x] Size: **21.37 KB gzipped, 19.09 KB brotli** (round 22), against a budget of about 21 KB guarded at 21.5 KB. The 12 KB target was retired: only cutting behaviour could reach it
 - [~] Frameworks: plain HTML (built file), React 19, Vue 3 and server-side import (Astro/Next) are tested. **Svelte 5 is not tested yet**
 - [x] README complete; JOURNAL.md up to date; `process/` snapshots taken
 - [ ] **Published as `@marigameo/agent-clarifier`: needs Mari's go-ahead** (npm login, and the repo going public for the demo)

@@ -963,6 +963,65 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 
 ---
 
+## Round 22 · Size (12 Oct 2026)
+
+**Brief (mine):** I want this to feel light, so nobody thinks twice about installing it. Is an npm package the right way to ship it, or is there something better? What can be optimised without breaking any feature or styling? Is the current size OK for a component like this, and what's a fair benchmark? Plan first, no changes.
+
+**How Claude worked:** it measured first, then ran three read-only agents in parallel, each in a throwaway copy of the repo: a JS byte audit, a CSS byte audit, and a benchmark of 25 comparable packages built with our own Vite settings. Every proposed saving was applied and measured, not estimated. Plan frozen before any change: `process/22-size/round-plan.md`. Peer sizes: `process/22-size/benchmarks.md`.
+
+**What it found:**
+- **Already lean.** Zero dependencies, fully minified JS and CSS, no dead code, no unused selectors. Gzip already absorbs repetition: the dark tokens are written twice and that costs 56 B.
+- **21.9 KB sits with the mid-weight widgets** (cmdk 16.4, Shoelace's dialog 17.1 + 4.1 CSS, tom-select 17.6 + 2.0, vaul 20.6, choices.js 20.7 + 2.3). It's 2–4× the "small and polished" references (sonner 9.3, Lit 5.9), and far below the chat kits it would sit beside (chatscope 39 + 6, deep-chat 105, CopilotKit ~800).
+- **Every safe change adds up to ~0.6 KB.** 12 KB would mean cutting features. That target was set in M1, before rounds 9–21 added motion, accessibility fixes and polish.
+- **"Heavy" is judged from two numbers browsers never download:** npm's "Unpacked Size" (380 KB, of which 245 KB was source maps), and the page-load cost (the card only appears when an agent asks, so it can load on first use).
+- **npm is the right channel.** It feeds jsDelivr, unpkg and esm.sh for free.
+
+**I asked what "optional features" would mean** (they're optional to use today). Claude: optional to use, but always downloaded, since one file holds every view. Making them optional to download means opt-in imports (breaks zero-config) or chunks fetched when the card opens (a visible delay at the worst moment, async rendering, ~3 KB saved and only for some apps). Loading the whole component on first use gets a better result for everyone.
+
+**My decisions:**
+1. **The target is about 21 KB, guarded tightly**, instead of 12 KB.
+2. Packaging: take the recommendation.
+3. **Numeric action types: yes.** I mostly code with agents, so readable strings in the debugger matter less than the bytes.
+4. Fix the bug the audit found.
+
+**What changed:**
+- **The "Something else" field is 16px on touch again** (a bug, found by the CSS audit). Its `font: inherit` (specificity 0,1,1) had outranked round 11's touch rule (0,0,1) since round 16, so iOS zoomed the page on focus. The touch rule now names the field. New `touch-fields.test.ts` emulates touch through Chrome's DevTools protocol and checks every field is ≥ 16px. It failed (14px) before the fix.
+- **The npm package ships no source maps:** 115 → 43.5 KB packed, 380 → 133 KB unpacked. They still build locally.
+- **The README** shows loading on first use (`await import(...)` inside the function that asks), with a note on preloading when the chat opens, and pinning a version on a CDN.
+- **Build settings:** lightningcss no longer adds light/dark toggles we never use (−30 B), and the minifier treats property reads as side-effect free (−28 B; never write a bare `el.offsetWidth;` to force a reflow, the comment says why).
+- **Private CSS tokens get one-letter names at build time** (`scripts/short-tokens.ts`, −119 B). The source keeps the readable names; public `--clarify-*` names never change. The three the TypeScript reads keep theirs, and a unit test fails if the code starts reading another.
+- **Duplicate CSS rules merged** (−92 B): option and review rows share the fill inset and dividers, plus focus rings, foot rules and the reduced-motion blocks. Comments moved to follow their rules.
+- **Action types are named numeric constants** (`src/model/act.ts`, −323 B). The `Action` type uses `typeof Act.X`, so the compiler still checks every action is handled. The test table stays keyed by name, so test titles read "SELECT in hidden", not "2 in hidden".
+- **The budget:** `size-limit` guards the core at **21.5 KB gzip** and adds a **19.2 KB brotli** line. BUILD §0 and §11, README and DESIGN §18 are updated.
+
+**Turned down (Claude's calls):**
+- Stripping `/* @__PURE__ */` from the output (−40 B). The JS audit said they do nothing for apps. They do: they let an app's bundler drop `ask()` when it isn't used.
+- Dropping the developer warnings in production (−202 B): developers would lose documented warnings.
+- Mangling state field names (−155 B): it changes the public `snapshot`.
+- Native `light-dark()`: it drops Safari 16.4–17.4.
+- Lazy chunks per feature (see above).
+
+**Found along the way: a check that checked nothing.** While proving the new token test could fail, Claude found that the unit tests receive the stylesheet as an **empty string**: Vitest swaps CSS for "" unless told otherwise. So the RTL guard ("a test fails if `left`/`right` creep in", BUILD §8.1) had been passing on nothing since M2. Its self-test only checked the regex, never the file. Run by hand on the real CSS it found 0 physical properties, so the promise held in practice. The unit project now loads the CSS, and a new first test fails if the stylesheet is ever empty again.
+
+**Verified:**
+- `pnpm check`: **597 green**, 100% lines.
+- Deliberate breaks, caught 5/5: two tokens sharing a short name, a JS-read token missing from the keep list, an injected `margin-left`, two actions sharing a number, and the 14px bug itself.
+- **CSS changes are pixel-identical.** Every computed style and element box was dumped on all 34 break-page scenarios: light, dark, forced colours, reduced motion, 375px touch, 60 Tab steps, 6 arrow steps and 40 hovers (137 snapshots). Before vs after: 0 differences. The tool is now `scripts/style-dump.mjs` for future rounds. A 1px change, injected to prove the tool can see one, showed up as 336. This also stands in for re-running the skill checks after option-row changes: nothing they judged can have moved.
+- Renders: `process/22-size/renders/` (step 1 in light, dark and phone; "Something else" typed on a touch phone at 16px; a multi with two picks).
+
+**Numbers** (core + shared chunk):
+
+| | Minified | Gzip | Brotli |
+|---|---|---|---|
+| Before | 73.1 KB | 21.93 KB | 19.44 KB |
+| After | 70.6 KB | **21.37 KB** | **19.09 KB** |
+
+The converters are unchanged (1.18 and 1.15 KB).
+
+**Artifacts:** `process/22-size/` (round-plan.md and benchmarks.md frozen before the change, PLAN.md, DESIGN.md, renders/).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -983,4 +1042,4 @@ Claude recommended Gap: one rule for every case, each answer stays its own objec
 - Round 17 is the "colour is a word" beat: I asked for a warning colour, and the answer was that the message wasn't a warning and wasn't an action either. So it lost its colour instead of gaining one. A small honesty beat too: a claimed precedent ("round 9 rejected that") turned out not to exist, and saying so mattered more than the answer.
 - Round 19's beat: a screenshot can agree with you for the wrong reason. The "after" render showed the gap, but only because a focus ring drew it; the actual fill still bled through (a CSS shorthand quietly reset the clip). The test that measured the fill's box is what told the truth.
 - Round 21 is the "measure the premise" beat: two AI sessions argued Back's position with good-sounding reasons. The tie-breaker was one number per step: which edge of the card actually moves. The confident "top-anchored, so the header never moves" was simply wrong for this component, and a probe showed it in a minute.
-
+- Round 22 is the "weigh it before you diet" beat: I asked to make it smaller, and the measurements said it was already lean. Twenty-five real packages, built the same way, put 21 KB among single-purpose widgets that do less. The honest result was a better target, not a smaller number: ~0.6 KB of real savings, a package a third of its old size, 0 KB at page load, and two quiet bugs (a 14px field, and an RTL guard that had been checking an empty string since M2).

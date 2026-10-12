@@ -4,6 +4,7 @@ import { fromElicitation, toElicitation, type ElicitParams } from '../../src/ada
 import { normalize } from '../../src/model/normalize';
 import { initialState, reducer } from '../../src/model/reducer';
 import type { Action, ClarifyResult, Questionnaire } from '../../src/model/types';
+import * as Act from '../../src/model/act';
 
 const ENV = { review: 'never' as const, undoWindow: 0, now: 0 };
 
@@ -12,9 +13,9 @@ function answer(q: Questionnaire, actions: Action[]): ClarifyResult {
   const r = normalize(q);
   if (!r.ok) throw new Error('did not normalize');
   expect(r.warnings).toEqual([]);
-  let s = reducer(initialState(), { type: 'OPEN', q: r.q, partial: false }, ENV);
+  let s = reducer(initialState(), { type: Act.OPEN, q: r.q, partial: false }, ENV);
   for (const a of actions) s = reducer(s, a, ENV);
-  if (s.status === 'submitting') s = reducer(s, { type: 'SUBMIT_OK' }, ENV);
+  if (s.status === 'submitting') s = reducer(s, { type: Act.SUBMIT_OK }, ENV);
   return s.record!.result;
 }
 
@@ -75,11 +76,11 @@ describe('toClaude', () => {
 
   it('answers keyed by question text, values in the original labels, multi joined with ", "', () => {
     const result = answer(q, [
-      { type: 'SELECT', questionId: 'library', optionId: 'date-fns' },
-      { type: 'NEXT' },
-      { type: 'TOGGLE', questionId: 'features', optionId: 'sync' },
-      { type: 'TOGGLE', questionId: 'features', optionId: 'dark-mode' },
-      { type: 'NEXT' },
+      { type: Act.SELECT, questionId: 'library', optionId: 'date-fns' },
+      { type: Act.NEXT },
+      { type: Act.TOGGLE, questionId: 'features', optionId: 'sync' },
+      { type: Act.TOGGLE, questionId: 'features', optionId: 'dark-mode' },
+      { type: Act.NEXT },
     ]);
     expect(toClaude(result, CLAUDE)).toEqual({
       behavior: 'allow',
@@ -95,9 +96,9 @@ describe('toClaude', () => {
 
   it('"Something else" sends the typed text, never the word "Other"', () => {
     const result = answer(q, [
-      { type: 'OTHER_INPUT', questionId: 'library', text: 'Temporal' },
-      { type: 'NEXT' },
-      { type: 'SKIP', questionId: 'features' },
+      { type: Act.OTHER_INPUT, questionId: 'library', text: 'Temporal' },
+      { type: Act.NEXT },
+      { type: Act.SKIP, questionId: 'features' },
     ]);
     const out = toClaude(result, CLAUDE);
     expect(out.behavior === 'allow' && out.updatedInput.answers).toEqual({ 'Which library should we use for dates?': 'Temporal' });
@@ -105,10 +106,10 @@ describe('toClaude', () => {
 
   it('Decide for me sends an instruction as that answer', () => {
     const result = answer(fromClaude(CLAUDE, { delegate: true }), [
-      { type: 'DELEGATE', questionId: 'library' },
-      { type: 'NEXT' },
-      { type: 'DELEGATE', questionId: 'features' },
-      { type: 'NEXT' },
+      { type: Act.DELEGATE, questionId: 'library' },
+      { type: Act.NEXT },
+      { type: Act.DELEGATE, questionId: 'features' },
+      { type: Act.NEXT },
     ]);
     const out = toClaude(result, CLAUDE);
     expect(out.behavior === 'allow' && out.updatedInput.answers['Which library should we use for dates?']).toBe(
@@ -117,7 +118,7 @@ describe('toClaude', () => {
   });
 
   it('skipping everything sends a response in the user’s voice', () => {
-    const result = answer(q, [{ type: 'SKIP', questionId: 'library' }, { type: 'SKIP', questionId: 'features' }]);
+    const result = answer(q, [{ type: Act.SKIP, questionId: 'library' }, { type: Act.SKIP, questionId: 'features' }]);
     expect(result.status).toBe('skipped');
     const out = toClaude(result, CLAUDE, { skipMessage: 'Just go.' });
     expect(out).toMatchObject({ behavior: 'allow', updatedInput: { answers: {}, response: 'Just go.' } });
@@ -125,16 +126,16 @@ describe('toClaude', () => {
 
   it('a reply in the user’s own words becomes the response, carrying any picks with it', () => {
     const result = answer(q, [
-      { type: 'SELECT', questionId: 'library', optionId: 'luxon' },
-      { type: 'MINIMISE' },
-      { type: 'REPLY', text: 'Whatever is smallest' },
+      { type: Act.SELECT, questionId: 'library', optionId: 'luxon' },
+      { type: Act.MINIMISE },
+      { type: Act.REPLY, text: 'Whatever is smallest' },
     ]);
     const out = toClaude(result, CLAUDE);
     expect(out.behavior === 'allow' && out.updatedInput.response).toBe('Whatever is smallest\n\n(Picked so far: Library: Luxon)');
   });
 
   it('an expired card is a deny with a message', () => {
-    const result = answer(q, [{ type: 'EXPIRE' }]);
+    const result = answer(q, [{ type: Act.EXPIRE }]);
     expect(toClaude(result, CLAUDE)).toEqual({ behavior: 'deny', message: 'The user closed the questions without answering.' });
   });
 });
@@ -184,11 +185,11 @@ describe('toElicitation', () => {
 
   it('accept, with content typed back from the schema', () => {
     const result = answer(q, [
-      { type: 'TEXT_INPUT', questionId: 'size', text: '4' },
-      { type: 'SELECT', questionId: 'time', optionId: '20' },
-      { type: 'TOGGLE', questionId: 'diet', optionId: 'gf' },
-      { type: 'SELECT', questionId: 'highchair', optionId: 'true' },
-      { type: 'SUBMIT' },
+      { type: Act.TEXT_INPUT, questionId: 'size', text: '4' },
+      { type: Act.SELECT, questionId: 'time', optionId: '20' },
+      { type: Act.TOGGLE, questionId: 'diet', optionId: 'gf' },
+      { type: Act.SELECT, questionId: 'highchair', optionId: 'true' },
+      { type: Act.SUBMIT },
     ]);
     expect(toElicitation(result, MCP)).toEqual({
       action: 'accept',
@@ -197,25 +198,25 @@ describe('toElicitation', () => {
   });
 
   it('skip → decline, expired → cancel', () => {
-    expect(toElicitation(answer(q, [{ type: 'EXPIRE' }]), MCP)).toEqual({ action: 'cancel' });
-    const skip = { ...answer(q, [{ type: 'EXPIRE' }]), status: 'skipped' as const };
+    expect(toElicitation(answer(q, [{ type: Act.EXPIRE }]), MCP)).toEqual({ action: 'cancel' });
+    const skip = { ...answer(q, [{ type: Act.EXPIRE }]), status: 'skipped' as const };
     expect(toElicitation(skip, MCP)).toEqual({ action: 'decline' });
   });
 
   it('a reply in own words: accept if every required field has an answer, else decline', () => {
-    const partial = answer(q, [{ type: 'SELECT', questionId: 'time', optionId: '19' }, { type: 'MINIMISE' }, { type: 'REPLY', text: 'Call me' }]);
+    const partial = answer(q, [{ type: Act.SELECT, questionId: 'time', optionId: '19' }, { type: Act.MINIMISE }, { type: Act.REPLY, text: 'Call me' }]);
     expect(toElicitation(partial, MCP)).toEqual({ action: 'decline' });
     const full = answer(q, [
-      { type: 'TEXT_INPUT', questionId: 'size', text: '2' },
-      { type: 'SELECT', questionId: 'time', optionId: '19' },
-      { type: 'MINIMISE' },
-      { type: 'REPLY', text: 'Window seat if possible' },
+      { type: Act.TEXT_INPUT, questionId: 'size', text: '2' },
+      { type: Act.SELECT, questionId: 'time', optionId: '19' },
+      { type: Act.MINIMISE },
+      { type: Act.REPLY, text: 'Window seat if possible' },
     ]);
     expect(toElicitation(full, MCP)).toMatchObject({ action: 'accept', content: { size: 2, time: '19' } });
   });
 
   it('a "number" that isn’t one is never sent as NaN: required → decline, optional → left out', () => {
-    const result = answer(q, [{ type: 'TEXT_INPUT', questionId: 'size', text: 'four' }, { type: 'SELECT', questionId: 'time', optionId: '19' }, { type: 'SUBMIT' }]);
+    const result = answer(q, [{ type: Act.TEXT_INPUT, questionId: 'size', text: 'four' }, { type: Act.SELECT, questionId: 'time', optionId: '19' }, { type: Act.SUBMIT }]);
     expect(toElicitation(result, MCP)).toEqual({ action: 'decline' });
     const optional: ElicitParams = { ...MCP, requestedSchema: { ...MCP.requestedSchema!, required: ['time'] } };
     // Defaults count as answers (seating 'in', high chair false), as the spec says to pre-fill them.

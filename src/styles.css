@@ -114,7 +114,6 @@ button { font: inherit; color: inherit; }
 .live { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ── card ───────────────────────────────────────────────────────────── */
-.card:focus { outline: none; }
 .card {
   container-type: inline-size;
   display: flex; flex-direction: column;
@@ -142,7 +141,6 @@ button { font: inherit; color: inherit; }
   padding-block: 16px 10px; padding-inline: 20px 16px;
 }
 .source + .head { padding-block-start: 6px; }
-.foot { flex: none; }
 
 /* The questions scroll; the footer stays put. The header sticks to the top while it's short,
    and scrolls away with the content when it's tall (over a third of the card), so a long
@@ -154,12 +152,10 @@ button { font: inherit; color: inherit; }
 .card[data-tall] .top { position: static; }
 /* An edge shadow means "there's more under here", so it only shows while content is hidden. */
 .top, .foot { transition: box-shadow var(--_duration) var(--_ease); }
-.foot { position: relative; z-index: 1; }
-.card[data-above]:not([data-tall]) .top { box-shadow: 0 1px 0 var(--_border), 0 8px 12px -10px var(--_edge); }
+.card[data-above]:not([data-tall]) .top, .card[data-above][data-tall] .scroll::before { box-shadow: 0 1px 0 var(--_border), 0 8px 12px -10px var(--_edge); }
 .card[data-below] .foot { box-shadow: 0 -8px 12px -10px var(--_edge); }
 /* A tall header scrolls away, so a 1px sticky edge carries the "more above" cue instead (round 11). */
 .scroll::before { content: ""; display: block; position: sticky; inset-block-start: 0; z-index: 2; block-size: 1px; margin-block-end: -1px; }
-.card[data-above][data-tall] .scroll::before { box-shadow: 0 1px 0 var(--_border), 0 8px 12px -10px var(--_edge); }
 
 /* dock: the card sits on the composer, so its bottom edge joins it and its shadow falls upward,
    onto the conversation it floats over (DESIGN §3). */
@@ -204,18 +200,20 @@ button { font: inherit; color: inherit; }
 /* Fills are drawn 2px inside the row (a transparent border, the background clipped to the padding
    box), so two filled neighbours (picks, a hover, review flags) show a 4px gap instead of pinching
    into one shape. Padding gives back the 2px: heights don't change. The vertical radius is 2px
-   larger so the clipped fill keeps round corners (round 19). */
-.opt {
+   larger so the clipped fill keeps round corners (round 19). Review rows share it, and the dividers. */
+.opt, .review .row {
   position: relative;
-  display: flex; align-items: center; gap: 12px;
-  min-block-size: 52px; padding: 8px 12px;
   border-block: 2px solid transparent; background-clip: padding-box;
   border-radius: var(--_radius-sm) / calc(var(--_radius-sm) + 2px);
+}
+.opt {
+  display: flex; align-items: center; gap: 12px;
+  min-block-size: 52px; padding: 8px 12px;
   cursor: pointer; user-select: none;
 }
 /* "Something else" sits in a wrapper (with its field), so it's reached as `.opt + .other-wrap > .opt`.
    :where() keeps this at zero weight, so every rule that hides a divider wins, wrapped row included. */
-:where(.opt + .opt, .opt + .other-wrap > .opt, .other-wrap + .opt)::before {
+:where(.opt + .opt, .opt + .other-wrap > .opt, .other-wrap + .opt)::before, .review .row + .row::before {
   /* -2px: on the row boundary, the middle of the gap between fills (round 19). */
   content: ""; position: absolute; inset-block-start: -2px; inset-inline: 12px;
   border-block-start: 1px solid var(--_border);
@@ -223,20 +221,18 @@ button { font: inherit; color: inherit; }
 .opt[aria-checked="true"], .opt[aria-pressed="true"] { background-color: var(--_selected); } /* -color: the shorthand would reset the clip (round 19) */
 /* A filled or keyboard-focused row hides the hairlines on both its edges, so none poke out at its
    corners (focus added in round 14). */
-.opt:is([aria-checked="true"], [aria-pressed="true"])::before,
-.opt:is([aria-checked="true"], [aria-pressed="true"]) + .opt::before,
-.opt:is([aria-checked="true"], [aria-pressed="true"]) + .other-wrap > .opt::before,
-.other-wrap:has(> .opt:is([aria-checked="true"], [aria-pressed="true"])) + .opt::before,
-.card:not([data-pointer]) .opt:focus-visible::before,
-.card:not([data-pointer]) .opt:focus-visible + .opt::before,
-.card:not([data-pointer]) .opt:focus-visible + .other-wrap > .opt::before,
-.card:not([data-pointer]) .other-wrap:has(> .opt:focus-visible) + .opt::before { border-color: transparent; }
+:is(.opt[aria-checked="true"], .opt[aria-pressed="true"], .card:not([data-pointer]) .opt:focus-visible)::before,
+:is(.opt[aria-checked="true"], .opt[aria-pressed="true"], .card:not([data-pointer]) .opt:focus-visible) + .opt::before,
+:is(.opt[aria-checked="true"], .opt[aria-pressed="true"], .card:not([data-pointer]) .opt:focus-visible) + .other-wrap > .opt::before,
+.other-wrap:has(> :is(.opt[aria-checked="true"], .opt[aria-pressed="true"], .card:not([data-pointer]) .opt:focus-visible)) + .opt::before { border-color: transparent; }
 /* Rings are box-shadows (they follow the radius); the transparent outline is what forced-colors
    mode paints instead, since it removes shadows (round 11). */
-.opt:focus-visible, .chip:focus-visible, button.dot:focus-visible { outline: 2px solid transparent; outline-offset: -2px; }
-.opt:focus-visible { box-shadow: inset 0 0 0 2px var(--_accent); }
+:is(.opt, .chip):focus-visible, button.dot:focus-visible { outline: 2px solid transparent; outline-offset: -2px; }
+/* An open "Something else" shows its ring whenever its field has focus, even after a click: it follows
+   the field, which always shows focus, not the keyboard-only rule below. */
+.opt:focus-visible, .other-wrap:has(> .other-field [data-input]:focus) > .opt { box-shadow: inset 0 0 0 2px var(--_accent); }
 /* Rings are for keyboard users; after a click or tap they're noise (fills already show the pick). */
-[data-pointer] .opt:focus-visible, [data-pointer] .chip:focus-visible, [data-pointer] .btn:focus-visible, [data-pointer] .icon-btn:focus-visible { box-shadow: none; }
+[data-pointer] :is(.opt, .chip, .btn, .icon-btn):focus-visible { box-shadow: none; }
 .opt[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 
 .key {
@@ -293,14 +289,11 @@ button { font: inherit; color: inherit; }
   padding-block: 10px; padding-inline-end: 12px;
 }
 .other-wrap:has(> .other-field:not([hidden])) > .opt .body { display: none; }
-/* A text field always shows focus, even after a click. Only the field: the row itself follows the
-   keyboard-only ring rule like every row. */
-.other-wrap:has(> .other-field [data-input]:focus) > .opt { box-shadow: inset 0 0 0 2px var(--_accent); }
+/* The field borrows the row: no box, ring or font of its own (the base textarea rule sets the rest). */
 .other-field textarea {
   flex: 1; min-inline-size: 0; min-block-size: 1lh; max-block-size: 5lh;
-  padding: 0; border: 0; border-radius: 0; box-shadow: none; outline: 0;
-  font: inherit; line-height: inherit; color: var(--_fg); background: transparent;
-  field-sizing: content; resize: none;
+  padding: 0; border-radius: 0; box-shadow: none; outline: 0;
+  font: inherit; line-height: inherit; background: transparent;
 }
 .other-field textarea:focus { box-shadow: none; }
 .enter { font-size: var(--_t12); color: var(--_muted); }
@@ -331,6 +324,7 @@ textarea::placeholder, input::placeholder { color: var(--_muted); }
   flex-wrap: wrap;
   padding-block: 12px 14px; padding-inline: 20px 16px;
   border-block-start: 1px solid var(--_border);
+  flex: none; position: relative; z-index: 1;
 }
 /* Back opens the footer (round 21): its glyph on the card's 20px edge (the 28px box has 7px each
    side), then the dashes. Dimmed on step 1 rather than hidden, so nothing shifts between steps. */
@@ -361,7 +355,7 @@ kbd { font: inherit; font-size: var(--_t12); padding: 1px 5px; border: 1px solid
 
 .dots { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 /* By status (round 21): the current step ink, answered muted, skipped dashed, not reached light. */
-.dot { display: block; inline-size: 14px; block-size: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--_border); }
+.dot { inline-size: 14px; block-size: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--_border); }
 .dot.now { background: var(--_fg); }
 .dot.done { background: var(--_muted); }
 .dot.skip { background: repeating-linear-gradient(90deg, var(--_faint) 0 2px, transparent 2px 4px); }
@@ -370,7 +364,7 @@ button.dot { position: relative; cursor: pointer; }
 /* 24×24 and never overlapping (14 + 10px gap = 24px apart), on every pointer, not just touch (round 21;
    WCAG 2.5.8). It was 18px wide on a mouse. */
 button.dot::after { content: ""; position: absolute; inset: -10px -5px; }
-button.dot:focus-visible { box-shadow: var(--_focus); }
+button.dot:focus-visible, .chip:focus-visible { box-shadow: var(--_focus); }
 
 .toast {
   display: inline-flex; align-items: center; gap: 10px;
@@ -414,7 +408,6 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .chip[role="checkbox"][aria-checked="true"] .tick { display: block; }
 .chip.quiet { border-style: dashed; color: var(--_muted); }
 .chip.quiet[aria-checked="true"], .chip.quiet[aria-pressed="true"] { border-style: solid; color: var(--_bg); }
-.chip:focus-visible { box-shadow: var(--_focus); }
 .chip[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .chip .out { color: inherit; opacity: .7; }
 .chip-input {
@@ -462,13 +455,9 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 .review dd.act { justify-self: end; }
 .review .row {
   display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center;
-  padding: 9px 12px; /* + the 2px fill inset, as option rows (round 19) */
-  border-block: 2px solid transparent; background-clip: padding-box;
-  border-radius: var(--_radius-sm) / calc(var(--_radius-sm) + 2px);
+  padding: 9px 12px;
 }
-.review .row { position: relative; }
-/* Dividers start where the text starts and never cut into a fill's corners, like option rows (round 12). */
-.review .row + .row::before { content: ""; position: absolute; inset-block-start: -2px; inset-inline: 12px; border-block-start: 1px solid var(--_border); }
+/* Dividers (shared with option rows, above) start where the text starts; a flag hides them like a pick. */
 .review .flag::before, .review .flag + .row::before { border-color: transparent; }
 .review dt { font-size: var(--_t12); color: var(--_muted); overflow-wrap: anywhere; }
 .review dd { margin: 0; overflow-wrap: anywhere; }
@@ -516,7 +505,7 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   padding: 12px 14px; border: 1px solid var(--_border); border-radius: var(--_radius);
   background: var(--_bg); font-size: var(--_t13);
 }
-.record:focus { outline: none; }
+.card:focus, .record:focus { outline: none; }
 .record.expired { border-style: dashed; }
 .record-head { display: flex; align-items: flex-start; gap: 8px; color: var(--_muted); }
 /* On the first line of a long message, not floating in its middle (round 13). */
@@ -566,13 +555,12 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
      fill (key-bg and hover were 2% apart). Mixed from the tokens, so a theme's key follows (round 21). */
   .opt:hover:not([aria-checked="true"], [aria-pressed="true"], [aria-disabled="true"]) > .key:not(.box) { background: color-mix(in srgb, var(--_key-bg) 92%, var(--_fg)); color: var(--_fg); }
 }
-@media (prefers-reduced-motion: reduce) { .spin, .sk::after { animation: none; } }
 /* Movement only for those who haven't asked for less. Fades stay either way (DESIGN §7). */
 @media (prefers-reduced-motion: no-preference) {
   @starting-style { .toast:not(.notice) { transform: translateY(4px); } }
   /* Press feedback: the control gives a little under a pointer. Not for keyboard presses
      (Space), which repeat fast and already show the ring. Text links don't shrink. */
-  .btn:not(.link), .chip, .icon-btn { transition: transform var(--_duration) var(--_ease); }
+  .btn:not(.link), .chip, .icon-btn, .key.box { transition: transform var(--_duration) var(--_ease); }
   [data-pointer] .btn:not(.link):active:not(:disabled):not([aria-disabled="true"]),
   [data-pointer] .chip:active:not([aria-disabled="true"]),
   [data-pointer] .icon-btn:not([aria-disabled="true"]):active { transform: scale(.97); }
@@ -580,7 +568,6 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
      animate. The box gives under the press (.95: the low end of the subtle range, for a 16px box),
      and the tick is revealed left to right like a pen, from the stroke's own edge (~16% of the icon
      box), in 0.75x the duration. Unticking is instant: no transition on the unchecked state. */
-  .key.box { transition: transform var(--_duration) var(--_ease); }
   [data-pointer] .opt:active:not([aria-disabled="true"]) > .key.box { transform: scale(.95); }
   .key.box .i { clip-path: inset(0 84% 0 0); }
   .opt[aria-checked="true"] > .key.box .i { clip-path: inset(0); }
@@ -588,13 +575,15 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
 }
 /* Reduced motion: no press, and the tick fades in instead of wiping (fades stay, nothing moves). */
 @media (prefers-reduced-motion: reduce) {
+  .spin, .sk::after { animation: none; }
   [data-pointer] .opt[aria-checked="true"] > .key.box .i { transition: opacity calc(var(--_duration) * .75) var(--_ease); }
 }
 
 /* Touch: controls drawn smaller than 44px keep a 44px hit area; the drawing doesn't change (BUILD §5.3). */
 @media (pointer: coarse) {
-  /* Below 16px, iOS zooms the whole page when a field is focused (round 11). */
-  textarea, .chip-input { font-size: var(--_t16); }
+  /* Below 16px, iOS zooms the whole page when a field is focused (round 11). "Something else" is named
+     so its own `font: inherit` can't outrank this, as it did from round 16 to 22. */
+  textarea, .other-field textarea, .chip-input { font-size: var(--_t16); }
   .btn, .icon-btn { position: relative; }
   .chip::after, .btn::after, .icon-btn::after {
     content: ""; position: absolute; inset-inline: -2px; inset-block: calc((100% - 44px) / 2);

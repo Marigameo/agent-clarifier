@@ -212,7 +212,7 @@ Run with Jakub Krehel's `better-interface` (six domain reviews, evidence require
 | 11 | A blocked Send was silent; optional questions were described by an error | Screen-reader users | `aria-invalid`/`describedby` only while invalid; focus moves to the first question that needs an answer |
 | 12 | The multi "Something else" checkbox couldn't be unticked | Everyone; its role promised a toggle | Pressing it again unticks it; its text stays in the draft |
 | 13 | "C++" showed as "++C" in an Arabic card | RTL languages with Latin names | App text in `<bdi>`; label placeholders isolated with FSI…PDI |
-| 14 | iOS zoomed the page when a field was focused | iPhone users | Fields are 16px under `(pointer: coarse)` |
+| 14 | iOS zoomed the page when a field was focused | iPhone users | Fields are 16px under `(pointer: coarse)`. The "Something else" field slipped back to 14px from round 16 to 22 (§18) |
 | 15 | An invalid field's edge got fainter (2.35:1) | Everyone | The edge uses `--_danger` itself (5.18), thicker while focused |
 
 **Not done here, on purpose:** the 15 smaller findings beyond the cap (copy, Intl lists, icon strokes, rem sizes and so on) are round 12. Copy changes are offered as options first.
@@ -354,3 +354,16 @@ From a suggestion Mari brought, argued over with a second session; **Mari's call
 | **The key answers the hover** (Mari, from a Claude screenshot): one step toward ink, number in ink, mouse only, instant. Not on picked rows (accent), checkboxes, disabled rows, or keyboard focus (the ring has no fill, and the key travels with the fill like the arrow, §16) | `key-bg` #f0f0f0 sat 2% from the hover fill #f5f5f5, so a hovered row's key disappeared. Mixed from the tokens like the primary button's hover, so a theme's own key gets a matching step |
 | Turned down | A header pager ‹ 2 of 4 › without dashes (the header is the moving edge here; not capped at 4 questions); pill dashes; a dash tooltip; a min-height on the options; the keyboard hint line |
 
+
+---
+
+## 18. Size, and a field that slipped (round 22)
+
+Plan and measurements: `process/22-size/round-plan.md`; peer sizes: `process/22-size/benchmarks.md`.
+
+| Decision | Why |
+|---|---|
+| **The "Something else" field is 16px on touch again** | `.other-field textarea { font: inherit }` (0,1,1) outranked the touch rule's bare `textarea` (0,0,1), so from round 16 the field was 14px and iOS zoomed the page on focus. The touch rule now names the field. A component test checks every field at ≥ 16px under emulated touch |
+| **Private tokens ship with one-letter names** (`--_accent-soft` → `--_c`) | Done at build time (`scripts/short-tokens.ts`), so `styles.css` keeps the readable names; −119 B gzipped. In devtools on the built file, look up a `--_x` by its `--clarify-*` fallback. Public `--clarify-*` names never change. Tokens the TypeScript reads (`--_vvh`, `--_duration`, `--_ease`) keep theirs, and a unit test fails if the code starts reading another |
+| **Duplicate rules merged**, no visual change | Option and review rows share one fill-inset rule and one divider rule; focus rings, foot rules and the reduced-motion blocks are merged. Checked by dumping every computed style and element box on all 34 break-page scenarios (light, dark, forced colours, reduced motion, 375px touch, 60 Tab steps, 40 hovers) with `scripts/style-dump.mjs`: 0 differences, and a 1px change shows up as 336 |
+| Turned down | `light-dark()` for the dark tokens (−11 B, or it drops Safari 16.4–17.4 natively); a shared transition token (+4 B) |

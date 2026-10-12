@@ -4,6 +4,8 @@
 //   so the reducer never has to ask "was this set?". Display-only text (title, description) may
 //   still be absent, because absence is a real value there.
 
+import type * as Act from './act';
+
 // ── Input ────────────────────────────────────────────────────────────────────
 
 export type Flow = 'sequential' | 'all';
@@ -225,35 +227,35 @@ export interface Env {
 
 export type Action =
   // q is null while streaming and no question is complete yet (partial must then be true).
-  | { type: 'OPEN'; q: NormalizedQuestionnaire | null; partial: boolean }
-  | { type: 'STREAM'; q: NormalizedQuestionnaire | null; partial: boolean }
-  | { type: 'SELECT'; questionId: string; optionId: string }
-  | { type: 'TOGGLE'; questionId: string; optionId: string }
-  | { type: 'OTHER_FOCUS'; questionId: string }
-  | { type: 'OTHER_INPUT'; questionId: string; text: string }
-  | { type: 'TEXT_FOCUS'; questionId: string }
-  | { type: 'TEXT_INPUT'; questionId: string; text: string }
-  | { type: 'DELEGATE'; questionId: string }
-  | { type: 'NEXT' }
-  | { type: 'BACK' }
-  | { type: 'GOTO'; step: number }
-  | { type: 'SKIP'; questionId: string }
-  | { type: 'SKIP_ALL' }
-  | { type: 'EDIT'; questionId: string }
-  | { type: 'START_OVER' }
-  | { type: 'UNDO' }
-  | { type: 'SUBMIT' }
-  | { type: 'UNDO_SUBMIT' }
-  | { type: 'SUBMIT_OK' }
-  | { type: 'SUBMIT_FAIL'; message: string }
-  | { type: 'RETRY' }
-  | { type: 'MINIMISE' }
-  | { type: 'REOPEN' }
-  | { type: 'COMPOSE'; questionId: string; optionId: string }
-  | { type: 'REPLY'; text: string }
-  | { type: 'REVISE' }
-  | { type: 'EXPIRE'; message?: string }
-  | { type: 'RESET' }
-  | { type: 'TOAST_TIMEOUT' };
+  | { type: typeof Act.OPEN; q: NormalizedQuestionnaire | null; partial: boolean }
+  | { type: typeof Act.STREAM; q: NormalizedQuestionnaire | null; partial: boolean }
+  | { type: typeof Act.SELECT; questionId: string; optionId: string }
+  | { type: typeof Act.TOGGLE; questionId: string; optionId: string }
+  | { type: typeof Act.OTHER_FOCUS; questionId: string }
+  | { type: typeof Act.OTHER_INPUT; questionId: string; text: string }
+  | { type: typeof Act.TEXT_FOCUS; questionId: string }
+  | { type: typeof Act.TEXT_INPUT; questionId: string; text: string }
+  | { type: typeof Act.DELEGATE; questionId: string }
+  | { type: typeof Act.NEXT }
+  | { type: typeof Act.BACK }
+  | { type: typeof Act.GOTO; step: number }
+  | { type: typeof Act.SKIP; questionId: string }
+  | { type: typeof Act.SKIP_ALL }
+  | { type: typeof Act.EDIT; questionId: string }
+  | { type: typeof Act.START_OVER }
+  | { type: typeof Act.UNDO }
+  | { type: typeof Act.SUBMIT }
+  | { type: typeof Act.UNDO_SUBMIT }
+  | { type: typeof Act.SUBMIT_OK }
+  | { type: typeof Act.SUBMIT_FAIL; message: string }
+  | { type: typeof Act.RETRY }
+  | { type: typeof Act.MINIMISE }
+  | { type: typeof Act.REOPEN }
+  | { type: typeof Act.COMPOSE; questionId: string; optionId: string }
+  | { type: typeof Act.REPLY; text: string }
+  | { type: typeof Act.REVISE }
+  | { type: typeof Act.EXPIRE; message?: string }
+  | { type: typeof Act.RESET }
+  | { type: typeof Act.TOAST_TIMEOUT };
 
 export type ActionType = Action['type'];

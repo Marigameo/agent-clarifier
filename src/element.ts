@@ -20,6 +20,7 @@ import { enter, leave, type Move } from './view/motion';
 import { unwatchViewport, viewportSheet, watchViewport } from './view/viewport';
 import { h, rove } from './view/dom';
 import { DELEGATE, OTHER, type Ctx, type View } from './view/types';
+import * as Act from './model/act';
 
 /** Lets the module load on a server (Astro, Next): there's no HTMLElement there. */
 const Base: typeof HTMLElement =
@@ -198,10 +199,10 @@ export class AgentClarifier extends Base {
     // While streaming, half-written questions are expected, so only warn about the final version.
     if (!partial) for (const w of r.warnings) console.warn(formatWarning(w));
     const streaming = this.#s.status === 'loading' || (this.#s.status === 'minimised' && this.#s.resumeTo === 'loading');
-    const type = streaming ? 'STREAM' : 'OPEN';
+    const type = streaming ? Act.STREAM : Act.OPEN;
     if (!r.ok) {
       if (partial) {
-        if (type === 'OPEN' && this.placement === 'replace') this.#wantFocus = true;
+        if (type === Act.OPEN && this.placement === 'replace') this.#wantFocus = true;
         this.#dispatch({ type, q: null, partial });
       }
       else this.#emit('error', { reason: r.reason });
@@ -210,20 +211,20 @@ export class AgentClarifier extends Base {
     // The questionnaire's own flow wins; the attribute is the default.
     const raw = q as { flow?: unknown };
     if (raw.flow !== 'all' && raw.flow !== 'sequential') r.q.flow = this.flow;
-    if (type === 'OPEN' && this.placement === 'replace') this.#wantFocus = true;
+    if (type === Act.OPEN && this.placement === 'replace') this.#wantFocus = true;
     this.#dispatch({ type, q: r.q, partial });
   }
 
-  minimise(): void { this.#dispatch({ type: 'MINIMISE' }); }
-  reopen(): void { this.#dispatch({ type: 'REOPEN' }); }
-  reset(): void { this.#dispatch({ type: 'RESET' }); }
+  minimise(): void { this.#dispatch({ type: Act.MINIMISE }); }
+  reopen(): void { this.#dispatch({ type: Act.REOPEN }); }
+  reset(): void { this.#dispatch({ type: Act.RESET }); }
   /** After a prevented clarify:submit, once the app's send succeeded. */
-  markAnswered(): void { this.#dispatch({ type: 'SUBMIT_OK' }); }
+  markAnswered(): void { this.#dispatch({ type: Act.SUBMIT_OK }); }
   /** After a prevented clarify:submit, if the app's send failed. Answers are kept. */
-  setError(message: string): void { this.#dispatch({ type: 'SUBMIT_FAIL', message }); }
-  expire(message?: string): void { this.#dispatch(message ? { type: 'EXPIRE', message } : { type: 'EXPIRE' }); }
+  setError(message: string): void { this.#dispatch({ type: Act.SUBMIT_FAIL, message }); }
+  expire(message?: string): void { this.#dispatch(message ? { type: Act.EXPIRE, message } : { type: Act.EXPIRE }); }
   /** Manual composer wiring: the user sent a message while the card was minimised. */
-  reply(text: string): void { this.#dispatch({ type: 'REPLY', text }); }
+  reply(text: string): void { this.#dispatch({ type: Act.REPLY, text }); }
 
   // ── the loop ──────────────────────────────────────────────────────────
 
@@ -359,7 +360,7 @@ export class AgentClarifier extends Base {
     const st = this.#s.status;
     const waiting = st === 'minimised' || (this.placement === 'dock' && (st === 'answering' || st === 'reviewing'));
     if (!waiting) return false;
-    this.#dispatch({ type: 'REPLY', text });
+    this.#dispatch({ type: Act.REPLY, text });
     return this.#s.status === 'answered';
   }
 
@@ -413,7 +414,7 @@ export class AgentClarifier extends Base {
       if (next.toast) this.#toastTimer = window.setTimeout(this.#toastDone, TOAST_MS);
     }
 
-    const quiet = ['OPEN', 'STREAM', 'RESET', 'REVISE'].includes(action.type);
+    const quiet = [Act.OPEN, Act.STREAM, Act.RESET, Act.REVISE].includes(action.type);
     if (next.drafts !== prev.drafts && !quiet && next.q) {
       this.#emit('change', { answers: buildResult(next, 'submitted').answers });
     }
@@ -430,14 +431,14 @@ export class AgentClarifier extends Base {
     if (next.status === 'minimised' && prev.status !== 'minimised') {
       this.#emit('dismiss', { resumeTo: next.resumeTo });
       // Minimising gives the composer back, so typing can start straight away (BUILD §5.2).
-      if (action.type !== 'COMPOSE') this.#composer?.focus();
+      if (action.type !== Act.COMPOSE) this.#composer?.focus();
     }
-    if (action.type === 'REOPEN' || action.type === 'REVISE') {
-      if (action.type === 'REOPEN' && prev.compose) this.#composer?.takeBack();
+    if (action.type === Act.REOPEN || action.type === Act.REVISE) {
+      if (action.type === Act.REOPEN && prev.compose) this.#composer?.takeBack();
       this.#emit('reopen', null);
       this.#focusView(true);
     }
-    if (action.type === 'COMPOSE' && next.compose) {
+    if (action.type === Act.COMPOSE && next.compose) {
       const detail = { text: next.compose.text, questionId: action.questionId, optionId: action.optionId };
       // Not prevented → we start the sentence ourselves. Prevented → the app inserts it.
       if (this.#emit('compose', detail, true)) this.#composer?.insert(detail.text);
@@ -459,7 +460,7 @@ export class AgentClarifier extends Base {
           : t('liveLimit', { max: k.max }),
       );
     }
-    if (action.type === 'DELEGATE' && next.drafts[action.questionId]?.delegated) {
+    if (action.type === Act.DELEGATE && next.drafts[action.questionId]?.delegated) {
       say.push(t('liveDelegated', { label: label(action.questionId) }));
     }
     const sequential = next.q?.flow === 'sequential';
@@ -489,7 +490,7 @@ export class AgentClarifier extends Base {
     // out the one that was fading.
     const fading = this.#s.toast;
     void (toast ? leave(toast) : Promise.resolve()).then(() => {
-      if (this.#s.toast === fading) this.#dispatch({ type: 'TOAST_TIMEOUT' });
+      if (this.#s.toast === fading) this.#dispatch({ type: Act.TOAST_TIMEOUT });
     });
   };
 
@@ -501,7 +502,7 @@ export class AgentClarifier extends Base {
       // The window just closed: the countdown and its Undo go, and the button says Sending… (round 12).
       this.#render();
       const ok = this.#emit(revising ? 'revise' : 'submit', buildResult(this.#s, 'submitted'), true);
-      if (ok) this.#dispatch({ type: 'SUBMIT_OK' });
+      if (ok) this.#dispatch({ type: Act.SUBMIT_OK });
     };
     clearTimeout(this.#submitTimer);
     if (s.undoUntil) {
@@ -531,7 +532,7 @@ export class AgentClarifier extends Base {
   #moveOnSoon(): void {
     if (this.#s.q?.flow !== 'sequential') return;
     clearTimeout(this.#advance);
-    this.#advance = window.setTimeout(() => this.#dispatch({ type: 'NEXT' }), CONFIRM_MS);
+    this.#advance = window.setTimeout(() => this.#dispatch({ type: Act.NEXT }), CONFIRM_MS);
   }
 
   #onClick(e: Event): void {
@@ -545,19 +546,19 @@ export class AgentClarifier extends Base {
     const id = row.dataset.opt!;
 
     if (id === OTHER) {
-      this.#dispatch({ type: 'OTHER_FOCUS', questionId: q.id });
+      this.#dispatch({ type: Act.OTHER_FOCUS, questionId: q.id });
       if (!draftOf(this.#s, q.id).otherActive) return; // unticked: nothing to type into
       (row.nextElementSibling?.querySelector<HTMLElement>('[data-input]') ??
         row.closest('[data-q]')?.querySelector<HTMLElement>('input[data-input]'))?.focus();
     } else if (id === DELEGATE) {
-      this.#dispatch({ type: 'DELEGATE', questionId: q.id });
+      this.#dispatch({ type: Act.DELEGATE, questionId: q.id });
       if (draftOf(this.#s, q.id).delegated) this.#moveOnSoon();
     } else if (q.type === 'multi') {
-      this.#dispatch({ type: 'TOGGLE', questionId: q.id, optionId: id });
+      this.#dispatch({ type: Act.TOGGLE, questionId: q.id, optionId: id });
     } else if (q.options.find((o) => o.id === id)?.compose != null) {
-      this.#dispatch({ type: 'COMPOSE', questionId: q.id, optionId: id });
+      this.#dispatch({ type: Act.COMPOSE, questionId: q.id, optionId: id });
     } else {
-      this.#dispatch({ type: 'SELECT', questionId: q.id, optionId: id });
+      this.#dispatch({ type: Act.SELECT, questionId: q.id, optionId: id });
       this.#moveOnSoon();
     }
   }
@@ -569,29 +570,29 @@ export class AgentClarifier extends Base {
         // Focus stays on Back in the new step (round 21): landing on an option would make a second
         // Enter pick it. The ← key still lands on the options.
         this.#focusBack = true;
-        this.#dispatch({ type: 'BACK' });
+        this.#dispatch({ type: Act.BACK });
         this.#focusBack = false;
         return;
-      case 'minimise': return this.#dispatch({ type: 'MINIMISE' });
-      case 'reopen': return this.#dispatch({ type: 'REOPEN' });
-      case 'undo': return this.#dispatch({ type: 'UNDO' });
-      case 'undo-send': return this.#dispatch({ type: 'UNDO_SUBMIT' });
-      case 'skip': return q ? this.#dispatch({ type: 'SKIP', questionId: q.id }) : undefined;
-      case 'next': return this.#dispatch({ type: 'NEXT' });
+      case 'minimise': return this.#dispatch({ type: Act.MINIMISE });
+      case 'reopen': return this.#dispatch({ type: Act.REOPEN });
+      case 'undo': return this.#dispatch({ type: Act.UNDO });
+      case 'undo-send': return this.#dispatch({ type: Act.UNDO_SUBMIT });
+      case 'skip': return q ? this.#dispatch({ type: Act.SKIP, questionId: q.id }) : undefined;
+      case 'next': return this.#dispatch({ type: Act.NEXT });
       case 'send':
-        this.#dispatch({ type: 'SUBMIT' });
+        this.#dispatch({ type: Act.SUBMIT });
         // A blocked send moves focus to the first question that needs an answer: the move itself
         // is what a screen reader announces, with the error it now describes (round 11).
         if (this.#s.attempted && this.#s.status === 'answering') {
           this.#root.querySelector<HTMLElement>('.q.invalid textarea, .q.invalid [data-opt][tabindex="0"]')?.focus();
         }
         return;
-      case 'skip-all': return this.#dispatch({ type: 'SKIP_ALL' });
-      case 'retry': return this.#dispatch({ type: 'RETRY' });
-      case 'start-over': return this.#dispatch({ type: 'START_OVER' });
-      case 'revise': return this.#dispatch({ type: 'REVISE' });
-      case 'edit': return questionId ? this.#dispatch({ type: 'EDIT', questionId }) : undefined;
-      case 'goto': return this.#dispatch({ type: 'GOTO', step: Number(step) });
+      case 'skip-all': return this.#dispatch({ type: Act.SKIP_ALL });
+      case 'retry': return this.#dispatch({ type: Act.RETRY });
+      case 'start-over': return this.#dispatch({ type: Act.START_OVER });
+      case 'revise': return this.#dispatch({ type: Act.REVISE });
+      case 'edit': return questionId ? this.#dispatch({ type: Act.EDIT, questionId }) : undefined;
+      case 'goto': return this.#dispatch({ type: Act.GOTO, step: Number(step) });
     }
   }
 
@@ -599,14 +600,14 @@ export class AgentClarifier extends Base {
     const el = e.target as HTMLInputElement | HTMLTextAreaElement;
     const q = this.#questionOf(el);
     if (!q) return;
-    if (el.dataset.input === OTHER) this.#dispatch({ type: 'OTHER_INPUT', questionId: q.id, text: el.value });
-    if (el.dataset.input === 'text') this.#dispatch({ type: 'TEXT_INPUT', questionId: q.id, text: el.value });
+    if (el.dataset.input === OTHER) this.#dispatch({ type: Act.OTHER_INPUT, questionId: q.id, text: el.value });
+    if (el.dataset.input === 'text') this.#dispatch({ type: Act.TEXT_INPUT, questionId: q.id, text: el.value });
   }
 
   #onFocusIn(e: Event): void {
     const el = e.target as HTMLElement;
     const q = this.#questionOf(el);
-    if (q && el.dataset.input === 'text') this.#dispatch({ type: 'TEXT_FOCUS', questionId: q.id });
+    if (q && el.dataset.input === 'text') this.#dispatch({ type: Act.TEXT_FOCUS, questionId: q.id });
   }
 
   /**
@@ -624,7 +625,7 @@ export class AgentClarifier extends Base {
     if (mod && !e.shiftKey && e.key.toLowerCase() === 'z') {
       if (field) return;
       e.preventDefault();
-      return this.#dispatch({ type: s.status === 'submitting' ? 'UNDO_SUBMIT' : 'UNDO' });
+      return this.#dispatch({ type: s.status === 'submitting' ? Act.UNDO_SUBMIT : Act.UNDO });
     }
     if (mod || e.altKey) return;
 
@@ -635,7 +636,7 @@ export class AgentClarifier extends Base {
       e.preventDefault();
       // In "Something else", Esc leaves the field (text kept) instead of minimising.
       if (t.dataset.input === OTHER) return this.#focusOther(t);
-      return this.#dispatch({ type: 'MINIMISE' });
+      return this.#dispatch({ type: Act.MINIMISE });
     }
 
     if (field) {
@@ -644,7 +645,7 @@ export class AgentClarifier extends Base {
       if (e.key === 'Enter' && t.dataset.input === OTHER) e.preventDefault();
       if (e.key === 'Enter' && !e.shiftKey && sequential && q && canContinue(q, draftOf(s, q.id))) {
         e.preventDefault();
-        this.#dispatch({ type: 'NEXT' });
+        this.#dispatch({ type: Act.NEXT });
       }
       // ↑ at the very start of "Something else" goes back up to the options.
       if (e.key === 'ArrowUp' && t.dataset.input === OTHER && (t as HTMLTextAreaElement).selectionStart === 0) {
@@ -674,7 +675,7 @@ export class AgentClarifier extends Base {
       const enterContinues = sequential && q?.type === 'multi' && row.dataset.opt !== DELEGATE && row.dataset.opt !== OTHER;
       if (e.key === 'Enter' && enterContinues) {
         e.preventDefault();
-        return this.#dispatch({ type: 'NEXT' });
+        return this.#dispatch({ type: Act.NEXT });
       }
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
@@ -697,7 +698,7 @@ export class AgentClarifier extends Base {
     // ← goes back (→ in right-to-left languages), in the steps and on review.
     if (e.key === (rtl ? 'ArrowRight' : 'ArrowLeft') && (this.#viewName === 'step' || this.#viewName === 'review')) {
       e.preventDefault();
-      this.#dispatch({ type: 'BACK' });
+      this.#dispatch({ type: Act.BACK });
     }
   }
 

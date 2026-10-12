@@ -50,6 +50,19 @@ import '@marigameo/agent-clarifier'; // defines <agent-clarifier>
 
 Importing it on a server (Astro, Next, Nuxt) is safe: nothing touches the DOM until the element is used in a browser.
 
+**Load it when it's needed.** The card only appears when the agent asks something, so it doesn't have to load with the page. Import it on first use, and your page pays nothing up front:
+
+```js
+async function clarify(questions) {
+  const { ask } = await import('@marigameo/agent-clarifier');
+  return ask(questions);
+}
+```
+
+To have it ready before the first question arrives, start the same `import()` when the chat opens. An `<agent-clarifier>` already in your markup waits, empty, until the code arrives.
+
+**From a CDN,** pin a version (`…/npm/@marigameo/agent-clarifier@1.2.3/dist/index.js`), so a new release never changes your page without you knowing.
+
 ---
 
 ## Use it with Claude (Agent SDK)
@@ -364,7 +377,7 @@ Runtime fixes print `[agent-clarifier] <where>: <code>` to the console:
 ## Browser support and size
 
 - **Browsers:** the last two versions of Chrome, Edge, Firefox and Safari (Safari 16.4+).
-- **Size:** about 20 KB gzipped for the core (the target is 12 KB, and a size pass is planned). Each converter is about 1 KB, imported only if you use it.
+- **Size:** about 21 KB gzipped for the core (19 KB brotli, which is what CDNs send), and nothing at page load if you load it when it's needed (see Install). Each converter is about 1 KB, imported only if you use it.
 - **Dependencies:** none at runtime.
 
 ## Development
