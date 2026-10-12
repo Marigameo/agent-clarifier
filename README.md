@@ -2,7 +2,9 @@
 
 `<agent-clarifier>` is a web component that lets a chat agent **ask clarifying questions before it acts**. It works in any framework or none, has zero runtime dependencies, looks neutral by default, and is themed with CSS variables.
 
-**[Try it in the playground →](https://marigameo.github.io/agent-clarifier/)** Every scenario, in light and dark, at desktop and phone widths.
+**[See it in a chat app →](https://marigameo.github.io/agent-clarifier/chat.html)** An assistant that asks before it acts, phone first: plan a trip, draft an email, sort out an order. Open it on your phone, too.
+
+**[Try every variant in the playground →](https://marigameo.github.io/agent-clarifier/)** Every scenario and setting, in light and dark, at desktop and phone widths.
 
 ```html
 <agent-clarifier composer="#message"></agent-clarifier>
@@ -396,7 +398,7 @@ pnpm dev     # the playground: the real component in a fake chat, with every sce
 pnpm check   # types, lint, unit + browser tests with coverage, build, size
 ```
 
-The playground (also live at [marigameo.github.io/agent-clarifier](https://marigameo.github.io/agent-clarifier/)) covers every case, and each setting is in the URL (for example `/demo/?scenario=arabic&width=375&theme=dark`). `node scripts/shots.mjs <dir> "name=query|click:…"` takes screenshots of any state.
+The playground (also live at [marigameo.github.io/agent-clarifier](https://marigameo.github.io/agent-clarifier/)) covers every case, and each setting is in the URL (for example `/demo/?scenario=arabic&width=375&theme=dark`). The chat demo is `/demo/chat.html` (`?start=hotel|email|order` opens a conversation, `?theme=dark|light`). `node scripts/shots.mjs <dir> "name=query|click:…"` takes screenshots of any state.
 
 How it was designed, round by round, is in [JOURNAL.md](https://github.com/Marigameo/agent-clarifier/blob/main/JOURNAL.md), with snapshots in [`process/`](https://github.com/Marigameo/agent-clarifier/tree/main/process).
 

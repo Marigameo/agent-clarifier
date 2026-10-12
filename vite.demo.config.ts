@@ -15,7 +15,7 @@ export default defineConfig({
     outDir: new URL('./site/', import.meta.url).pathname,
     emptyOutDir: true,
     rolldownOptions: {
-      input: { index: `${demo}index.html`, break: `${demo}break.html` },
+      input: { index: `${demo}index.html`, chat: `${demo}chat.html`, break: `${demo}break.html` },
     },
   },
 });

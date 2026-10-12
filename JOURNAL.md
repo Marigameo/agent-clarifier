@@ -1088,6 +1088,31 @@ The questionnaire arrives as a property in all three. To prove the test isn't bl
 
 ---
 
+## Round 25 · A chat demo, phone first (12 Oct 2026)
+
+**Brief (mine):** what is the `demo/` folder doing? I want to try the component in a simulated chat app, especially on mobile. The playground is good for variants and props, but I need to see how it looks in a chat. One demo page, linked from the README like the playground. Make it cool, with copy that sounds like a practical use case.
+
+**Claude's answer on `demo/`:** the name is misleading. It holds developer tools, not a demo: the playground (`index.html`), the round 13 stress page (`break.html`), a test page for the built file (`frameworks/plain.html`) and the playground's data.
+
+**What Claude built (its calls, under round 8's arrangement):** `demo/chat.html`, live at https://marigameo.github.io/agent-clarifier/chat.html.
+- **A neutral chat app, phone first:** full screen on a phone (safe areas, `interactive-widget=resizes-content`, a 16px composer so iOS doesn't zoom), and a 390×844 phone frame on desktop beside a short intro and links. A light/dark toggle in the header; `?theme=` and `?start=` make any moment linkable.
+- **The component wired the way an app would:** a fresh `<agent-clarifier>` at the composer for each question set (replace mode, so the card takes the box's place), questions streamed in ("Writing questions…"), the record moved into the conversation once answered, "Edit answers" moving it back, and the composer taking replies in your own words.
+- **Three practical conversations, one per business area**, each showing different parts of the card:
+  - **Travel:** "Find me a hotel in Lisbon for next weekend". Sequential, a Recommended area, Decide for me on budget, a capped multi, an optional note.
+  - **Writing:** "Write a launch email for our new CSV export". All at once, a required audience, and "Write my own" starting a sentence in the composer.
+  - **Support:** "My order arrived damaged". Two questions, sent with no review step.
+- **The replies are built from the answers:** three hotels matched to the area, budget and priorities (with a line when the budget was left to the assistant, and the note echoed back); a drafted email whose subject, greeting, steps and button follow the picks (the user's own sentence becomes the button); a confirmed replacement, refund or credit. A message the demo doesn't handle gets a short redirect to the starters.
+
+**Found while checking it, fixed:**
+- **The newest message hid under the starters when they came back** (85px, their height). The "stay at the bottom" logic read a scroll event that arrived after the thread had already shrunk. It now judges from the size change itself, which also covers the phone keyboard opening.
+- **Hotel reply copy:** "all with walk everywhere and quiet street" became short tags on each card ("Walkable · Quiet at night").
+
+**Linked from:** the README (above the playground link) and the playground's panel.
+
+**Verified:** the three conversations, the compose path and the redirect, driven by touch at 390×844 (2×) in light and dark plus desktop, against both the dev server and the built site under `/agent-clarifier/`. No errors or failed requests. Shots: `process/25-chat-demo/shots/`.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -1110,3 +1135,4 @@ The questionnaire arrives as a property in all three. To prove the test isn't bl
 - Round 21 is the "measure the premise" beat: two AI sessions argued Back's position with good-sounding reasons. The tie-breaker was one number per step: which edge of the card actually moves. The confident "top-anchored, so the header never moves" was simply wrong for this component, and a probe showed it in a minute.
 - Round 22 is the "weigh it before you diet" beat: I asked to make it smaller, and the measurements said it was already lean. Twenty-five real packages, built the same way, put 21 KB among single-purpose widgets that do less. The honest result was a better target, not a smaller number: ~0.6 KB of real savings, a package a third of its old size, 0 KB at page load, and two quiet bugs (a 14px field, and an RTL guard that had been checking an empty string since M2).
 - Round 23 is the "read it as a stranger" beat: 22 rounds of tests were green, and the first reviewers who read the package the way a user would (install the tarball, follow the README) found that three of its own recipes didn't work and that TypeScript users on one common setting would get no types at all. The tests only ever imported the source. A second beat: the simplify pass found a regression in one of the fixes, then an old motion test caught the next attempt. Checks on the checks, again.
+- Round 25 is the "context, not controls" beat: a playground full of switches showed every state, and still didn't answer my real question, which was how it feels in a chat on a phone. The demo answered it in one screen.
