@@ -247,8 +247,9 @@ button { font: inherit; color: inherit; }
 }
 .key .i { inline-size: 14px; block-size: 14px; }
 .opt[aria-checked="true"] > .key:not(.plain) { background: var(--_accent); color: var(--_accent-fg); }
-/* The pencil and "Decide for me" keys take the row's fill once picked, so no lighter square sits on it. */
-.opt:is([aria-checked="true"], [aria-pressed="true"]) > .key.plain { background: var(--_selected); }
+/* The pencil and "Decide for me" keys take the row's fill once picked, so no lighter square sits on it,
+   and their icon turns ink with the label (.quiet), so the row reads as picked in one colour. */
+.opt:is([aria-checked="true"], [aria-pressed="true"]) > .key.plain { background: var(--_selected); color: var(--_fg); }
 /* 16px, the common checkbox size, centred in the 26px key slot so labels keep their edge. The whole
    row is the target, so the box needn't be big (round 14; it was the full 26px). */
 .key.box {
@@ -557,13 +558,14 @@ button.dot:focus-visible { box-shadow: var(--_focus); }
   .btn.primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in srgb, var(--_fg) 88%, var(--_bg)); border-color: transparent; }
   .btn.link:hover { text-decoration: underline; text-underline-offset: 2px; }
   .chip:not([aria-checked="true"]):not([aria-pressed="true"]):not([aria-disabled="true"]):hover { background: var(--_hover); }
-  .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background-color: var(--_hover); }
+  /* Picked rows keep their fill under the mouse: checked, and pressed (Decide for me on a text question). */
+  .opt:hover:not([aria-checked="true"], [aria-pressed="true"], [aria-disabled="true"]) { background-color: var(--_hover); }
   .opt:hover::before, .opt:hover + .opt::before,
   .opt:hover + .other-wrap > .opt::before, .other-wrap:has(> .opt:hover) + .opt::before { border-color: transparent; }
   .opt:hover .trail { visibility: visible; }
   /* The key answers with its row: a step toward ink, number in ink, so it stays a key on the lit
      fill (key-bg and hover were 2% apart). Mixed from the tokens, so a theme's key follows (round 21). */
-  .opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) > .key:not(.box) { background: color-mix(in srgb, var(--_key-bg) 92%, var(--_fg)); color: var(--_fg); }
+  .opt:hover:not([aria-checked="true"], [aria-pressed="true"], [aria-disabled="true"]) > .key:not(.box) { background: color-mix(in srgb, var(--_key-bg) 92%, var(--_fg)); color: var(--_fg); }
 }
 @media (prefers-reduced-motion: reduce) { .spin, .sk::after { animation: none; } }
 /* Movement only for those who haven't asked for less. Fades stay either way (DESIGN §7). */

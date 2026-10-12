@@ -70,16 +70,24 @@ describe('the key answers the hover with its row', () => {
 });
 
 // Round 21 add-on 2: the pencil and Decide-for-me keys kept key-bg (#f0f0f0) on a picked row (#ececec),
-// a lighter square on the fill. Picked, they take the row's fill.
-describe('picked, the plain keys take the row fill', () => {
+// a lighter square on the fill, and their icon stayed grey while the label turned ink. Picked, they take
+// the row's fill and the label's ink. A pressed Decide for me (text questions) also keeps its fill on hover.
+describe('picked, the plain keys take the row fill and the label ink', () => {
   const bg = (el: Element) => getComputedStyle(el).backgroundColor;
+  const matches = (r: HTMLElement) => {
+    const key = r.querySelector('.key')!;
+    expect(bg(key)).toBe(bg(r));
+    expect(getComputedStyle(key).color).toBe(getComputedStyle(r.querySelector('.label')!).color);
+  };
 
   it('"Something else": the pencil key matches its picked row', async () => {
     const m = mount(HOTEL);
     await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
     await userEvent.click(row(m, '__other'));
     expect(row(m, '__other').getAttribute('aria-checked')).toBe('true');
-    expect(bg(row(m, '__other').querySelector('.key')!)).toBe(bg(row(m, '__other')));
+    matches(row(m, '__other'));
+    await userEvent.keyboard('Near Kings Cross'); // still the same while typing
+    matches(row(m, '__other'));
   });
 
   it('Decide for me: the key matches its picked row (seen again after Back)', async () => {
@@ -92,6 +100,22 @@ describe('picked, the plain keys take the row fill', () => {
     await userEvent.click(button(m, 'back'));
     await onStep(m, 'Budget');
     expect(row(m, '__delegate').getAttribute('aria-checked')).toBe('true');
-    expect(bg(row(m, '__delegate').querySelector('.key')!)).toBe(bg(row(m, '__delegate')));
+    matches(row(m, '__delegate'));
+  });
+
+  it('a pressed Decide for me (text question) keeps its picked fill and key under the mouse', async () => {
+    document.dispatchEvent(new PointerEvent('pointerdown'));
+    const m = mount({ id: 't', questions: [{ id: 'n', prompt: 'Anything else?', type: 'text', delegate: true }, { id: 'm', prompt: 'And?', type: 'text' }] });
+    await onStep(m, 'Anything else');
+    await userEvent.click(row(m, '__delegate'));
+    await onStep(m, 'And?');
+    await userEvent.click(button(m, 'back'));
+    await onStep(m, 'Anything else');
+    const r = row(m, '__delegate');
+    expect(r.getAttribute('aria-pressed')).toBe('true');
+    const picked = bg(r);
+    await userEvent.hover(r);
+    expect(bg(r)).toBe(picked);
+    matches(r);
   });
 });
