@@ -545,7 +545,7 @@ Status as of round 8 (10 Oct 2026), updated in round 23 (12 Oct 2026):
 - [~] Frameworks: plain HTML (built file), React 19, Vue 3 and server-side import (Astro/Next) are tested. **Svelte 5 is not tested yet**
 - [x] README complete; JOURNAL.md up to date; `process/` snapshots taken
 - [x] Pre-release review (round 23): 44 findings, every P1 and P2 fixed or documented; `publint` and `attw` check the packed package in `pnpm check`
-- [ ] **Published as `@marigameo/agent-clarifier` 0.1.0: needs Mari's go-ahead** (npm login, and the repo going public). Ships with the VoiceOver pass, the real-phone pass and Svelte 5 listed as known gaps
+- [x] **Published as `@marigameo/agent-clarifier` 0.1.0** (12 Oct 2026, Mari's go-ahead), repo public, GitHub release `v0.1.0`. Ships with the VoiceOver pass, the real-phone pass and Svelte 5 listed as known gaps
 
 ## 12. Risks
 

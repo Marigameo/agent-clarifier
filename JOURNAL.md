@@ -1059,6 +1059,11 @@ The converters are unchanged (1.18 and 1.15 KB).
 - `style-dump`: 0 differences across 137 snapshots outside the one field that changed on purpose.
 - Renders: `process/23-release/shots/` (step 1 in light, dark and phone; the all-at-once "Something else" wrapping on a phone; a multi with "Something else" ticked).
 
+**Released (my go-ahead):** I made the repo public and published **`@marigameo/agent-clarifier@0.1.0`** to npm, then tagged `v0.1.0` with a GitHub release that lists the known gaps.
+- **The dry run found one more thing:** `npm publish --dry-run` sets a "dry run" flag that the new `attw` check's own `npm pack` also obeyed, so no tarball was written for it to inspect. Fixed before publishing.
+- **2FA:** my npm 2FA is a passkey in iCloud Keychain, so there's no 6-digit code. npm only offers the browser step to an interactive terminal, so Claude ran the publish under a pseudo-terminal (`script`) with `--auth-type=web --browser=false`. The approval link expires after about 5 minutes; the first one ran out.
+- **Checked live:** the tarball on npm is byte-for-byte the one tested (same shasum). It installs from npm and imports in Node, it's served by jsDelivr and unpkg, and the README's opening example, loaded from jsDelivr in Chrome, renders the card and resolves `ask()` with the answer.
+
 **Artifacts:** `process/23-release/` (review.md frozen before the fixes, PLAN.md, DESIGN.md, shots/).
 
 ---

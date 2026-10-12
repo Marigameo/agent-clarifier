@@ -86,10 +86,9 @@ From round 8, **Mari delegates design and copy calls to Claude** and will audit 
 
 ## Status (end of the build on 10 Oct 2026)
 
-M1–M7 are built. 626 tests are green (`pnpm check`, after round 23). The Definition of done in BUILD §11 shows what's still open:
+M1–M7 are built. 626 tests are green (`pnpm check`, after round 23). **0.1.0 is published** on npm (12 Oct 2026); the repo is public. Any later release still needs Mari's go-ahead. The Definition of done in BUILD §11 shows what's still open:
 - the manual VoiceOver and real-phone passes
 - Svelte 5
-- publishing, which needs Mari's go-ahead
 - Mari's audit of the round-8 calls
 
 ## Round 9 onwards: audits with external skills
