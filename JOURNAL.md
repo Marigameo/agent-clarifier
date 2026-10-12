@@ -1113,6 +1113,47 @@ The questionnaire arrives as a property in all three. To prove the test isn't bl
 
 ---
 
+## Round 26 · The chat demo, audited with the component's design skills (12 Oct 2026)
+
+**Brief (mine):** audit the demo page against the design skills I used for the component earlier, and improve it. The UI looks good, but it's cluttered here and there. Record the demo's setup and this round in the journal too (the setup is round 25).
+
+**How Claude worked:** it fetched the same skills fresh (Jakub Krehel's `better-*` and `break` at c0588bb; Emil Kowalski's `emil-design-eng`, `find-animation-opportunities` and `review-animations` at 2d22863) and ran four read-only reviewers in parallel, each rendering the page in real Chrome:
+- **A, layout + UI:** clutter, measured.
+- **B, typography + colours + writing.**
+- **C, accessibility + break:** axe, keyboard, landscape, 320px, long input, forced colours, zoom.
+- **D, motion + craft:** slowed-clock filmstrips.
+The merged report was frozen before any change: `process/26-demo-audit/audit.md` (27 findings, all applied; 7 ideas turned down with reasons). Before: `process/25-chat-demo/shots/`. After: `process/26-demo-audit/after/`.
+
+**The clutter, measured:** the hotel result showed 9 bordered boxes and a hairline at once, 4 different left edges, two corner radii for the same kind of card, 5 text colours and 15px text in four weights. The starter cards came back after every reply, cut "Write a launch emai|" mid-word, and the third couldn't be reached with a mouse. The page had also brought back warm greys that DESIGN F9 had dropped for the card (they read as Claude's look), so one screen had two greys and two border colours.
+
+**What changed (Claude's calls under round 8):**
+- **Less on screen:** the starters stack inside the empty state, which now sits in the upper middle instead of under a blank screen. After a reply there's one quiet line, "Try another: a launch email or a damaged order", instead of three cards. The header loses its avatar. The three hotel cards became one list with dividers, the perks are said once in the lead instead of on every card, and the price is just "€145" (the lead says "a night"). The email lost its "From:" line and the hairline under the subject.
+- **One system:** the card's neutral greys (#666 on #f0f0f0, 5.04:1), its 14px/13px scale with one emphasis weight (600), one 16px left edge and one 16px radius. 24px before each new turn, 12px within one.
+- **Honest controls:** the email draft's button no longer looks like Send (ink fill means "this acts", DESIGN §1). Send dims while the box is empty. Hover only where there's a mouse (a tap used to leave it stuck on).
+- **Copy:** the fallback no longer says "ask in your own words" right after that failed. The order reply says the number once. "Demo · nothing is booked or sent". "I'll pick for you" instead of "sensible defaults". Curly apostrophes throughout.
+- **Breaks fixed:** a phone on its side got the desktop frame and hid the card's buttons (the question couldn't be finished); a long URL in the composer pushed the whole app 575px sideways.
+- **Accessibility:**
+  - The thread was a live region, so one answer read out four things: your own message, the whole record, the card's "Answers sent." and the reply. Now one status says "Assistant is typing…", then the reply, once.
+  - Hidden "You:" and "Assistant:" labels.
+  - Focus stays in the conversation when a starter is used, instead of falling to the page.
+  - The theme button is named for what it will do under a dark OS.
+  - A focus ring for the composer in forced colours.
+  - The header title is the page's heading.
+  - 44px targets.
+- **Motion:**
+  - The answered card used to teleport from the composer into the conversation in one frame; it now rises in like a message.
+  - Under reduced motion, messages fade instead of nothing (DESIGN §7: fades stay, nothing moves).
+  - The typing dots wave the right way from the first frame.
+  - Pointer-only press feedback on Send and the starters.
+  - The card's own easing curve.
+  - One-at-a-time cards stream only the question you see, so the hotel card is answerable ~0.9s sooner.
+
+**Turned down:** shadows instead of borders (a second style next to the record), a carousel for three starters, a theme crossfade, smooth scrolling for new messages, staggered result cards, and animating the thread's height. Each fails one of the motion skill's questions (purpose, frequency, speed, function) or adds a second style.
+
+**Verified:** every conversation, the compose path and the fallback, by touch at 390×844 in light and dark plus desktop, with no errors. axe: 0 violations, light and dark, empty and result. Measured: a landscape phone gets the phone layout and the card's footer can be tapped; the composer stays 358px wide with a 180-character URL; focus lands on the conversation after a starter; the status reads the reply once; a dark OS gets "Switch to light"; reduced motion keeps a fade.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -1136,3 +1177,4 @@ The questionnaire arrives as a property in all three. To prove the test isn't bl
 - Round 22 is the "weigh it before you diet" beat: I asked to make it smaller, and the measurements said it was already lean. Twenty-five real packages, built the same way, put 21 KB among single-purpose widgets that do less. The honest result was a better target, not a smaller number: ~0.6 KB of real savings, a package a third of its old size, 0 KB at page load, and two quiet bugs (a 14px field, and an RTL guard that had been checking an empty string since M2).
 - Round 23 is the "read it as a stranger" beat: 22 rounds of tests were green, and the first reviewers who read the package the way a user would (install the tarball, follow the README) found that three of its own recipes didn't work and that TypeScript users on one common setting would get no types at all. The tests only ever imported the source. A second beat: the simplify pass found a regression in one of the fixes, then an old motion test caught the next attempt. Checks on the checks, again.
 - Round 25 is the "context, not controls" beat: a playground full of switches showed every state, and still didn't answer my real question, which was how it feels in a chat on a phone. The demo answered it in one screen.
+- Round 26 is the "the same rules, one level up" beat: the demo was built quickly around a carefully audited card, and the same skills found the page around it had drifted on everything the card had already settled: warm greys, too many weights, a button that looked real and wasn't, a screen reader hearing four things at once. Clutter turned out to be measurable: on the hotel result, nine bordered boxes became three (the record, one list, the composer).

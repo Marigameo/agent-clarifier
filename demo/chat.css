@@ -1,173 +1,209 @@
-/* The chat demo (round 25): a believable chat app around the real component, phone first.
-   The app's look is its own, deliberately neutral; the card keeps its defaults. */
+/* The chat demo (rounds 25–26): a believable chat app around the real component, phone first.
+   Round 26 (process/26-demo-audit): the card's neutral greys (DESIGN F9), its 14/13px scale, one 16px edge and
+   radius, borders only where something is an object or an input. The card keeps its own defaults. */
 :root {
-  --bg: #efeee9;
-  --app: #fbfbf9;
-  --ink: #1d1d1b;
-  --soft: #6f6d67;
-  --line: #e2e0da;
-  --bubble: #ecebe6;
+  --bg: #f0f0f0;
+  --app: #fafafa;
+  --ink: #1c1c1c;
+  --soft: #666666; /* 5.04:1 on --bg, 5.50 on --app */
+  --line: #e6e6e6;
+  --bubble: #ececec;
   --field: #ffffff;
-  --chip: #ffffff;
   --accent: #3b5bdb;
+  --ease: cubic-bezier(.2, .7, .2, 1); /* the card's --clarify-ease */
+  --edge: 16px; /* one leading edge for everything in the app */
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f0f0e; --app: #171716; --ink: #ecebe7; --soft: #9b9993; --line: #2c2b29;
-    --bubble: #2a2a27; --field: #1f1f1d; --chip: #1f1f1d; --accent: #8ea6ff; color-scheme: dark;
+    --bg: #0f0f0f; --app: #171717; --ink: #ededed; --soft: #a3a3a3; --line: #343434;
+    --bubble: #2a2a2a; --field: #1f1f1f; --accent: #8ea6ff; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f0f0e; --app: #171716; --ink: #ecebe7; --soft: #9b9993; --line: #2c2b29;
-  --bubble: #2a2a27; --field: #1f1f1d; --chip: #1f1f1d; --accent: #8ea6ff; color-scheme: dark;
+  --bg: #0f0f0f; --app: #171717; --ink: #ededed; --soft: #a3a3a3; --line: #343434;
+  --bubble: #2a2a2a; --field: #1f1f1f; --accent: #8ea6ff; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 html, body { block-size: 100%; }
 body {
   margin: 0;
-  display: grid; grid-template-columns: minmax(0, 380px) auto; place-content: center; gap: 72px;
+  display: grid; grid-template-columns: minmax(0, 360px) auto; place-content: center; gap: 72px;
   padding: 32px;
-  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--ink); background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
-a { color: inherit; }
+a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--soft); }
+h1, h2, p { margin: 0; }
+.sr-only { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ── desktop: the intro beside the phone ── */
 .about { align-self: center; }
-.about .kicker { margin: 0 0 8px; font: 600 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
-.about h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
-.about p { margin: 0 0 20px; color: var(--soft); text-wrap: pretty; }
+.about .kicker { margin-block-end: 8px; font-size: 13px; color: var(--soft); }
+.about h2 { margin-block-end: 12px; font-size: 28px; font-weight: 600; line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
+.about p { margin-block-end: 20px; color: var(--soft); text-wrap: pretty; }
 .links { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.links a { text-underline-offset: 3px; text-decoration-color: var(--line); }
-.links a:hover { text-decoration-color: currentColor; }
 
 .phone {
   inline-size: 390px; block-size: min(844px, calc(100dvh - 64px));
-  border-radius: 48px; padding: 10px; background: #0b0b0a;
-  box-shadow: 0 30px 80px -20px rgb(0 0 0 / .35), 0 0 0 1px rgb(255 255 255 / .06) inset;
+  border-radius: 48px; padding: 10px; background: #0b0b0b;
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / .35);
+}
+:root[data-theme="dark"] .phone { box-shadow: 0 0 0 1px rgb(255 255 255 / .08), 0 30px 80px -20px rgb(0 0 0 / .6); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .phone { box-shadow: 0 0 0 1px rgb(255 255 255 / .08), 0 30px 80px -20px rgb(0 0 0 / .6); }
 }
 .app {
   block-size: 100%; display: flex; flex-direction: column; overflow: hidden;
   border-radius: 38px; background: var(--app);
 }
 
-/* ── phone: the app is the page ── */
-@media (max-width: 640px) {
+/* ── phone (and a phone on its side): the app is the page ── */
+@media (max-width: 640px), (max-height: 520px) {
   body { display: block; padding: 0; }
   .about { display: none; }
-  .phone { inline-size: auto; block-size: 100dvh; border-radius: 0; padding: 0; background: none; box-shadow: none; }
+  .phone { inline-size: auto; block-size: 100dvh; border-radius: 0; padding: 0; background: none; box-shadow: none !important; }
   .app { border-radius: 0; }
 }
 
-/* ── header ── */
+/* ── header: a title, a subtitle, two quiet buttons ── */
 .bar {
-  flex: none; display: flex; align-items: center; gap: 10px;
-  padding: 14px 14px 12px 18px; padding-block-start: max(14px, env(safe-area-inset-top));
+  flex: none; display: flex; align-items: center; gap: 4px;
+  padding: 10px 6px 10px var(--edge); padding-block-start: max(10px, env(safe-area-inset-top));
   border-block-end: 1px solid var(--line);
 }
-.phone .bar { padding-block-start: 22px; } /* clears the frame's rounded top on desktop */
-@media (max-width: 640px) { .phone .bar { padding-block-start: max(14px, env(safe-area-inset-top)); } }
-.avatar { inline-size: 30px; block-size: 30px; display: grid; place-items: center; border-radius: 50%; color: var(--app); background: var(--ink); }
-.who { flex: 1; display: grid; line-height: 1.25; }
-.who small { color: var(--soft); font-size: 12px; }
+.phone .bar { padding-block-start: 20px; } /* clears the frame's rounded top on desktop */
+@media (max-width: 640px), (max-height: 520px) { .phone .bar { padding-block-start: max(10px, env(safe-area-inset-top)); } }
+.who { flex: 1; margin: 0; line-height: 1.3; }
+.who h1 { font-size: 15px; font-weight: 600; }
+.who p { color: var(--soft); font-size: 13px; }
 .icon {
-  inline-size: 36px; block-size: 36px; display: grid; place-items: center;
-  border: 0; border-radius: 10px; color: var(--soft); background: transparent; cursor: pointer;
+  inline-size: 44px; block-size: 44px; display: grid; place-items: center;
+  border: 0; border-radius: 12px; color: var(--soft); background: transparent; cursor: pointer;
 }
-.icon:hover { color: var(--ink); background: var(--bubble); }
-.icon:focus-visible, .chip:focus-visible, .send:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sun { display: none; }
 :root[data-theme="dark"] .sun { display: block; }
 :root[data-theme="dark"] .moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sun { display: block; }
+  :root:not([data-theme="light"]) .moon { display: none; }
+}
 
 /* ── the conversation ── */
 .thread {
-  flex: 1; min-block-size: 0; overflow-y: auto; overscroll-behavior: contain;
-  display: flex; flex-direction: column; gap: 14px; padding: 20px 16px 12px;
+  flex: 1; min-block-size: 0; overflow-y: auto; overscroll-behavior: contain; outline: 0;
+  display: flex; flex-direction: column; gap: 12px; padding: 20px var(--edge) 12px;
 }
 .thread::before { content: ""; flex: 1 0 0; } /* new messages sit at the bottom; scrolls when full */
-.hello { padding: 0 4px 6px; }
-.hello h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.01em; }
-.hello p { margin: 0; color: var(--soft); text-wrap: pretty; }
+/* The empty state sits in the upper middle, not pinned under a blank screen. */
+.thread:has(> .hello:not([hidden]))::before { flex-grow: .45; }
+.hello h2 { margin-block-end: 6px; font-size: 22px; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; }
+.hello > p { color: var(--soft); text-wrap: pretty; }
 
-.msg { max-inline-size: 88%; overflow-wrap: anywhere; animation: rise .22s ease-out both; }
-.msg.user { align-self: flex-end; padding: 9px 14px; border-radius: 18px; border-end-end-radius: 6px; background: var(--bubble); }
-.msg.agent { align-self: flex-start; max-inline-size: 100%; }
-.msg.agent p { margin: 0 0 8px; }
-.msg.agent p:last-child { margin-block-end: 0; }
-.msg.agent ul { margin: 4px 0 8px; padding-inline-start: 20px; }
-.msg.agent li { margin-block: 3px; }
-.msg .note { color: var(--soft); font-size: 13px; }
-
-/* Result cards in the assistant's replies: hotels, the draft email, the order. */
-.cards { display: grid; gap: 8px; margin-block: 8px; }
-.card {
-  padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--field);
+/* Starters: stacked, filled like a message you're about to send. No borders. */
+.starters { display: grid; gap: 8px; margin-block-start: 20px; }
+.chip {
+  display: flex; align-items: baseline; gap: 12px; min-block-size: 44px; padding: 11px 14px; text-align: start;
+  border: 0; border-radius: 16px; color: var(--ink); background: var(--bubble);
+  font: inherit; cursor: pointer;
 }
-.card .top { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; }
-.card .top span { flex: none; font-weight: 500; color: var(--soft); font-variant-numeric: tabular-nums; }
-.card .sub { color: var(--soft); font-size: 13px; margin-block-start: 2px; }
-.email { padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--field); margin-block: 8px; }
-.email .subject { font-weight: 600; padding-block-end: 8px; margin-block-end: 10px; border-block-end: 1px solid var(--line); }
-.email .subject small { display: block; font-weight: 400; color: var(--soft); font-size: 12px; }
-.email p { margin: 0 0 8px; }
-.email .cta {
-  display: inline-block; margin-block-start: 4px; padding: 7px 14px; border-radius: 9px;
-  color: var(--app); background: var(--ink); font-weight: 600; font-size: 14px;
+.chip small { flex: none; inline-size: 56px; color: var(--soft); font-size: 13px; }
+
+.msg { max-inline-size: 85%; overflow-wrap: anywhere; animation: rise .2s var(--ease); }
+/* A new turn starts with more space than the steps inside one (24px against 12px). */
+.msg.user { align-self: flex-end; padding: 8px 14px; border-radius: 18px; border-end-end-radius: 6px; background: var(--bubble); }
+.msg.user:not(:first-of-type) { margin-block-start: 12px; }
+.msg.agent { align-self: stretch; max-inline-size: none; }
+.msg.agent > * + * { margin-block-start: 8px; }
+.msg b { font-weight: 600; }
+.msg .aside { color: var(--soft); font-size: 13px; }
+
+/* Result lists in the assistant's replies: one object, rows divided, not a box per row. */
+.list { border: 1px solid var(--line); border-radius: 16px; background: var(--field); }
+.row { padding: 11px 14px; }
+.row + .row { border-block-start: 1px solid var(--line); }
+.row .top { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; }
+.row .top span { flex: none; font-weight: 400; font-variant-numeric: tabular-nums; }
+.row .sub { color: var(--soft); font-size: 13px; }
+
+.email { padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--field); }
+.email > * + * { margin-block-start: 8px; }
+.email .subject { font-weight: 600; }
+.email ol { margin-block-end: 0; padding-inline-start: 20px; }
+/* The draft's button, drawn quiet: the ink fill means "this acts" (DESIGN §1), and this doesn't. */
+.email .cta { display: inline-block; padding: 6px 12px; border-radius: 10px; background: var(--bubble); font-weight: 600; }
+
+/* "Try another": one quiet line after a reply, instead of the starter cards again. */
+.more { display: flex; flex-wrap: wrap; align-items: center; column-gap: 4px; color: var(--soft); font-size: 13px; animation: fade .16s var(--ease); }
+.more button {
+  min-block-size: 44px; padding: 0 6px; border: 0; background: none; cursor: pointer;
+  color: var(--ink); font: inherit; text-decoration: underline; text-decoration-color: var(--soft); text-underline-offset: 3px;
 }
 
-/* Typing: three dots. Under reduced motion they stay still. */
-.typing { display: inline-flex; gap: 4px; padding: 12px 2px; }
-.typing i { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--soft); animation: blink 1s infinite ease-in-out; }
-.typing i:nth-child(2) { animation-delay: .15s; }
-.typing i:nth-child(3) { animation-delay: .3s; }
+/* Typing: three dots in a wave. Opacity only, so it stays under reduced motion. */
+.typing { display: inline-flex; gap: 4px; padding: 10px 2px; }
+.typing i { inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--soft); animation: blink 1s ease-in-out infinite backwards; }
+.typing i:nth-child(1) { animation-delay: -.2s; }
+.typing i:nth-child(2) { animation-delay: -.05s; }
+.typing i:nth-child(3) { animation-delay: .1s; }
 @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
-@media (prefers-reduced-motion: reduce) {
-  .msg { animation: none; }
-  .typing i { animation: none; opacity: .6; }
-}
+@keyframes fade { from { opacity: 0; } }
 
-/* Records of answered questions stay in the conversation. */
-.thread agent-clarifier { inline-size: 100%; }
+/* Answered cards stay in the conversation, and arrive there like a message, not in one jump. */
+.thread agent-clarifier { inline-size: 100%; animation: rise .2s var(--ease); }
 
-/* ── bottom: starters, the card while it asks, the composer ── */
+/* ── bottom: the card while it asks, then the composer ── */
 .bottom {
   flex: none; display: grid; gap: 10px;
-  padding: 6px 12px 12px; padding-block-end: max(12px, env(safe-area-inset-bottom));
+  padding: 4px var(--edge) 12px; padding-block-end: max(12px, env(safe-area-inset-bottom));
 }
 .phone .bottom { padding-block-end: 16px; }
-@media (max-width: 640px) { .phone .bottom { padding-block-end: max(12px, env(safe-area-inset-bottom)); } }
-.starters {
-  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
-  margin-inline: -12px; padding-inline: 12px; scroll-padding-inline: 12px;
-}
-.starters[hidden] { display: none; }
-.chip {
-  flex: none; display: grid; gap: 1px; max-inline-size: 230px; padding: 9px 13px; text-align: start;
-  border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: var(--chip);
-  font: inherit; font-size: 14px; line-height: 1.35; cursor: pointer;
-}
-.chip small { color: var(--soft); font-size: 12px; }
-.chip:hover { border-color: var(--soft); }
+@media (max-width: 640px), (max-height: 520px) { .phone .bottom { padding-block-end: max(12px, env(safe-area-inset-bottom)); } }
 .slot:empty { display: none; }
 
 .composer {
-  display: flex; align-items: flex-end; gap: 8px; padding: 8px 8px 8px 16px;
+  display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 16px;
   border: 1px solid var(--line); border-radius: 22px; background: var(--field);
 }
 .composer:focus-within { border-color: var(--soft); }
 .composer textarea {
-  flex: 1; min-block-size: 24px; max-block-size: 7lh; padding: 6px 0; resize: none;
-  border: 0; outline: 0; color: inherit; background: transparent;
+  flex: 1; min-inline-size: 0; min-block-size: 24px; max-block-size: 7lh; padding: 8px 0; resize: none;
+  border: 0; outline: 0; color: inherit; background: transparent; overflow-wrap: anywhere;
   font: inherit; font-size: 16px; /* 16px: iOS doesn't zoom the page on focus */
   field-sizing: content;
 }
 .composer textarea::placeholder { color: var(--soft); }
 .send {
-  flex: none; inline-size: 36px; block-size: 36px; display: grid; place-items: center;
+  position: relative; flex: none; inline-size: 36px; block-size: 36px; display: grid; place-items: center;
   border: 0; border-radius: 50%; color: var(--app); background: var(--ink); cursor: pointer;
 }
+.send::before { content: ""; position: absolute; inset: -4px; } /* a 44px target around the 36px button */
+.composer:has(textarea:placeholder-shown) .send { opacity: .35; } /* nothing to send yet */
+
+/* ── states ── */
+.icon:focus-visible, .chip:focus-visible, .send:focus-visible, .more button:focus-visible, .links a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+/* Hover only where there's a mouse: a tap would leave it stuck on (better-ui; the card does the same). */
+@media (hover: hover) and (pointer: fine) {
+  .icon:hover { color: var(--ink); background: var(--bubble); }
+  .chip:hover { background: color-mix(in srgb, var(--bubble) 92%, var(--ink)); }
+  .more button:hover, .links a:hover { text-decoration-color: currentColor; }
+}
+/* Press feedback, pointer only (a keyboard press keeps its ring), and only where motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  .send, .chip { transition: transform 160ms var(--ease); }
+  .send:active:not(:focus-visible), .chip:active:not(:focus-visible) { transform: scale(.97); }
+}
+/* Reduced motion: fades stay, nothing moves (DESIGN §7). */
+@media (prefers-reduced-motion: reduce) {
+  .msg, .thread agent-clarifier { animation-name: fade; }
+}
+@media (forced-colors: active) {
+  .composer:focus-within { outline: 2px solid Highlight; outline-offset: 2px; }
+  .msg.user, .chip { border: 1px solid CanvasText; }
+}
+.msg > .sr-only + * { margin-block-start: 0; } /* the hidden speaker label isn't a block above the reply */
