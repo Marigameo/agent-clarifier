@@ -1,10 +1,15 @@
 // The app's message box (BUILD §7): hide it, change its placeholder, start a sentence in it,
 // and notice when the user sends from it. Everything changed here is put back exactly.
 
+import { attr } from './view/dom.js';
+
 type Field = HTMLTextAreaElement | HTMLInputElement | HTMLElement;
 
 const isTextField = (el: Element): el is HTMLTextAreaElement | HTMLInputElement =>
   el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
+
+/** Tell the app (and its framework) the text changed, as typing would. */
+const input = (f: Element): boolean => f.dispatchEvent(new Event('input', { bubbles: true }));
 
 export class Composer {
   readonly field: Field;
@@ -43,7 +48,7 @@ export class Composer {
     // change and its state follows; with `value =` a sent reply came back on the next render (round 23).
     if (isTextField(f)) f.setRangeText(v, 0, f.value.length, 'end');
     else f.textContent = v;
-    f.dispatchEvent(new Event('input', { bubbles: true }));
+    input(f);
   }
 
   /**
@@ -84,23 +89,17 @@ export class Composer {
 
   /** Swap the placeholder; null puts the app's back. */
   placeholder(text: string | null): void {
-    const attr = isTextField(this.field) ? 'placeholder' : 'aria-placeholder';
     const f = this.field;
-    if (text !== null) {
-      if (this.#placeholder === undefined) this.#placeholder = f.getAttribute(attr);
-      if (f.getAttribute(attr) !== text) f.setAttribute(attr, text);
-      if (!isTextField(f)) f.dataset.placeholder = text;
-    } else if (this.#placeholder !== undefined) {
+    const name = isTextField(f) ? 'placeholder' : 'aria-placeholder';
+    if (text !== null && this.#placeholder === undefined) this.#placeholder = f.getAttribute(name);
+    else if (text === null) {
+      if (this.#placeholder === undefined) return;
       // A box that had no placeholder gets none back, not an empty one (round 23).
-      const p = this.#placeholder;
-      if (p === null) f.removeAttribute(attr);
-      else f.setAttribute(attr, p);
-      if (!isTextField(f)) {
-        if (p === null) delete f.dataset.placeholder;
-        else f.dataset.placeholder = p;
-      }
+      text = this.#placeholder;
       this.#placeholder = undefined;
     }
+    attr(f, name, text);
+    if (!isTextField(f)) attr(f, 'data-placeholder', text);
   }
 
   /** dock mode: lets the app square off the box's top corners under the card (README recipe). */
@@ -127,7 +126,7 @@ export class Composer {
       getSelection()?.collapse(node, text.length);
       this.#inserted.node = node;
     }
-    f.dispatchEvent(new Event('input', { bubbles: true }));
+    input(f);
     // A glow fading out moves nothing, so it plays under reduced motion too (DESIGN §7).
     this.container.animate(
       [{ boxShadow: '0 0 0 3px color-mix(in srgb, currentColor 18%, transparent)' }, { boxShadow: '0 0 0 3px transparent' }],
@@ -142,7 +141,7 @@ export class Composer {
     if (!ins || this.value !== ins.text + ins.rest) return;
     if (ins.node) {
       ins.node.remove();
-      this.field.dispatchEvent(new Event('input', { bubbles: true }));
+      input(this.field);
     } else this.value = ins.rest;
   }
 

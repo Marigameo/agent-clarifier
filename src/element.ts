@@ -277,7 +277,8 @@ export class AgentClarifier extends Base {
     // Was focus inside the card? Then it must follow into the new view, never fall to <body>.
     const hadFocus = !!this.#root.activeElement && this.#root.activeElement !== this.#live;
     // Was the composer missing (it mounts later), or replaced by the app? Look again (round 23).
-    if (this.isConnected && !this.#composer?.field.isConnected) this.#connectComposer();
+    // (Disconnected, #connectComposer does nothing.)
+    if (!this.#composer?.field.isConnected) this.#connectComposer();
     const fromName = this.#viewName;
     const fromStep = this.#shownStep;
     const fromHeight = swap ? (this.#view?.el.getBoundingClientRect().height ?? 0) : 0;
@@ -434,6 +435,9 @@ export class AgentClarifier extends Base {
     // Toasts disappear by themselves after a while
     if (next.toast !== prev.toast) {
       clearTimeout(this.#toastTimer);
+      // A new toast can reuse the node on screen (the same message: the limit hit twice). If that
+      // one was fading out (leave(), a Web Animation), bring it back; its CSS fade-in stays (round 23).
+      this.#root.querySelector('.toast')?.getAnimations().forEach((a) => a instanceof CSSTransition || a.cancel());
       if (next.toast) this.#toastTimer = window.setTimeout(this.#toastDone, TOAST_MS);
     }
 
@@ -531,8 +535,7 @@ export class AgentClarifier extends Base {
       const ok = this.#emit(revising ? 'revise' : 'submit', buildResult(this.#s, 'submitted'), true);
       if (ok) this.#dispatch({ type: Act.SUBMIT_OK });
     };
-    clearTimeout(this.#submitTimer);
-    clearInterval(this.#tick);
+    // (No timers to clear: leaving 'submitting' cleared them, see #effects.)
     if (s.undoUntil) {
       this.#submitTimer = window.setTimeout(fire, Math.max(0, s.undoUntil - Date.now()));
       // Redraw the "Sending in 3s" countdown each second until the window closes or Undo is pressed.
@@ -650,7 +653,7 @@ export class AgentClarifier extends Base {
     const s = this.#s;
     const field = t.matches('input, textarea');
     // A held key acts once: auto-repeat would pick on the next step too, and race on (round 23).
-    if (e.repeat && ((e.key === 'Enter' && !e.shiftKey) || (!field && (e.key === ' ' || /^[1-9]$/.test(e.key))))) return e.preventDefault();
+    if (e.repeat && ((e.key === 'Enter' && !e.shiftKey) || (!field && /^[1-9 ]$/.test(e.key)))) return e.preventDefault();
     const mod = e.metaKey || e.ctrlKey;
 
     // ⌘Z / Ctrl+Z is our undo, except inside a text field, where it's the browser's own.

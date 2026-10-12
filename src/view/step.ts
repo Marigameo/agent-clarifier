@@ -1,6 +1,6 @@
 // Sequential flow: one question per card (PLAN §4).
 
-import { canContinue, draftOf, isSettled, needsReview, picks, questionState, reach, ticked } from '../model/selectors.js';
+import { canContinue, draftOf, needsReview, picks, questionState, reach, ticked } from '../model/selectors.js';
 import type { NormalizedOption, NormalizedQuestion } from '../model/types.js';
 import { backButton, button, failBanner, footLeft, header, setButton, setFailBanner, sourceLine, undoOpen } from './chrome.js';
 import { attr, bdi, h, icon, rove, text } from './dom.js';
@@ -194,8 +194,8 @@ export function stepView(init: Ctx): View {
           const state = questionState(x, d2);
           const cls = i === s.step ? 'now' : state === 'skipped' ? 'skip' : state === 'unanswered' ? '' : 'done';
           // Settled steps are buttons, so you can jump straight back to one (PLAN §6), but never past
-          // a step not settled yet (round 23).
-          return i !== s.step && i <= far && isSettled(x, d2)
+          // a step not settled yet (round 23): everything before `far` is settled.
+          return i !== s.step && i < far
             ? h('button', { class: `dot ${cls}`, type: 'button', 'data-act': 'goto', 'data-step': i, 'aria-label': ctx.t('goTo', { n: i + 1, label: x.label }) })
             : h('i', { class: `dot ${cls}`, 'aria-hidden': 'true' });
         }),

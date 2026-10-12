@@ -19,6 +19,4 @@ export interface View {
   update: (ctx: Ctx) => void;
 }
 
-/** Row ids for the two rows that aren't options. */
-export const OTHER = '__other';
-export const DELEGATE = '__delegate';
+export { DELEGATE, OTHER } from '../model/normalize.js';

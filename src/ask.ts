@@ -29,7 +29,7 @@ export interface AskOptions {
   signal?: AbortSignal;
 }
 
-const DONE = ['clarify:submit', 'clarify:skip', 'clarify:reply', 'clarify:expire'] as const;
+const DONE = ['clarify:submit', 'clarify:skip', 'clarify:reply', 'clarify:expire', 'clarify:error'] as const;
 
 export function ask(q: Questionnaire, opts: AskOptions = {}): Promise<ClarifyResult> {
   const fresh = !opts.element && (opts.transcript || !document.querySelector('agent-clarifier'));
@@ -41,7 +41,8 @@ export function ask(q: Questionnaire, opts: AskOptions = {}): Promise<ClarifyRes
 
   // A newer question takes over: a card still open becomes "the agent moved on". That covers an
   // earlier ask still waiting, and a card the user reopened with "Edit answers" (round 23).
-  if (!['hidden', 'answered', 'expired'].includes(el.state)) el.expire();
+  // (A card that isn't open ignores it.)
+  el.expire();
 
   if (opts.placement) el.placement = opts.placement;
   if (opts.flow) el.flow = opts.flow;
@@ -51,37 +52,30 @@ export function ask(q: Questionnaire, opts: AskOptions = {}): Promise<ClarifyRes
 
   return new Promise<ClarifyResult>((resolve, reject) => {
     const finish = (e: Event): void => {
-      // With ask(), the awaiting code does the sending, so the card counts as answered as soon as
-      // the result is handed over, even if another listener prevented the submit.
+      cleanup();
+      if (e.type === 'clarify:error') return reject(new Error('[agent-clarifier] nothing to ask: the questionnaire has no usable questions'));
       // Checked after the event has finished dispatching: other listeners may run after this one.
       queueMicrotask(() => {
+        // With ask(), the awaiting code does the sending, so the card counts as answered as soon as
+        // the result is handed over, even if another listener prevented the submit.
         if (e.type === 'clarify:submit' && e.defaultPrevented && el.state === 'submitting') el.markAnswered();
-      });
-      cleanup();
-      // Moved once the card has finished: by then the record has handed focus to the composer, so
-      // the move doesn't take focus down with it. Moving a focused element drops focus to <body>;
-      // if it was still inside, it goes to the record's button (round 23).
-      if (opts.transcript) {
-        queueMicrotask(() => {
+        // Moved once the card has finished: by then the record has handed focus to the composer, so
+        // the move doesn't take focus down with it. Moving a focused element drops focus to <body>;
+        // if it was still inside, it goes to the record's button (round 23).
+        if (opts.transcript) {
           const had = el.matches(':focus-within');
-          opts.transcript!.append(el);
+          opts.transcript.append(el);
           if (had) el.shadowRoot?.querySelector<HTMLElement>('button')?.focus();
-        });
-      }
+        }
+      });
       resolve((e as CustomEvent<ClarifyResult>).detail);
-    };
-    const fail = (): void => {
-      cleanup();
-      reject(new Error('[agent-clarifier] nothing to ask: the questionnaire has no usable questions'));
     };
     const abort = (): void => el.expire();
     const cleanup = (): void => {
       for (const name of DONE) el.removeEventListener(name, finish);
-      el.removeEventListener('clarify:error', fail);
       opts.signal?.removeEventListener('abort', abort);
     };
     for (const name of DONE) el.addEventListener(name, finish);
-    el.addEventListener('clarify:error', fail);
     opts.signal?.addEventListener('abort', abort, { once: true });
 
     // Reopened from the record: back to the composer while it's being edited, then back again.

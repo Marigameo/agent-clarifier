@@ -47,6 +47,10 @@ export type NormalizeResult =
 
 export const MAX_OPTIONS = 9;
 
+/** Row ids of the two rows that aren't options. Reserved, so no option can pose as one (round 23). */
+export const OTHER = '__other';
+export const DELEGATE = '__delegate';
+
 /** Codes, not sentences: they read clearly on their own and keep ~0.4 KB out of every download.
  *  The README explains each one. */
 export function formatWarning(w: Warning): string {
@@ -139,8 +143,7 @@ function normalizeQuestion(
   if (type === 'text') {
     if (rawOptions.length > 0) warn('options-ignored', at);
   } else {
-    // The ids of the "Something else" and "Decide for me" rows (view/types.ts), so no option can pose as one (round 23).
-    const usedOptionIds = new Set<string>(['__other', '__delegate']);
+    const usedOptionIds = new Set<string>([OTHER, DELEGATE]);
     rawOptions.forEach((o, j) => {
       const oat = `${at}.options[${j}]`;
       const label = isObj(o) ? str(o.label) : undefined;

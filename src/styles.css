@@ -595,7 +595,7 @@ button.dot:focus-visible, .chip:focus-visible { box-shadow: var(--_focus); }
    fills instead (round 11). */
 @media (forced-colors: active) {
   textarea, .chip-input { border: 1px solid CanvasText; }
-  textarea:focus, .chip-input:focus { outline: 2px solid Highlight; }
+  textarea:focus { outline: 2px solid Highlight; }
   /* An open "Something else" keeps an edge (round 11's rule for fields), Highlight while focused (round 16). */
   .other-field textarea, .other-field textarea:focus { border: 0; outline: 0; }
   .other-wrap:has(> .other-field:not([hidden])) > .opt { outline: 1px solid CanvasText; outline-offset: -1px; }

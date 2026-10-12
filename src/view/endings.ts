@@ -3,7 +3,7 @@
 
 import { buildAnswer, draftOf, progress } from '../model/selectors.js';
 import { header } from './chrome.js';
-import { bdi, h, icon, text } from './dom.js';
+import { attr, bdi, h, icon, text } from './dom.js';
 import type { Ctx, View } from './types.js';
 
 export function pillView(init: Ctx): View {
@@ -15,7 +15,7 @@ export function pillView(init: Ctx): View {
     const p = progress(ctx.s);
     const vars = { n: p.answered, total: p.total };
     text(t, ctx.t('answeredOf', vars));
-    btn.setAttribute('aria-label', ctx.t('pillLabel', vars));
+    attr(btn, 'aria-label', ctx.t('pillLabel', vars));
   }
   return { el, update };
 }

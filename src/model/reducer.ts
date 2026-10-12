@@ -154,6 +154,9 @@ function advance(s: State, env: Env): State {
   return needsReview(s, env.review) ? { ...s, status: 'reviewing' } : submit(s, env);
 }
 
+/** Not open: nothing showing, or only a record. OPEN is allowed here, EXPIRE isn't. */
+const ended = (s: State): boolean => ['hidden', 'answered', 'expired'].includes(s.status);
+
 /** Exhaustiveness check: this only compiles if every action type is handled above it. */
 const unhandled = (_action: never, s: State): State => s;
 
@@ -167,8 +170,7 @@ function reduce(s: State, a: Action, env: Env): State {
 
   switch (a.type) {
     case Act.OPEN: {
-      if (!['hidden', 'answered', 'expired'].includes(s.status)) return s;
-      if (!a.q && !a.partial) return s;
+      if (!ended(s) || (!a.q && !a.partial)) return s;
       return {
         ...initialState(),
         status: a.partial ? 'loading' : 'answering',
@@ -288,9 +290,9 @@ function reduce(s: State, a: Action, env: Env): State {
     case Act.GOTO: {
       const q = qs[a.step];
       if (!answering || !sequential || !q || a.step === s.step) return s;
-      // Only as far as the user has been: every step up to the target must be settled, so a later
-      // question settled by its default can't be jumped to past one never seen (round 23).
-      if (a.step > reach(s) || !isSettled(q, draftOf(s, q.id))) return s;
+      // Only to a settled step, and only as far as the user has been: every step up to it settled,
+      // so a later question settled by its default can't be jumped to past one never seen (round 23).
+      if (a.step >= reach(s)) return s;
       return { ...s, step: a.step };
     }
 
@@ -413,7 +415,7 @@ function reduce(s: State, a: Action, env: Env): State {
 
     case Act.EXPIRE: {
       // An answered card stays answered: the agent moving on later doesn't undo the answer.
-      if (['hidden', 'answered', 'expired'].includes(s.status)) return s;
+      if (ended(s)) return s;
       const record: ClarifyRecord = { kind: 'expired', result: buildResult(s, 'dismissed') };
       if (a.message) record.message = a.message;
       return done(s, record, 'expired');

@@ -115,11 +115,7 @@ export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | strin
       ? null
       : h('button', { class: 'btn link', type: 'button', 'data-act': 'undo' }, icon('undo', 'flip'), ctx.t('undo'));
   const current = el.firstElementChild;
-  if (current?.classList.contains('toast') && current.textContent === msg + (undo ? ctx.t('undo') : '')) {
-    // The same message again (the limit hit twice): if it was fading out, bring it back (round 23).
-    for (const a of current.getAnimations()) a.cancel();
-    return;
-  }
+  if (current?.classList.contains('toast') && current.textContent === msg + (undo ? ctx.t('undo') : '')) return;
   // The message wraps if it must (it names what Undo restores); Undo always stays whole.
   // Without Undo it's a notice, not a toast to act on: drawn as quiet text (round 17).
   const cls = undo ? 'toast' : 'toast notice';
