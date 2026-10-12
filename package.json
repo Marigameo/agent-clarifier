@@ -62,7 +62,7 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "size": "size-limit",
-    "lint:pkg": "publint && attw --pack . --profile esm-only",
+    "lint:pkg": "publint && npm_config_dry_run=false attw --pack . --profile esm-only",
     "check": "pnpm typecheck && pnpm lint && pnpm coverage && pnpm build && pnpm size && pnpm lint:pkg",
     "prepublishOnly": "pnpm check"
   },
