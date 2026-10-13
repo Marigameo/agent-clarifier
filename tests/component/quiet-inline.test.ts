@@ -36,7 +36,8 @@ describe('"Something else" turns into the field in place', () => {
     const f = field(m).getBoundingClientRect();
     expect(f.top).toBeGreaterThanOrEqual(r.top);
     expect(f.bottom).toBeLessThanOrEqual(r.bottom);
-    expect(m.root.querySelector('.list')!.getBoundingClientRect().height).toBe(before);
+    // Within half a pixel: a second box would add ~40px, and layout can land a hair off mid-click.
+    expect(m.root.querySelector('.list')!.getBoundingClientRect().height).toBeCloseTo(before, 0);
     // And it's painted on top of the row, not hidden under it (round 16).
     const t = field(m).querySelector('textarea')!.getBoundingClientRect();
     expect(m.root.elementFromPoint(t.left + t.width / 2, t.top + t.height / 2)?.tagName).toBe('TEXTAREA');

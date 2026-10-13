@@ -1154,6 +1154,17 @@ The merged report was frozen before any change: `process/26-demo-audit/audit.md`
 
 ---
 
+## Round 27 · Skills, and 0.1.1 (13 Oct 2026)
+
+**Brief:** I wanted the way this component was built to be reusable for the next one, and the knowledge of how to use it to reach the agents that wire it in.
+
+**Decisions:**
+- I made a public repo, [`marigameo/skills`](https://github.com/marigameo/skills), with two skills: `craft-component` (this build's process, made general) and `ask-clarifier` (how to use the card, with a ready `ask_user` tool definition and an API reference). It installs with `npx skills add marigameo/skills` or as a Claude Code plugin. Emil Kowalski's skills repo was the inspiration for the shape, not a source to copy.
+- The tool definition stays in the skill, not exported from the package: teams will reword it anyway, and the format is frozen for 0.1.x (Claude's suggestion, my call).
+- `process/` and this journal are now "story mode" in the skill, off by default. They exist for the write-up, not the build.
+- The README points to the skill from Install and from "Tell the model when to ask", the way Sonner's README points to `ask-sonner`.
+- **0.1.1** is a README-only patch, so the npm page shows those links. The code is unchanged.
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.

@@ -11,7 +11,7 @@
 <form><textarea id="message"></textarea><button>Send</button></form>
 
 <script type="module">
-  import { ask } from 'https://cdn.jsdelivr.net/npm/@marigameo/agent-clarifier@0.1.0/dist/index.js';
+  import { ask } from 'https://cdn.jsdelivr.net/npm/@marigameo/agent-clarifier@0.1.1/dist/index.js';
 
   const result = await ask({
     id: 'trip',
@@ -71,7 +71,7 @@ async function clarify(questions) {
 
 To have it ready before the first question arrives, start the same `import()` when the chat opens. An `<agent-clarifier>` already in your markup waits, empty, until the code arrives.
 
-**From a CDN,** pin a version (`…/npm/@marigameo/agent-clarifier@0.1.0/dist/index.js`), so a new release never changes your page without you knowing.
+**From a CDN,** pin a version (`…/npm/@marigameo/agent-clarifier@0.1.1/dist/index.js`), so a new release never changes your page without you knowing.
 
 ---
 
