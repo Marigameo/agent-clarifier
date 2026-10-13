@@ -362,6 +362,8 @@ Paste this into your system prompt:
 
 > Ask clarifying questions only when the answer changes the result and a wrong guess is costly to redo. Ask at most 4 questions with 2 to 6 options each, and put a recommended option first. Never ask for anything you can read from the context. Offer "Decide for me" where any sensible pick would do. After a skip, say what you assumed; after "Decide for me", say what you chose.
 
+Running your own tool loop? The [`ask-clarifier`](https://github.com/marigameo/skills/blob/main/skills/ask-clarifier/SKILL.md#tell-the-model-when-to-ask) skill has a ready `ask_user` tool definition. Its description tells the model when to ask and which question type to use, and its input goes straight to `ask()`.
+
 ---
 
 ## Warnings
