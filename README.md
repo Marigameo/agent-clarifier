@@ -54,6 +54,12 @@ import '@marigameo/agent-clarifier'; // defines <agent-clarifier>
 
 Importing it on a server (Astro, Next, Nuxt) is safe: nothing touches the DOM until the element is used in a browser.
 
+Or let your coding agent do the wiring: the [`ask-clarifier`](https://github.com/marigameo/skills/blob/main/skills/ask-clarifier/SKILL.md) skill covers setup, placement, which question type to use, the tool that tells your model when to ask, theming and the usual fixes.
+
+```sh
+npx skills add marigameo/skills --skill ask-clarifier
+```
+
 **Load it when it's needed.** The card only appears when the agent asks something, so it doesn't have to load with the page. Import it on first use, and your page pays nothing up front:
 
 ```js
