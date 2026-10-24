@@ -1184,6 +1184,21 @@ The merged report was frozen before any change: `process/26-demo-audit/audit.md`
 
 ---
 
+## Round 29 · One way to draw a footer message (24 Oct 2026)
+
+**Brief:** on a phone, the review step showed "Skipped 'Notes' ↶ Undo" as a black slab, with the black Send answers wrapped under it at a different edge. In round 17 I'd made the limit notice quiet text, so the card was drawing its messages two ways. I wanted one pattern for every message, and the phone layout fixed.
+
+**Decisions:**
+- Every footer message is ink text with no fill: Skipped, Cleared, "Sending in 3s" and the limit notice. The ink fill is the primary button's alone.
+- Undo is an underlined link with its icon, like every other link since round 28.
+- Every message only fades. The 4px rise was for the black toast; plain text on the footer's edge doesn't need to move (Claude's suggestion, to make it one pattern in motion too).
+- On a phone the buttons still drop to their own line when the message is long, as they did for the limit notice: a line of text, then a line of buttons. Part names (`toast`, `toast notice`) are unchanged.
+- Still **0.2.0**: it wasn't on npm yet, so both rounds ship together.
+
+**Verified:** 633 tests; the two new assertions (a toast with Undo has no fill and an underlined Undo; it only fades) fail on round 28's code. Before and after renders of all three messages in light, dark and phone: `process/29-one-note/`.
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -1209,3 +1224,4 @@ The merged report was frozen before any change: `process/26-demo-audit/audit.md`
 - Round 25 is the "context, not controls" beat: a playground full of switches showed every state, and still didn't answer my real question, which was how it feels in a chat on a phone. The demo answered it in one screen.
 - Round 26 is the "the same rules, one level up" beat: the demo was built quickly around a carefully audited card, and the same skills found the page around it had drifted on everything the card had already settled: warm greys, too many weights, a button that looked real and wasn't, a screen reader hearing four things at once. Clutter turned out to be measurable: on the hotel result, nine bordered boxes became three (the record, one list, the composer).
 - Round 28 is the "ask the question again" beat: round 14 asked why black and blue mixed, prototyped monochrome, and kept the blue. Looking at real forms later showed that a black button with blue picks is something almost no product does, so the card went to one colour. Keeping a decision is fine; keeping it after the evidence turns isn't.
+- Round 29 is the "one pattern, not two" beat: round 17 made one message quiet and left its siblings black. A phone screenshot showed the cost: two black slabs on two lines with different edges. The fix was to apply round 17's reason to every message, not to invent a new one.

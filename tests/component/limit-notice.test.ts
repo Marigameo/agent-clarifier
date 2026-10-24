@@ -4,8 +4,9 @@ import type { Questionnaire } from '../../src/index';
 import { leave } from '../../src/view/motion';
 import { HOTEL, button, focused, mount, onStep, row } from './helpers';
 
-// Round 17 (process/17-limit-notice): the pick limit is a quiet notice, not a black toast. The ink
-// fill means "this acts" (DESIGN §1), so it stays only on toasts that carry Undo.
+// Round 17 (process/17-limit-notice): the pick limit is a quiet notice, not a black toast.
+// Round 29 (process/29-one-note): every footer message is drawn that way, Undo or not. The fill is the
+// primary button's alone, and a message only fades.
 
 const MAX2: Questionnaire = {
   id: 'm2',
@@ -36,19 +37,28 @@ describe('the pick limit is a notice, not a toast to act on', () => {
     expect(gap).toBeLessThan(16);
   });
 
-  it('toasts that carry Undo keep the ink fill', async () => {
+  it('a toast with Undo is drawn the same way: ink text, no fill, Undo a link', async () => {
     const m = mount(HOTEL);
     await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
     await userEvent.click(button(m, 'skip'));
     await onStep(m, 'Budget per night?');
     const t = m.root.querySelector<HTMLElement>('.toast')!;
     expect(t.classList.contains('notice')).toBe(false);
-    expect(getComputedStyle(t).backgroundColor).toBe(INK);
+    expect([getComputedStyle(t).backgroundColor, getComputedStyle(t).color]).toEqual([CLEAR, INK]);
+    const undo = t.querySelector('[data-act="undo"]')!;
+    expect([getComputedStyle(undo).color, getComputedStyle(undo).textDecorationLine]).toEqual([INK, 'underline']);
   });
 
-  it('it only fades, in and out: the 4px rise is for toasts with Undo', async () => {
-    const m = mount(MAX2, { style: '--clarify-duration: 1600ms' });
-    const n = await overLimit(m);
+  it.each(['notice', 'toast with Undo'])('a %s only fades, in and out', async (kind) => {
+    const m = mount(kind === 'notice' ? MAX2 : HOTEL, { style: '--clarify-duration: 1600ms' });
+    let n: HTMLElement;
+    if (kind === 'notice') n = await overLimit(m);
+    else {
+      await expect.poll(() => focused(m)?.dataset.opt).toBe('southbank');
+      await userEvent.click(button(m, 'skip'));
+      await expect.poll(() => m.root.querySelector('.toast')).not.toBeNull();
+      n = m.root.querySelector<HTMLElement>('.toast')!;
+    }
     const entering = n.getAnimations().filter((a): a is CSSTransition => a instanceof CSSTransition).map((a) => a.transitionProperty);
     expect(entering).not.toContain('transform');
     void leave(n);

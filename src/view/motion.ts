@@ -47,14 +47,12 @@ export function enter(el: HTMLElement, from: number, move: Move, rtl: boolean): 
 }
 
 /**
- * Fade an element out the way it came in (the toast sinks 4px), a quarter faster than it arrived:
- * on its way out it shouldn't hold attention. Resolves when it's gone or the fade was cut short.
+ * Fade a footer message out the way it came in, a quarter faster than it arrived: on its way out it
+ * shouldn't hold attention. Resolves when it's gone or the fade was cut short.
  */
 export function leave(el: HTMLElement): Promise<unknown> {
   if (typeof el.animate !== 'function') return Promise.resolve();
-  // A notice (nothing to press) only ever fades: the 4px is for toasts that carry Undo (round 17).
-  const fadeOnly = reduced() || el.classList.contains('notice');
-  const frames = fadeOnly ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(4px)' }];
+  // Every footer message only fades, with or without Undo (round 29; the limit notice since round 17).
   const t = timing(el);
-  return el.animate(frames, { ...t, duration: t.duration * 0.75, fill: 'forwards' }).finished.catch(() => undefined);
+  return el.animate([{ opacity: 1 }, { opacity: 0 }], { ...t, duration: t.duration * 0.75, fill: 'forwards' }).finished.catch(() => undefined);
 }

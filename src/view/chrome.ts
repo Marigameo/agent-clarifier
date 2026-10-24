@@ -117,7 +117,8 @@ export function footLeft(el: HTMLElement, ctx: Ctx, content: () => (Node | strin
   const current = el.firstElementChild;
   if (current?.classList.contains('toast') && current.textContent === msg + (undo ? ctx.t('undo') : '')) return;
   // The message wraps if it must (it names what Undo restores); Undo always stays whole.
-  // Without Undo it's a notice, not a toast to act on: drawn as quiet text (round 17).
+  // Without Undo it's a notice (round 17). Both are drawn as the same quiet text since round 29; the
+  // part name still tells them apart for apps that style them.
   const cls = undo ? 'toast' : 'toast notice';
   el.replaceChildren(h('span', { class: cls, part: cls }, h('span', { class: 'msg' }, msg), undo));
 }

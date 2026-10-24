@@ -17,7 +17,7 @@ Each signal has **one meaning**, so it never has to be learnt twice.
 |---|---|---|
 | **Shadow** | "This floats over the conversation" (the docked card, the pill), or "there's more content under this edge" (scroll edges) | Decoration, or anything that sits in the flow (the record, a card in the composer's place) |
 | **Accent colour** | "Yours": your selection marks and text links. **Ink by default** since round 28, so it's the same colour as the primary button; shape tells a pick (a filled key or checkbox) from an action (a button). An app's `--clarify-accent` also takes over the focus ring | Large fills, or anything the agent says (the Recommended badge and the source dot went grey in round 14) |
-| **Ink** (`--clarify-fg` as a fill) | "This acts" as a button: the primary button, and toasts that carry Undo. As a filled key or checkbox it's the pick (round 28) | A message with nothing to press (the pick-limit notice is ink *text*, round 17) |
+| **Ink** (`--clarify-fg` as a fill) | "This acts" as a button: the primary button, the only ink fill in the footer. As a filled key or checkbox it's the pick (round 28) | A message, with or without Undo: every footer message is ink *text* (round 17 for the limit notice, round 29 for the rest) (the pick-limit notice is ink *text*, round 17) |
 | **Fill** | State: hover is a light fill (rows, buttons, chips; mouse or trackpad only), selected is a stronger fill | The only sign of selection (the check or radio mark always shows it too) |
 | **Ring** | Keyboard focus. **Grey** (round 28), so a focused row never reads as picked | Selection. A ring and a fill can show at the same time (round 1). Drawn as a box-shadow so it follows the radius, over a transparent outline that Windows contrast themes paint instead (round 11) |
 | **Dashed edge** | "Not a real option" ("Other" chip) or "no longer live" (the expired record) | |
@@ -39,7 +39,7 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 
 | Token | Light | Dark | Role | Contrast (bg / selected) | Why |
 |---|---|---|---|---|---|
-| `--clarify-fg` | #1c1c1c | #ededed | Text, the primary button, toasts with Undo, the limit notice's text | 17.0 / 14.4 · 14.1 / 11.3 | ✅ Near-black: softer than black on white, far above AA |
+| `--clarify-fg` | #1c1c1c | #ededed | Text, the primary button, every footer message (toasts and the limit notice) | 17.0 / 14.4 · 14.1 / 11.3 | ✅ Near-black: softer than black on white, far above AA |
 | `--clarify-muted` | #666666 | #a3a3a3 | **All secondary and small text**: descriptions, step count, source, review keys, placeholders | 5.7 / 4.9 · 6.5 / 5.2 | ✅ Passes AA everywhere it's used. Hierarchy below it comes from size (12px), not a paler grey |
 | `--clarify-faint` | #888888 | #7a7a7a | **Non-text only**: checkbox rings, the text field outline, skipped-step dashes, the source dot (round 14) | edge 3.5 / 3.0 · 3.8 / 3.1 | ✅ Meets 3:1 for the edges that identify a control (WCAG 1.4.11). Never used for text (F1) |
 | `--clarify-border` | #e6e6e6 | #343434 | Card edge, row dividers | decorative | ✅ Dividers only; nothing depends on seeing them |
@@ -131,7 +131,7 @@ Checked against Emil Kowalski's `find-animation-opportunities` skill in round 9,
 | Pill: **fade only** | folding into the pill | ✅ A capsule (radius 999px) that changes height is drawn as an oval for the first ~100ms (caught in the round 9 filmstrip). The pill appears at its own size and fades in |
 | **scale .97** on press | buttons, chips, icon buttons | ✅ Feedback: the control gives under the finger. That's ~1px on a 32px button, felt more than seen. **Pointer only**: a keyboard press already shows the ring, and keyboard actions repeat too fast to animate. Text links don't shrink |
 | **Checkbox: press .95 + tick reveal** (round 15) | multi checkboxes, pointer only | ✅ Built with Emil Kowalski's `animate` skill. *Feedback*: the 16px box gives under a held press (.95, the low end of the skill's 0.95–0.98, since the box is small: ≈0.8px), at `--_duration` like the buttons. *State*: the tick is revealed left to right with `clip-path` (the sanctioned fourth property, not `stroke-dashoffset`), from the stroke's own edge, in 0.75× (120ms). **Keyboard toggles are instant** (the skill's disqualifier); **unticking is instant** (a system response snaps). Reduced motion: no press, the tick fades. Claude's own card turned out not to animate at all (the "feel" in the recording was the recorder's click circle) |
-| **4px rise + fade** | toasts with Undo: in at 160ms, out at **120ms** (0.75×). The pick-limit notice only fades (round 17): nothing to press, so nothing to chase | ✅ The toast carries Undo, which the whole recovery design rests on (undo instead of confirm dialogs). Swapped in where the dashes were, it's easy to miss. It leaves the way it came, a quarter faster: on its way out it shouldn't hold attention (round 10). The dashes come back without a fade: they're rebuilt on every update, so an entrance would replay constantly |
+| **Fade only** | every footer message: in at 160ms, out at **120ms** (0.75×) | ✅ (round 29) The message sits on the footer's one edge, so it doesn't move to get noticed: replacing the dashes is change enough. Toasts with Undo rose 4px until round 29; the limit notice only ever faded (round 17) |
 | **600ms** | compose highlight | ✅ Long enough to see where the text landed, gone before reading starts. A glow, not a move, so it plays under reduced motion too |
 | **5s** toast | Skip and Start over toasts | ✅ (F13) Waits while hovered or focused, so nobody loses Undo while reaching for it. **And while the tab is hidden** (round 10): switch away, come back, Undo is still there |
 | 1.4s shimmer · **0.6s** spinner | loading, sending | ✅ The shimmer is calm. It's a highlight band moving on `transform`, so it runs off the main thread and stays smooth while a streamed reply is being parsed (round 10; it used to repaint `background-position` every frame), and it sweeps in the reading direction. The spinner went from 0.8s to 0.6s in round 10: a faster spinner makes the wait feel shorter, and it only shows while sending. Both stop with reduced motion |
@@ -295,7 +295,7 @@ Mari asked whether "Up to 2 picks. Unpick one first" should be a warning colour.
 | Decision | Why |
 |---|---|
 | Not danger orange | It isn't an error or a warning: a reasonable tap was refused, with how to swap. Orange would scold, and dilute the colour that means "something failed, or fix this to send" |
-| Not a black toast any more | The ink fill means "this acts" (§1); Skip and Start over earn it with Undo, this has nothing to press. Beside Continue it was a second black slab, louder than the user's own picks (round 14's principle) |
+| Not a black toast any more | The ink fill means "this acts" (§1); Skip and Start over earn it with Undo (until round 29: now no message has a fill, §20), this has nothing to press. Beside Continue it was a second black slab, louder than the user's own picks (round 14's principle) |
 | **Ink text, weight 500, no fill, where the dashes start** (on the card's 20px edge until round 21; now right after Back) | Reads as news (not muted status), sits where the count it replaces sits, and leaves Continue the only filled thing in the footer. Contrast 17.0 / 14.1 |
 | Fade only, in and out | The 4px rise was earned by Undo (round 9, "easy to miss"); a notice doesn't need chasing |
 | Same timer, pauses, live region, wording; `part="toast notice"` | Only the drawing changed. Apps styling `::part(toast)` still reach it; `::part(notice)` tells it apart |
@@ -383,3 +383,16 @@ From Mari's question about why the card mixed a black button with blue picks. Cl
 | **Links are underlined** (40% of their colour at rest, full on hover; Claude's call) | Ink links can't be told from text by colour. The hover cue was the underline appearing; now it darkens, so the line never jumps in |
 | The exploration's ring shape (edge + halo outside the row) was not taken | Round 19 drew fills 2px inside the row, so an outside halo would leave a gap between ring and fill. Only the colour changed |
 | The playground's "warm" theme drops its rust accent; the demos' own focus rings and links go grey and ink | The same rule on the pages around the card |
+
+---
+
+## 20. One way to draw a footer message (round 29)
+
+From Mari's phone screenshot of the review step: "Skipped 'Notes' ↶ Undo" was a black slab beside the black Send answers, and when the buttons wrapped on a phone, the two slabs sat on two lines with different left edges. The limit notice had been quiet text since round 17, so the card already drew messages two ways. Renders: `process/29-one-note/before|after`.
+
+| Change | Why |
+|---|---|
+| **Every footer message is ink text with no fill**: Skipped, Cleared, "Sending in 3s", and the limit notice | One pattern. The fill belongs to the primary button alone (§1), so a message never reads as a second button. On a phone the message stays a line of text above the buttons' line, the way the limit notice already did |
+| **Undo is a link** (ink, underlined, with its icon) | Like every other link since round 28 (§19). It's still a real button, keyboard-reachable, with the same timer and pauses (F13) |
+| **Every message only fades** | The 4px rise was for toasts with Undo; with no fill there's nothing to lift, and the text stays on the footer's one edge |
+| `part="toast"` and `part="toast notice"` stay | Apps styling `::part(toast)` still reach every message; `::part(notice)` still tells the limit apart |
