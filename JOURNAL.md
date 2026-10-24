@@ -1193,7 +1193,7 @@ The merged report was frozen before any change: `process/26-demo-audit/audit.md`
 - Undo is an underlined link with its icon, like every other link since round 28.
 - Every message only fades. The 4px rise was for the black toast; plain text on the footer's edge doesn't need to move (Claude's suggestion, to make it one pattern in motion too).
 - On a phone the buttons still drop to their own line when the message is long, as they did for the limit notice: a line of text, then a line of buttons. Part names (`toast`, `toast notice`) are unchanged.
-- Still **0.2.0**: it wasn't on npm yet, so both rounds ship together.
+- **0.2.1**: 0.2.0 (round 28) was published minutes before this round was committed, so it ships as its own patch.
 
 **Verified:** 633 tests; the two new assertions (a toast with Undo has no fill and an underlined Undo; it only fades) fail on round 28's code. Before and after renders of all three messages in light, dark and phone: `process/29-one-note/`.
 
