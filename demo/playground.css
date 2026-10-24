@@ -66,6 +66,9 @@ body {
 }
 .panel h1 { margin: 0; font-size: 16px; }
 .panel header p { margin: 4px 0 0; color: var(--pg-soft); font-size: 13px; }
+/* Ink with an underline, like the card's links: no second colour on the page (round 28). */
+.panel header a { color: var(--pg-ink); text-underline-offset: 3px; text-decoration-color: var(--pg-soft); }
+.panel header a:hover { text-decoration-color: currentColor; }
 .panel h2 {
   display: flex; justify-content: space-between; align-items: center;
   margin: 0 0 8px; font: 500 11px/1 ui-monospace, Menlo, monospace;
@@ -99,11 +102,11 @@ pre {
 /* ── a third theme, made with tokens only (as an app would) ── */
 agent-clarifier.warm {
   --clarify-font: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  /* Measured in round 12: every pair passes on the selected fill, and danger sits 18° of hue away
-     from the accent, so an error never looks like a pick. The soft fill is left to the default mix. */
+  /* Measured in round 12: every pair passes on the selected fill. Monochrome like the default (round 28):
+     no accent, so picks share the warm ink with the primary button. The soft fill is left to the default mix. */
   --clarify-bg: #fffaf2; --clarify-fg: #2b2118; --clarify-muted: #746452; --clarify-faint: #92826a;
   --clarify-border: #eadfcd; --clarify-hover: #f8efe1; --clarify-selected: #f3e6d1; --clarify-key-bg: #f3e6d1;
-  --clarify-accent: #b54116; --clarify-accent-fg: #fff; --clarify-danger: #c53443;
+  --clarify-danger: #c53443;
   --clarify-radius: 6px 14px 8px 16px / 14px 6px 16px 8px; --clarify-radius-sm: 6px;
   --clarify-shadow: 4px 4px 0 rgba(43, 33, 24, .12);
 }

@@ -9,7 +9,7 @@
   --line: #e6e6e6;
   --bubble: #ececec;
   --field: #ffffff;
-  --accent: #3b5bdb;
+  --ring: #767676; /* focus, grey like the card's (round 28) */
   --ease: cubic-bezier(.2, .7, .2, 1); /* the card's --clarify-ease */
   --edge: 16px; /* one leading edge for everything in the app */
   color-scheme: light;
@@ -17,12 +17,12 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f0f0f; --app: #171717; --ink: #ededed; --soft: #a3a3a3; --line: #343434;
-    --bubble: #2a2a2a; --field: #1f1f1f; --accent: #8ea6ff; color-scheme: dark;
+    --bubble: #2a2a2a; --field: #1f1f1f; --ring: #8f8f8f; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f0f0f; --app: #171717; --ink: #ededed; --soft: #a3a3a3; --line: #343434;
-  --bubble: #2a2a2a; --field: #1f1f1f; --accent: #8ea6ff; color-scheme: dark;
+  --bubble: #2a2a2a; --field: #1f1f1f; --ring: #8f8f8f; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -185,7 +185,7 @@ h1, h2, p { margin: 0; }
 
 /* ── states ── */
 .icon:focus-visible, .chip:focus-visible, .send:focus-visible, .more button:focus-visible, .links a:focus-visible {
-  outline: 2px solid var(--accent); outline-offset: 2px;
+  outline: 2px solid var(--ring); outline-offset: 2px;
 }
 /* Hover only where there's a mouse: a tap would leave it stuck on (better-ui; the card does the same). */
 @media (hover: hover) and (pointer: fine) {

@@ -11,7 +11,7 @@
 <form><textarea id="message"></textarea><button>Send</button></form>
 
 <script type="module">
-  import { ask } from 'https://cdn.jsdelivr.net/npm/@marigameo/agent-clarifier@0.1.1/dist/index.js';
+  import { ask } from 'https://cdn.jsdelivr.net/npm/@marigameo/agent-clarifier@0.2.0/dist/index.js';
 
   const result = await ask({
     id: 'trip',
@@ -71,7 +71,7 @@ async function clarify(questions) {
 
 To have it ready before the first question arrives, start the same `import()` when the chat opens. An `<agent-clarifier>` already in your markup waits, empty, until the code arrives.
 
-**From a CDN,** pin a version (`…/npm/@marigameo/agent-clarifier@0.1.1/dist/index.js`), so a new release never changes your page without you knowing.
+**From a CDN,** pin a version (`…/npm/@marigameo/agent-clarifier@0.2.0/dist/index.js`), so a new release never changes your page without you knowing.
 
 ---
 
@@ -293,7 +293,7 @@ Each group of options is a single Tab stop (roving tabindex). Focus follows into
 
 ## Theming
 
-The look is neutral by default and restyled with CSS variables. Set them anywhere they inherit from: `:root`, a container, or the element itself.
+The look is neutral and monochrome by default: a pick shares the primary button's ink, so the card has one colour, and keyboard focus is a grey ring. Restyle it with CSS variables. Set them anywhere they inherit from: `:root`, a container, or the element itself.
 
 ```css
 agent-clarifier { --clarify-accent: #0b7a5f; --clarify-radius: 12px; --clarify-font: "Inter", sans-serif; }
@@ -303,7 +303,7 @@ agent-clarifier { --clarify-accent: #0b7a5f; --clarify-radius: 12px; --clarify-f
 agent-clarifier[theme="dark"] { --clarify-accent: #5fa48d; }
 ```
 
-Accent, danger and success each need a light and a dark value that pass 4.5:1 on the card. The soft fills behind the answered tick and errors are mixed from them automatically, so they follow your colours. The Recommended badge is grey on purpose: the user's pick should be the loudest thing on the card (restyle it with `::part(badge)` if you must).
+Accent, danger and success each need a light and a dark value that pass 4.5:1 on the card. The soft fills behind the answered tick and errors are mixed from them automatically, so they follow your colours. The Recommended badge is grey on purpose: the user's pick should be the loudest thing on the card (restyle it with `::part(badge)` if you must). An accent recolours picks, links and focus but not the primary button, so to keep one colour, give `::part(button-primary)` the same one.
 
 | Token | Default (light / dark) | Used for |
 |---|---|---|
@@ -315,7 +315,7 @@ Accent, danger and success each need a light and a dark value that pass 4.5:1 on
 | `--clarify-border` | `#e6e6e6` / `#343434` | Card edge, dividers |
 | `--clarify-hover`, `--clarify-selected` | `#f5f5f5`, `#ececec` / `#292929`, `#303030` | Row fills |
 | `--clarify-key-bg` | `#f0f0f0` / `#2c2c2c` | Number-key badges |
-| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `#3b5bdb` / `#8ea6ff` | The user's picks, focus, links. `-accent-soft` (the halo on the minimised pill's dot) must be opaque: by default it's the accent mixed into the background |
+| `--clarify-accent`, `-accent-fg`, `-accent-soft` | `--clarify-fg`, `--clarify-bg` (ink) | The user's picks, links, and keyboard focus. Unset, focus is a grey ring (`#767676` / `#8f8f8f`), so a focused row never looks picked. `-accent-soft` (the halo on the minimised pill's dot) must be opaque: by default it's the accent mixed into the background |
 | `--clarify-danger`, `-danger-soft` | `#c2410c` / `#f0895a` | Errors |
 | `--clarify-success` | `#2f7d4f` / `#7cc79a` | The answered tick |
 | `--clarify-radius`, `--clarify-radius-sm` | `16px`, `8px` | Card, rows (concentric: 16 − 8 inset) |

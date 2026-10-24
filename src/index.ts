@@ -4,7 +4,7 @@ import type { ClarifyResult, Status } from './model/types.js';
 
 export { AgentClarifier };
 export { ask, type AskOptions } from './ask.js';
-export const VERSION = '0.1.1';
+export const VERSION = '0.2.0';
 
 if (typeof customElements !== 'undefined' && !customElements.get('agent-clarifier')) {
   customElements.define('agent-clarifier', AgentClarifier);

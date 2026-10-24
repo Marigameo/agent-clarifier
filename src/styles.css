@@ -17,8 +17,13 @@
   --_hover: var(--clarify-hover, #f5f5f5);
   --_selected: var(--clarify-selected, #ececec);
   --_key-bg: var(--clarify-key-bg, #f0f0f0);
-  --_accent: var(--clarify-accent, #3b5bdb);
-  --_accent-fg: var(--clarify-accent-fg, #fff);
+  /* Monochrome by default (round 28): a pick is ink, like the primary button, so the card has one colour.
+     Declared once: --_fg is per theme, so the dark themes follow. An app's --clarify-accent recolours
+     picks, links and focus. */
+  --_accent: var(--clarify-accent, var(--_fg));
+  --_accent-fg: var(--clarify-accent-fg, var(--_bg));
+  /* Keyboard focus is grey, so a focused row never reads as picked (round 28). 4.5:1 on the card. */
+  --_ring: var(--clarify-accent, #767676);
   /* The halo on the minimised pill's dot. Opaque, so it follows an app's own accent (round 11). */
   --_accent-soft: var(--clarify-accent-soft, color-mix(in srgb, var(--_accent) 10%, var(--_bg)));
   --_danger: var(--clarify-danger, #c2410c);
@@ -42,7 +47,7 @@
   --_t16: max(16px, 1rem);
   --_duration: var(--clarify-duration, 160ms);
   --_ease: var(--clarify-ease, cubic-bezier(.2, .7, .2, 1));
-  --_focus: 0 0 0 2px var(--_bg), 0 0 0 4px var(--_accent);
+  --_focus: 0 0 0 2px var(--_bg), 0 0 0 4px var(--_ring);
   display: block;
   /* The card is a size container, which gives it no minimum width, so a flex sibling could squeeze it
      to nothing. It keeps at least a phone's width, or its container's if that's narrower (round 13). */
@@ -66,8 +71,7 @@
   --_hover: var(--clarify-hover, #292929);
   --_selected: var(--clarify-selected, #303030);
   --_key-bg: var(--clarify-key-bg, #2c2c2c);
-  --_accent: var(--clarify-accent, #8ea6ff);
-  --_accent-fg: var(--clarify-accent-fg, #14141a);
+  --_ring: var(--clarify-accent, #8f8f8f);
   --_accent-soft: var(--clarify-accent-soft, color-mix(in srgb, var(--_accent) 14%, var(--_bg)));
   --_danger: var(--clarify-danger, #f0895a);
   --_danger-soft: var(--clarify-danger-soft, color-mix(in srgb, var(--_danger) 12%, var(--_bg)));
@@ -88,8 +92,7 @@
   --_hover: var(--clarify-hover, #292929);
   --_selected: var(--clarify-selected, #303030);
   --_key-bg: var(--clarify-key-bg, #2c2c2c);
-  --_accent: var(--clarify-accent, #8ea6ff);
-  --_accent-fg: var(--clarify-accent-fg, #14141a);
+  --_ring: var(--clarify-accent, #8f8f8f);
   --_accent-soft: var(--clarify-accent-soft, color-mix(in srgb, var(--_accent) 14%, var(--_bg)));
   --_danger: var(--clarify-danger, #f0895a);
   --_danger-soft: var(--clarify-danger-soft, color-mix(in srgb, var(--_danger) 12%, var(--_bg)));
@@ -230,7 +233,7 @@ button { font: inherit; color: inherit; }
 :is(.opt, .chip):focus-visible, button.dot:focus-visible { outline: 2px solid transparent; outline-offset: -2px; }
 /* An open "Something else" shows its ring whenever its field has focus, even after a click: it follows
    the field, which always shows focus, not the keyboard-only rule below. */
-.opt:focus-visible, .other-wrap:has(> .other-field [data-input]:focus) > .opt { box-shadow: inset 0 0 0 2px var(--_accent); }
+.opt:focus-visible, .other-wrap:has(> .other-field [data-input]:focus) > .opt { box-shadow: inset 0 0 0 2px var(--_ring); }
 /* Rings are for keyboard users; after a click or tap they're noise (fills already show the pick). */
 [data-pointer] :is(.opt, .chip, .btn, .icon-btn):focus-visible { box-shadow: none; }
 .opt[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
@@ -310,7 +313,7 @@ textarea {
   font: inherit; line-height: 1.45; color: var(--_fg); background: var(--_bg);
   box-shadow: inset 0 0 0 1px var(--_faint); outline: none;
 }
-textarea:focus { box-shadow: inset 0 0 0 1.5px var(--_accent); }
+textarea:focus { box-shadow: inset 0 0 0 1.5px var(--_ring); }
 textarea::placeholder, input::placeholder { color: var(--_muted); }
 .field .opt { margin-block-start: 8px; }
 
@@ -345,7 +348,9 @@ textarea::placeholder, input::placeholder { color: var(--_muted); }
 .btn .i { inline-size: 14px; block-size: 14px; stroke-width: 1.75; } /* beside 500–600 labels */
 .btn.primary { color: var(--_bg); background: var(--_fg); border-color: var(--_fg); }
 .btn.ghost { color: var(--_muted); background: transparent; border-color: transparent; }
-.btn.link { block-size: auto; padding: 0; border: 0; background: none; color: var(--_accent); }
+/* Ink like the text around it, so an underline is what says "link" (round 28). It's faint at rest and
+   full under the mouse: the hover cue it used to be, without the line jumping in. */
+.btn.link { block-size: auto; padding: 0; border: 0; background: none; color: var(--_accent); text-decoration: underline 1px color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 2px; }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: .35; cursor: not-allowed; }
 .btn:focus-visible, .icon-btn:focus-visible { outline: 2px solid transparent; outline-offset: 2px; box-shadow: var(--_focus); }
 .keys { display: inline-flex; align-items: center; gap: 6px; }
@@ -414,7 +419,7 @@ button.dot:focus-visible, .chip:focus-visible { box-shadow: var(--_focus); }
   display: block; margin: -2px 20px 10px; inline-size: calc(100% - 40px); min-block-size: 0;
   padding: 8px 12px; border: 0; border-radius: var(--_radius-sm);
   font: inherit; font-size: var(--_t13); color: var(--_fg); background: var(--_bg);
-  box-shadow: inset 0 0 0 1.5px var(--_accent); outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--_ring); outline: none;
 }
 .q-field { padding: 0 20px 10px; }
 .q-field textarea { min-block-size: 64px; }
@@ -544,7 +549,7 @@ button.dot:focus-visible, .chip:focus-visible { box-shadow: var(--_focus); }
   /* A dash you can jump to answers the pointer: it thickens and turns ink, instantly (round 21). */
   button.dot:hover { background: var(--_fg); transform: scaleY(1.5); }
   .btn.primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in srgb, var(--_fg) 88%, var(--_bg)); border-color: transparent; }
-  .btn.link:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .btn.link:hover { text-decoration-color: currentColor; }
   .chip:not([aria-checked="true"]):not([aria-pressed="true"]):not([aria-disabled="true"]):hover { background: var(--_hover); }
   /* Picked rows keep their fill under the mouse: checked, and pressed (Decide for me on a text question). */
   .opt:hover:not([aria-checked="true"], [aria-pressed="true"], [aria-disabled="true"]) { background-color: var(--_hover); }

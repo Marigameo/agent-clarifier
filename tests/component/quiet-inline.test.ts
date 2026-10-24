@@ -10,7 +10,7 @@ const MULTI: Questionnaire = {
   id: 'multi',
   questions: [{ id: 'm', prompt: 'Which cuisines?', type: 'multi', options: [{ id: 'it', label: 'Italian' }, { id: 'jp', label: 'Japanese' }] }],
 };
-const ACCENT = 'rgb(59, 91, 219)'; // #3b5bdb
+const ACCENT = 'rgb(28, 28, 28)'; // ink (#1c1c1c): the accent defaults to it since round 28
 const color = (el: Element, prop = 'color') => getComputedStyle(el).getPropertyValue(prop);
 const field = (m: ReturnType<typeof mount>) => m.root.querySelector<HTMLElement>('.other-field')!;
 

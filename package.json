@@ -1,6 +1,6 @@
 {
   "name": "@marigameo/agent-clarifier",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A web component that lets a chat agent ask clarifying questions before it acts.",
   "license": "MIT",
   "author": "Mariappan <mari@strivelabs.ai>",

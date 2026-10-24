@@ -11,15 +11,15 @@
 
 Each signal has **one meaning**, so it never has to be learnt twice.
 
-**The user's decision is the loudest thing on the card** (Mari, round 14). What the agent says (its Recommended badge, who's asking) stays quiet and grey. Colour goes to what the user did, and to where they are.
+**The user's decision is the loudest thing on the card** (Mari, round 14). What the agent says (its Recommended badge, who's asking) stays quiet and grey. **The card has one colour** (Mari, round 28): what the user did is ink, the same ink as the button that moves on, and where they are is a grey ring.
 
 | Signal | Means | Never used for |
 |---|---|---|
 | **Shadow** | "This floats over the conversation" (the docked card, the pill), or "there's more content under this edge" (scroll edges) | Decoration, or anything that sits in the flow (the record, a card in the composer's place) |
-| **Accent colour** | "Yours, or here": your selection marks, keyboard focus, text links | The primary button, large fills, or anything the agent says (the Recommended badge and the source dot went grey in round 14) |
-| **Ink** (`--clarify-fg` as a fill) | "This acts": the primary button, and toasts that carry Undo | Selection, or a message with nothing to press (the pick-limit notice is ink *text*, round 17) |
+| **Accent colour** | "Yours": your selection marks and text links. **Ink by default** since round 28, so it's the same colour as the primary button; shape tells a pick (a filled key or checkbox) from an action (a button). An app's `--clarify-accent` also takes over the focus ring | Large fills, or anything the agent says (the Recommended badge and the source dot went grey in round 14) |
+| **Ink** (`--clarify-fg` as a fill) | "This acts" as a button: the primary button, and toasts that carry Undo. As a filled key or checkbox it's the pick (round 28) | A message with nothing to press (the pick-limit notice is ink *text*, round 17) |
 | **Fill** | State: hover is a light fill (rows, buttons, chips; mouse or trackpad only), selected is a stronger fill | The only sign of selection (the check or radio mark always shows it too) |
-| **Ring** | Keyboard focus | Selection. A ring and a fill can show at the same time (round 1). Drawn as a box-shadow so it follows the radius, over a transparent outline that Windows contrast themes paint instead (round 11) |
+| **Ring** | Keyboard focus. **Grey** (round 28), so a focused row never reads as picked | Selection. A ring and a fill can show at the same time (round 1). Drawn as a box-shadow so it follows the radius, over a transparent outline that Windows contrast themes paint instead (round 11) |
 | **Dashed edge** | "Not a real option" ("Other" chip) or "no longer live" (the expired record) | |
 | **Motion** | Answers "what just happened?": a pick confirmed, a step moved forward or back, the card folded into a record, a press landed | Delight for its own sake, or anything paced by the keyboard. With reduced motion nothing moves or resizes, but fades stay (round 9) |
 
@@ -46,7 +46,8 @@ Neutral greys since round 8 (F9). Contrast measured on the background and on the
 | `--clarify-hover` / `-selected` | #f5f5f5 / #ececec | #292929 / #303030 | Row fills | – | ✅ Selected is a step darker than hover. The fill is never the only sign of a pick |
 | Primary button hover | `color-mix(fg 88%, bg)` → #373737 | #d4d4d4 | The primary button under a mouse | text 11.9 · 11.1 (rest 17.0 · 14.1) | ✅ (round 10) A step toward the background reads as "lit" on both themes, stays far above AA, and is derived from the tokens, so a brand `--clarify-fg` gets a matching hover for free. Secondary and ghost buttons and chips use `--clarify-hover` (text 15.6 · 12.4) |
 | `--clarify-key-bg` | #f0f0f0 | #2c2c2c | Number-key badges | – | ✅ Between hover and selected: reads as a key, not a button. **On a hovered row** (round 21): `color-mix(key-bg 92%, fg)` → #dfdfdf · #3b3b3b, number in `fg` (12.8 · 9.6). At rest it was 2% from the hover fill and vanished into it. **On a picked row** (round 21 add-on), the pencil ("Something else") and Decide-for-me keys are filled with the accent like every picked key (`accent-fg` on `accent`, 5.7 · 7.1; `Highlight` in forced colors). They used to stay a grey key: 1% off the fill (#f0f0f0 on #ececec) with a grey icon beside an ink label, so an open "Something else" looked half-picked. Ink on the fill was tried first and was too quiet to notice (`design/explorations/03-active-pencil/`, Mari chose the fill) |
-| `--clarify-accent` | #3b5bdb | #8ea6ff | Focus ring, picks (filled key, checkbox), links | 5.7 / 4.8 · 7.1 / 5.7 | ✅ Passes as text, so links use it directly. **Kept blue in round 14** after a monochrome trial (`design/explorations/01-focus-and-colour/`): it carries "your pick / where you are" better than grey or black |
+| `--clarify-accent` | = fg (#1c1c1c) | = fg (#ededed) | Picks (filled key, checkbox), links | 17.0 / 14.4 · 14.1 / 11.3 | ✅ **Ink since round 28** (§19): one colour on the card. It was blue (#3b5bdb / #8ea6ff) until then; round 14 kept it after a monochrome trial, round 28 reversed that. `-accent-fg` defaults to the background (17.0 · 14.1). Links are ink, so an underline says "link" (faint at rest, full on hover) |
+| Focus ring | #767676 | #8f8f8f | Keyboard focus on rows, buttons, dashes, chips; the typing edge of a text field | edge 4.5 / 3.8 · 5.1 / 4.1 | ✅ (round 28) Grey, so a focused row never reads as picked. ≥ 3:1 on the card and on every row fill (hover 4.2 · 4.5), WCAG 2.4.13. Follows `--clarify-accent` when an app sets one |
 | `--clarify-accent-soft` | accent 10% into bg | accent 14% into bg | The halo around the minimised pill's dot | – | ✅ Opaque (round 11), so it follows an app's own accent. It was the badge fill until round 14 |
 | Recommended badge | muted text on bg, 1px `border` edge | same | The agent's suggestion | 5.7 · 6.5 (it carries its own bg, so every row state reads the same) | ✅ (round 14) Grey: a suggestion must not look like a pick. Its own background keeps it visible on a filled row |
 | `--clarify-danger` | #c2410c | #f0895a | Errors (on their own pale fill: `danger-soft`, mixed 8% / 12% into the background since round 12, so it follows an app's danger colour) | 4.6 on danger-soft · 5.4 | ✅ *(Claude's reading)* Burnt orange, not red: errors here are always recoverable |
@@ -367,3 +368,18 @@ Plan and measurements: `process/22-size/round-plan.md`; peer sizes: `process/22-
 | **Private tokens ship with one-letter names** (`--_accent-soft` → `--_c`) | Done at build time (`scripts/short-tokens.ts`), so `styles.css` keeps the readable names; −119 B gzipped. In devtools on the built file, look up a `--_x` by its `--clarify-*` fallback. Public `--clarify-*` names never change. Tokens the TypeScript reads (`--_vvh`, `--_duration`, `--_ease`) keep theirs, and a unit test fails if the code starts reading another |
 | **Duplicate rules merged**, no visual change | Option and review rows share one fill-inset rule and one divider rule; focus rings, foot rules and the reduced-motion blocks are merged. Checked by dumping every computed style and element box on all 34 break-page scenarios (light, dark, forced colours, reduced motion, 375px touch, 60 Tab steps, 40 hovers) with `scripts/style-dump.mjs`: 0 differences, and a 1px change shows up as 336 |
 | Turned down | `light-dark()` for the dark tokens (−11 B, or it drops Safari 16.4–17.4 natively); a shared transition token (+4 B) |
+
+---
+
+## 19. One colour (round 28)
+
+From Mari's question about why the card mixed a black button with blue picks. Claude found real forms that split the two (GitHub: green button, blue picks and focus), but no common product that pairs a black button with blue picks: with a black button, picks are almost always black too. So the card went monochrome, the "Grey" option from round 14's exploration (`design/explorations/01-focus-and-colour/`). Renders: `process/28-monochrome/before|after`.
+
+| Change | Why |
+|---|---|
+| **The accent defaults to ink** (`--_fg`), its text to the background | One colour on the card. A pick and the button that moves on share ink; shape tells them apart (a filled key or checkbox vs a button). Declared once in `:host`: `--_fg` is set per theme, so dark follows with no extra lines |
+| **Focus is a grey ring** (`--_ring`, #767676 / #8f8f8f), not the accent | With ink picks, an ink ring would make three ink things on one card (pick, ring, button), and a focused row would read as picked; round 14's renders showed it. Rows, buttons, dashes, chips and the text fields' typing edge all use it |
+| **An app's `--clarify-accent` still recolours picks, links and the ring** | The token keeps its meaning, so 0.1 themes look the same. The README says to give `::part(button-primary)` the same colour to keep one colour |
+| **Links are underlined** (40% of their colour at rest, full on hover; Claude's call) | Ink links can't be told from text by colour. The hover cue was the underline appearing; now it darkens, so the line never jumps in |
+| The exploration's ring shape (edge + halo outside the row) was not taken | Round 19 drew fills 2px inside the row, so an outside halo would leave a gap between ring and fill. Only the colour changed |
+| The playground's "warm" theme drops its rust accent; the demos' own focus rings and links go grey and ink | The same rule on the pages around the card |

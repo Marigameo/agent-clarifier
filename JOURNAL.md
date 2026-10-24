@@ -1165,6 +1165,25 @@ The merged report was frozen before any change: `process/26-demo-audit/audit.md`
 - The README points to the skill from Install and from "Tell the model when to ask", the way Sonner's README points to `ask-sonner`.
 - **0.1.1** is a README-only patch, so the npm page shows those links. The code is unchanged.
 
+## Round 28 · One colour, and 0.2.0 (24 Oct 2026)
+
+**Brief:** I asked again why the card mixed black and blue. Is blue for a pick good UX when black is the primary button, and does any real product do it?
+
+**What we found:** systems that split "press this" from "you picked this" exist (GitHub: a green button, blue picks and focus), but Claude found no common product that pairs a black button with blue picks. With a black button, picks are almost always black too, and with a blue button they are blue (Claude's recollection of shadcn, Uber, Nike, Cal.com, Apple and Notion; only GitHub's tokens were checked). My own instinct had been right: I hadn't seen it anywhere.
+
+**Decisions:**
+- I went monochrome: picks are ink, the same ink as Continue. It's the "Grey" option from round 14's exploration, which I'd turned down then.
+- Keyboard focus is a grey ring (#767676 / #8f8f8f), not ink. Claude recommended it and I agreed: an ink ring makes three ink things on one card, and a focused row would look picked.
+- Only the ring's colour changed, not its shape. The exploration drew an edge plus a halo outside the row, but round 19 moved fills 2px inside the row, so the halo would sit apart from the fill (Claude's call).
+- Links are ink, so they're underlined: faint at rest, full on hover (Claude's call). The hover cue used to be the underline appearing.
+- `--clarify-accent` keeps working: an app that sets it still gets that colour on picks, links and focus. The README now says to give the primary button the same colour, so the card keeps one.
+- The playground's warm theme lost its rust accent, and the demo pages' own focus rings and links went grey and ink: the same rule around the card.
+- **0.2.0**, since everyone's default look changes. No API change.
+
+**Verified:** 632 tests pass, 3 of them new (`tests/component/monochrome.test.ts`); the two about the new look fail on the old CSS. Before and after renders in light, dark and phone: `process/28-monochrome/`. Contrast: the ring is ≥ 3:1 on the card and every row fill in all three themes (DESIGN §19).
+
+---
+
 ## Story notes (to use later)
 
 - The arc: **borrow the feel, not the pixels** → research → plan → board → feedback → draft mode → **simplify** (cut a mode, a link and a strip) → **scope lock** (said no to branching) → build plan → build.
@@ -1189,3 +1208,4 @@ The merged report was frozen before any change: `process/26-demo-audit/audit.md`
 - Round 23 is the "read it as a stranger" beat: 22 rounds of tests were green, and the first reviewers who read the package the way a user would (install the tarball, follow the README) found that three of its own recipes didn't work and that TypeScript users on one common setting would get no types at all. The tests only ever imported the source. A second beat: the simplify pass found a regression in one of the fixes, then an old motion test caught the next attempt. Checks on the checks, again.
 - Round 25 is the "context, not controls" beat: a playground full of switches showed every state, and still didn't answer my real question, which was how it feels in a chat on a phone. The demo answered it in one screen.
 - Round 26 is the "the same rules, one level up" beat: the demo was built quickly around a carefully audited card, and the same skills found the page around it had drifted on everything the card had already settled: warm greys, too many weights, a button that looked real and wasn't, a screen reader hearing four things at once. Clutter turned out to be measurable: on the hotel result, nine bordered boxes became three (the record, one list, the composer).
+- Round 28 is the "ask the question again" beat: round 14 asked why black and blue mixed, prototyped monochrome, and kept the blue. Looking at real forms later showed that a black button with blue picks is something almost no product does, so the card went to one colour. Keeping a decision is fine; keeping it after the evidence turns isn't.
